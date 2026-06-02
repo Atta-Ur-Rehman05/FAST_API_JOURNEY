@@ -36,8 +36,6 @@ def get_student(student_id: int):
 @app.get("/students/")
 def get_students(name: str = None):
     return {"name": name}
-```
-
 
 
 ## Key Learnings
