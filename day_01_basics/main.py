@@ -25,3 +25,8 @@ def products():
 @app.get("/products/{id}")
 def product(id: int):
     return {"message": f"Product {id}"}
+
+@app.get("/users/{username}")
+def user(username: str):
+
+    return {"message": f"User {username}"}
