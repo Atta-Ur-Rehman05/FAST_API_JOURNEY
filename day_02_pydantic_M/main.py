@@ -14,6 +14,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from day_01_basics.main import user
+
 app = FastAPI()
 
 class Address(BaseModel):
@@ -34,6 +36,6 @@ async def create_user(user: User):
 
 @app.get("/users{id}/")
 async def get_users(id: int):
-    return {"message": "Users fetched successfully", "users": user.name}   
+    return {"message": "Users fetched successfully", "users": [user]}   
 
 
