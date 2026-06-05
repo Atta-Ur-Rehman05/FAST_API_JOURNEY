@@ -1,4 +1,4 @@
-# Day 08 - File Uploads & Static Files
+# Day 11 - File Uploads & Static Files
 
 ## Topics Covered
 
