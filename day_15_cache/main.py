@@ -10,7 +10,7 @@ app = FastAPI()
 # caching
 cache = {}
 
-start_time = time.time()
+start_time = time.time() 
 
 @app.get("/posts")
 async def get_posts():
