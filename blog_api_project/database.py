@@ -3,8 +3,9 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from config import settings
 
-DATABASE_URL = "postgresql://postgres:5565@localhost:5565/blog_db"
+DATABASE_URL = settings.DATABASE_URL
 
 
 engine = create_engine(DATABASE_URL)

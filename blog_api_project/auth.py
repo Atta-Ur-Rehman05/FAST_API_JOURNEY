@@ -10,11 +10,12 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from database import get_db
 import models
+from config import settings
 
 # 1. Configuration
-SECRET_KEY = "[ENCRYPTION_KEY]"  # In production, load this from an env file!
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 

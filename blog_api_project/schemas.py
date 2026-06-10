@@ -1,6 +1,7 @@
 # this file contain schemas for database mean data validation
 
 from pydantic import BaseModel
+from typing import Optional
 
 # input schema
 class create_blogs(BaseModel):
@@ -25,7 +26,7 @@ class blog_response(BaseModel):
     id: int
     title: str
     content: str
-    owner_id: int
+    owner_id: Optional[int] = None
     
     class Config:
         from_attributes = True
