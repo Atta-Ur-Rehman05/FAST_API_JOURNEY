@@ -4,7 +4,8 @@ from database import engine, get_db
 from sqlalchemy.orm import Session
 import models
 from models import Base, blogs, users
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, Query, status
+from sqlalchemy import or_
 import schemas
 from auth import create_access_token, get_current_user, pwd_context, ACCESS_TOKEN_EXPIRE_MINUTES
 from fastapi.security import OAuth2PasswordRequestForm
@@ -66,8 +67,25 @@ async def create_blog(blog: schemas.create_blogs, db: Session = Depends(get_db),
 
 # get all blogs
 @app.get("/blogs", response_model=list[schemas.blog_response])
-async def get_blogs(db: Session = Depends(get_db)):
-    return db.query(blogs).all()
+async def get_blogs(
+    db: Session = Depends(get_db),
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
+    search: str | None = Query(None),
+):
+    query = db.query(blogs)
+
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            or_(
+                blogs.title.ilike(search_term),
+                blogs.content.ilike(search_term),
+            )
+        )
+
+    offset = (page - 1) * limit
+    return query.offset(offset).limit(limit).all()
 
 
 # get blog by id
