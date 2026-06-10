@@ -10,3 +10,11 @@ DATABASE_URL = "postgresql://postgres:5565@localhost:5565/blog_db"
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+# database session generator
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
