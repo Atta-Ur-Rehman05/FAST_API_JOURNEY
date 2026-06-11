@@ -16,10 +16,12 @@ from auth import (
     hash_password,
 )
 
+
+app = FastAPI(title="Task Manager API")
+
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Task Manager API")
 
 # Add CORS middleware to allow frontend connections
 app.add_middleware(
