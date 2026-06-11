@@ -1,7 +1,7 @@
 # this file contain the schemas
 
 from pydantic import BaseModel
-from typing import Optional
+from typing import List, Optional
 from datetime import datetime
 
 class UserCreate(BaseModel):
@@ -50,3 +50,11 @@ class TaskResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class TaskPageResponse(BaseModel):
+    items: List[TaskResponse]
+    total: int
+    page: int
+    size: int
+    pages: int

@@ -1,10 +1,11 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
+from typing import Literal, Optional
 
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import asc, desc, or_
 from sqlalchemy.orm import Session
-from typing import List
 from database import engine, Base, get_db
 import models, schemas
 from auth import (
@@ -84,21 +85,63 @@ def create_task(
     db.refresh(db_task)
     return db_task
 
-@app.get("/tasks/", response_model=List[schemas.TaskResponse])
+@app.get("/tasks/", response_model=schemas.TaskPageResponse)
 def read_tasks(
-    skip: int = 0,
-    limit: int = 100,
+    page: int = Query(1, ge=1),
+    size: int = Query(10, ge=1, le=100),
+    search: Optional[str] = Query(None, min_length=1),
+    status_filter: Optional[str] = Query(None, alias="status"),
+    priority: Optional[str] = None,
+    due_from: Optional[datetime] = None,
+    due_to: Optional[datetime] = None,
+    sort_by: Literal["created_at", "updated_at", "due_date", "priority", "status", "title"] = "created_at",
+    sort_order: Literal["asc", "desc"] = "desc",
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
+    query = db.query(models.Task).filter(models.Task.owner_id == current_user.id)
+
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.filter(
+            or_(
+                models.Task.title.ilike(search_pattern),
+                models.Task.description.ilike(search_pattern),
+            )
+        )
+
+    if status_filter:
+        query = query.filter(models.Task.status == status_filter)
+
+    if priority:
+        query = query.filter(models.Task.priority == priority)
+
+    if due_from:
+        query = query.filter(models.Task.due_date >= due_from)
+
+    if due_to:
+        query = query.filter(models.Task.due_date <= due_to)
+
+    total = query.count()
+    pages = (total + size - 1) // size
+    sort_column = getattr(models.Task, sort_by)
+    sort_expression = asc(sort_column) if sort_order == "asc" else desc(sort_column)
+
     tasks = (
-        db.query(models.Task)
-        .filter(models.Task.owner_id == current_user.id)
-        .offset(skip)
-        .limit(limit)
+        query
+        .order_by(sort_expression, desc(models.Task.id))
+        .offset((page - 1) * size)
+        .limit(size)
         .all()
     )
-    return tasks
+
+    return {
+        "items": tasks,
+        "total": total,
+        "page": page,
+        "size": size,
+        "pages": pages,
+    }
 
 @app.get("/tasks/{task_id}", response_model=schemas.TaskResponse)
 def read_task(
