@@ -2,6 +2,11 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 import useAuthStore from '../store/authStore'
 
+//  http://127.0.0.1:8000
+//  https://task-management-backend-production-098f.up.railway.app
+// this is a shared axios instance for making requests to the backend
+// instead of writing axios.get(url) we can write api.get(url)
+// and it will automatically add the base url and the token
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000',
   headers: {
