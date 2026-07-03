@@ -11,7 +11,7 @@ from app.core.config import settings
 engine = create_async_engine(settings.DATABASE_URL, echo=True)
 
 # create async session
-AsyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession)
+AsyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession, expire_on_commit=False)
 
 # create base
 Base = declarative_base()
