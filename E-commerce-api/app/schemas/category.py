@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
 
 class CategoryBase(BaseModel):
@@ -18,3 +18,6 @@ class CategoryResponse(CategoryBase):
     id: int
     
     model_config = ConfigDict(from_attributes=True)
+
+class CategoryTreeResponse(CategoryResponse):
+    children: List["CategoryTreeResponse"] = Field(default_factory=list)
