@@ -7,7 +7,7 @@ from app.core.config import settings
 from app.schemas.user import UserCreate, UserResponse
 from app.schemas.token import Token
 from app.api.dependencies import SessionDep
-from app.repositries.user import UserRepository
+from app.repositories.user import UserRepository
 
 router = APIRouter()
 

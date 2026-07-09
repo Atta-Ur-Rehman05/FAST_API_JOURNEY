@@ -4,69 +4,43 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import SessionDep, get_current_admin_user
 from app.models.models import User
-from app.repositries.category import CategoryRepository
 from app.schemas.category import (
     CategoryCreate,
     CategoryResponse,
     CategoryTreeResponse,
     CategoryUpdate,
 )
+from app.services.category import (
+    CategoryDeleteRestrictedError,
+    CategoryNotFoundError,
+    CategoryService,
+    CategoryServiceError,
+    DuplicateCategorySlugError,
+    InvalidCategoryParentError,
+    ParentCategoryNotFoundError,
+)
 
 router = APIRouter()
 
 
-async def _validate_parent(
-    category_repo: CategoryRepository,
-    parent_id: Optional[int],
-    *,
-    category_id: Optional[int] = None,
-) -> None:
-    if parent_id is None:
-        return
+def _raise_category_http_error(error: CategoryServiceError) -> None:
+    if isinstance(error, (CategoryNotFoundError, ParentCategoryNotFoundError)):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.detail)
 
-    if category_id is not None and parent_id == category_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A category cannot be its own parent.",
-        )
-
-    parent = await category_repo.get_by_id(parent_id)
-    if parent is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Parent category not found.",
-        )
-
-    if category_id is not None and await category_repo.would_create_cycle(
-        category_id, parent_id
+    if isinstance(
+        error,
+        (
+            CategoryDeleteRestrictedError,
+            DuplicateCategorySlugError,
+            InvalidCategoryParentError,
+        ),
     ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A category cannot be moved under one of its descendants.",
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error.detail)
 
-
-def _build_category_tree(categories) -> list[CategoryTreeResponse]:
-    category_map = {
-        category.id: CategoryTreeResponse(
-            id=category.id,
-            name=category.name,
-            slug=category.slug,
-            parent_id=category.parent_id,
-            children=[],
-        )
-        for category in categories
-    }
-    roots = []
-
-    for category in categories:
-        node = category_map[category.id]
-        if category.parent_id and category.parent_id in category_map:
-            category_map[category.parent_id].children.append(node)
-        else:
-            roots.append(node)
-
-    return roots
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail="Unexpected category service error.",
+    )
 
 
 @router.get("/", response_model=list[CategoryResponse])
@@ -78,8 +52,8 @@ async def list_categories(
     root_only: bool = False,
     search: Optional[str] = None,
 ):
-    category_repo = CategoryRepository(session)
-    return await category_repo.list(
+    category_service = CategoryService(session)
+    return await category_service.list_categories(
         skip=skip,
         limit=limit,
         parent_id=parent_id,
@@ -90,9 +64,8 @@ async def list_categories(
 
 @router.get("/tree", response_model=list[CategoryTreeResponse])
 async def get_category_tree(session: SessionDep):
-    category_repo = CategoryRepository(session)
-    categories = await category_repo.list_all()
-    return _build_category_tree(categories)
+    category_service = CategoryService(session)
+    return await category_service.get_category_tree()
 
 
 @router.post(
@@ -105,29 +78,20 @@ async def create_category(
     session: SessionDep,
     _: Annotated[User, Depends(get_current_admin_user)],
 ):
-    category_repo = CategoryRepository(session)
-
-    existing_category = await category_repo.get_by_slug(category_in.slug)
-    if existing_category:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A category with this slug already exists.",
-        )
-
-    await _validate_parent(category_repo, category_in.parent_id)
-    return await category_repo.create(category_in)
+    category_service = CategoryService(session)
+    try:
+        return await category_service.create_category(category_in)
+    except CategoryServiceError as error:
+        _raise_category_http_error(error)
 
 
 @router.get("/{category_id}", response_model=CategoryResponse)
 async def get_category(category_id: int, session: SessionDep):
-    category_repo = CategoryRepository(session)
-    category = await category_repo.get_by_id(category_id)
-    if category is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Category not found.",
-        )
-    return category
+    category_service = CategoryService(session)
+    try:
+        return await category_service.get_category(category_id)
+    except CategoryServiceError as error:
+        _raise_category_http_error(error)
 
 
 @router.patch("/{category_id}", response_model=CategoryResponse)
@@ -137,28 +101,11 @@ async def update_category(
     session: SessionDep,
     _: Annotated[User, Depends(get_current_admin_user)],
 ):
-    category_repo = CategoryRepository(session)
-    category = await category_repo.get_by_id(category_id)
-    if category is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Category not found.",
-        )
-
-    if category_in.slug is not None:
-        existing_category = await category_repo.get_by_slug(category_in.slug)
-        if existing_category and existing_category.id != category_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="A category with this slug already exists.",
-            )
-
-    await _validate_parent(
-        category_repo,
-        category_in.parent_id,
-        category_id=category_id,
-    )
-    return await category_repo.update(category, category_in)
+    category_service = CategoryService(session)
+    try:
+        return await category_service.update_category(category_id, category_in)
+    except CategoryServiceError as error:
+        _raise_category_http_error(error)
 
 
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -167,24 +114,8 @@ async def delete_category(
     session: SessionDep,
     _: Annotated[User, Depends(get_current_admin_user)],
 ):
-    category_repo = CategoryRepository(session)
-    category = await category_repo.get_by_id(category_id)
-    if category is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Category not found.",
-        )
-
-    if await category_repo.has_children(category_id):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete a category that has child categories.",
-        )
-
-    if await category_repo.has_products(category_id):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete a category that has products.",
-        )
-
-    await category_repo.delete(category)
+    category_service = CategoryService(session)
+    try:
+        await category_service.delete_category(category_id)
+    except CategoryServiceError as error:
+        _raise_category_http_error(error)

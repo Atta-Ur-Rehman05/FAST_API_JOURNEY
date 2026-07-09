@@ -8,7 +8,7 @@ from uuid import UUID
 from app.core.config import settings
 from app.db.db import get_db
 from app.models.models import User, RoleType
-from app.repositries.user import UserRepository
+from app.repositories.user import UserRepository
 from app.schemas.token import TokenPayload
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
