@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List, Dict, Any
 from uuid import UUID
 from datetime import datetime
@@ -69,7 +69,7 @@ class ProductResponse(ProductBase):
     id: UUID
     created_at: datetime
     updated_at: datetime
-    images: List[ProductImageResponse] = []
-    variants: List[ProductVariantResponse] = []
+    images: List[ProductImageResponse] = Field(default_factory=list)
+    variants: List[ProductVariantResponse] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
