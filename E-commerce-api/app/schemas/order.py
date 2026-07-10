@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
@@ -7,14 +7,14 @@ from app.models.models import OrderStatus
 
 class OrderItemBase(BaseModel):
     variant_id: UUID
-    quantity: int
+    quantity: int = Field(gt=0)
     price_per_item: Decimal
 
 class OrderItemCreate(OrderItemBase):
     pass
 
 class OrderItemUpdate(BaseModel):
-    quantity: Optional[int] = None
+    quantity: Optional[int] = Field(default=None, gt=0)
     price_per_item: Optional[Decimal] = None
 
 class OrderItemResponse(OrderItemBase):
@@ -44,6 +44,6 @@ class OrderResponse(OrderBase):
     user_id: UUID
     created_at: datetime
     updated_at: datetime
-    items: List[OrderItemResponse] = []
+    items: List[OrderItemResponse] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
