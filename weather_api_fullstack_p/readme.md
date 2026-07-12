@@ -1,5 +1,7 @@
 WeatherAPI Full-Stack Project
 
+Solution to the roadmap.sh project Weather API https://roadmap.sh/projects/weather-api-wrapper-service
+
 A full-stack weather application that provides real-time weather information using a Weather API. The project consists of a frontend for displaying weather data and a backend that securely handles API requests.
 
 Features
