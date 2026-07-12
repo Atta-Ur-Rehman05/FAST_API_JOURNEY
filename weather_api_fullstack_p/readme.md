@@ -4,6 +4,8 @@ Solution to the roadmap.sh project Weather API https://roadmap.sh/projects/weath
 
 A full-stack weather application that provides real-time weather information using a Weather API. The project consists of a frontend for displaying weather data and a backend that securely handles API requests.
 
+https://roadmap.sh/projects/weather-api-wrapper-service
+
 Features
 
 Search weather by city name
