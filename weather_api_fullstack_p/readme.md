@@ -53,7 +53,7 @@ Start the frontend:
 cd frontend
 npm start
 
-The frontend will typically run on http://localhost:3000 and the backend on http://localhost:8000.
+
 
 project url : https://github.com/Atta-Ur-Rehman05/FAST_API_JOURNEY/tree/main/weather_api_fullstack_p
 
