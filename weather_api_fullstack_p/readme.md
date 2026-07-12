@@ -55,7 +55,7 @@ npm start
 
 
 
-project url : https://github.com/Atta-Ur-Rehman05/FAST_API_JOURNEY/tree/main/weather_api_fullstack_p
+project url : https://roadmap.sh/projects/weather-api-wrapper-service
 
 Project Structure
 weatherapi-fullstack/
