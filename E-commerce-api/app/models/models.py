@@ -60,6 +60,7 @@ class User(Base):
     addresses = relationship("Address", back_populates="user", cascade="all, delete-orphan")
     orders = relationship("Order", back_populates="user")
     cart = relationship("Cart", back_populates="user", uselist=False)
+    reviews = relationship("Review", back_populates="user", cascade="all, delete-orphan")
 
 class Address(Base):
     __tablename__ = "addresses"
@@ -111,6 +112,7 @@ class Product(Base):
     category = relationship("Category", back_populates="products")
     variants = relationship("ProductVariant", back_populates="product", cascade="all, delete-orphan")
     images = relationship("ProductImage", back_populates="product", cascade="all, delete-orphan")
+    reviews = relationship("Review", back_populates="product", cascade="all, delete-orphan")
 
 class ProductVariant(Base):
     __tablename__ = "product_variants"
@@ -135,6 +137,26 @@ class ProductImage(Base):
 
     # Relationships
     product = relationship("Product", back_populates="images")
+
+
+# ============================
+# Reviews Module
+# ============================
+
+class Review(Base):
+    __tablename__ = "reviews"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    rating = Column(Integer, nullable=False)
+    comment = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", back_populates="reviews")
+    product = relationship("Product", back_populates="reviews")
 
 
 # ============================
