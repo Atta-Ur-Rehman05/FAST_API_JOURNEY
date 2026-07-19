@@ -21,10 +21,11 @@ async def get_db():
     async with AsyncSessionLocal() as session:
         yield session
 
-# create tables
+# create tables (Deprecated: Use Alembic instead)
 async def create_tables():
-    from app.models import models
-    async with engine.begin() as conn:
-        # This ONLY creates tables if they do not already exist. 
-        # It never deletes existing data.
-        await conn.run_sync(Base.metadata.create_all)
+    pass
+    # from app.models import models
+    # async with engine.begin() as conn:
+    #     # This ONLY creates tables if they do not already exist. 
+    #     # It never deletes existing data.
+    #     await conn.run_sync(Base.metadata.create_all)
