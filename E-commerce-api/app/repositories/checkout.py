@@ -61,7 +61,7 @@ class CheckoutRepository:
         self.session.add(order)
         await self.session.flush()
 
-        for cart_item in cart.items:
+        for cart_item in list(cart.items):
             variant = cart_item.variant
             unit_price = variant.product.base_price + variant.price_modifier
             order_item = OrderItem(
@@ -74,6 +74,7 @@ class CheckoutRepository:
             self.session.add(order_item)
             self.session.add(variant)
             await self.session.delete(cart_item)
+        cart.items.clear()
 
         cart.updated_at = datetime.utcnow()
         payment = Payment(

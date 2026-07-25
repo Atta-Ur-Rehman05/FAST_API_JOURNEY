@@ -202,7 +202,7 @@ class Order(Base):
     # Relationships
     user = relationship("User", back_populates="orders")
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
-    payment = relationship("Payment", back_populates="order", uselist=False)
+    payment = relationship("Payment", back_populates="order", uselist=False, cascade="all, delete-orphan")
 
     shipping_address = relationship("Address", foreign_keys=[shipping_address_id])
     billing_address = relationship("Address", foreign_keys=[billing_address_id])
