@@ -89,6 +89,42 @@ async def test_order_lifecycle(client: AsyncClient, auth_headers_customer: dict,
     }, headers=auth_headers_admin)
     assert update_res.status_code == 200
 
+    # Admin get order
+    admin_get = await client.get(f"/api/v1/orders/{order_id}", headers=auth_headers_admin)
+    assert admin_get.status_code == 200
+
+    # Add order item
+    add_item_res = await client.post(f"/api/v1/orders/{order_id}/items", json={
+        "variant_id": str(variant_id),
+        "quantity": 1,
+        "price_per_item": 50.0
+    }, headers=auth_headers_customer)
+    assert add_item_res.status_code == 201
+    item_id = add_item_res.json()["id"]
+
+    # Update order item
+    up_item_res = await client.patch(f"/api/v1/orders/{order_id}/items/{item_id}", json={
+        "quantity": 3
+    }, headers=auth_headers_customer)
+    assert up_item_res.status_code == 200
+
+    # Delete order item
+    del_item_res = await client.delete(f"/api/v1/orders/{order_id}/items/{item_id}", headers=auth_headers_customer)
+    assert del_item_res.status_code == 204
+
     # Delete order
     del_res = await client.delete(f"/api/v1/orders/{order_id}", headers=auth_headers_admin)
     assert del_res.status_code == 204
+
+@pytest.mark.asyncio
+async def test_create_order_direct_and_address_errors(client: AsyncClient, auth_headers_customer: dict):
+    fake_addr_id = str(uuid.uuid4())
+    res = await client.post("/api/v1/orders/", json={
+        "shipping_address_id": fake_addr_id,
+        "billing_address_id": fake_addr_id,
+        "total_amount": 100.0,
+        "order_status": "pending"
+    }, headers=auth_headers_customer)
+    assert res.status_code == 404
+
+

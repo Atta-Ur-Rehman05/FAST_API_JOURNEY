@@ -129,3 +129,17 @@ async def test_inventory_filters(
     
     res_out = await client.get("/api/v1/inventory/?out_of_stock_only=true", headers=auth_headers_admin)
     assert res_out.status_code == 200
+
+@pytest.mark.asyncio
+async def test_inventory_non_existent_operations(client: AsyncClient, auth_headers_admin: dict):
+    fake_id = str(uuid.uuid4())
+    
+    res1 = await client.patch(f"/api/v1/inventory/{fake_id}/stock", json={"stock_quantity": 10}, headers=auth_headers_admin)
+    assert res1.status_code == 404
+
+    res2 = await client.post(f"/api/v1/inventory/{fake_id}/restock", json={"quantity": 5}, headers=auth_headers_admin)
+    assert res2.status_code == 404
+
+    res3 = await client.post(f"/api/v1/inventory/{fake_id}/release", json={"quantity": 5}, headers=auth_headers_admin)
+    assert res3.status_code == 404
+

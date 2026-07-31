@@ -61,3 +61,33 @@ async def test_delete_category(client: AsyncClient, auth_headers_admin: dict):
 
     get_res = await client.get(f"/api/v1/categories/{cat_id}")
     assert get_res.status_code == 404
+
+@pytest.mark.asyncio
+async def test_category_tree_and_parent_errors(client: AsyncClient, auth_headers_admin: dict):
+    # 1. Create parent category
+    parent_res = await client.post("/api/v1/categories/", json={"name": "ParentCat", "slug": "parent-cat"}, headers=auth_headers_admin)
+    parent_id = parent_res.json()["id"]
+
+    # 2. Create child category
+    child_res = await client.post("/api/v1/categories/", json={
+        "name": "ChildCat", "slug": "child-cat", "parent_id": parent_id
+    }, headers=auth_headers_admin)
+    assert child_res.status_code == 201
+
+    # 3. Get category tree
+    tree_res = await client.get("/api/v1/categories/tree")
+    assert tree_res.status_code == 200
+    assert len(tree_res.json()) > 0
+
+    # 4. Duplicate slug error (400)
+    dup_res = await client.post("/api/v1/categories/", json={"name": "DupCat", "slug": "parent-cat"}, headers=auth_headers_admin)
+    assert dup_res.status_code == 400
+
+    # 5. Invalid parent category error (404)
+    invalid_parent_res = await client.post("/api/v1/categories/", json={"name": "BadParentCat", "slug": "bad-parent-cat", "parent_id": 999999}, headers=auth_headers_admin)
+    assert invalid_parent_res.status_code == 404
+
+    # 6. Self parent error (400)
+    self_parent_res = await client.patch(f"/api/v1/categories/{parent_id}", json={"parent_id": parent_id}, headers=auth_headers_admin)
+    assert self_parent_res.status_code == 400
+
