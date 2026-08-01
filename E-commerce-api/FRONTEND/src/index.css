@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-slate-900 text-slate-100 antialiased font-sans min-h-screen selection:bg-indigo-500 selection:text-white;
+  }
+}
+
+/* Custom Glassmorphism & Micro-animations */
+.glass-panel {
+  @apply bg-slate-800/60 backdrop-blur-md border border-slate-700/50 shadow-xl;
+}
+
+.glass-card {
+  @apply bg-slate-800/40 backdrop-blur-sm border border-slate-700/40 hover:border-indigo-500/50 transition-all duration-300;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
