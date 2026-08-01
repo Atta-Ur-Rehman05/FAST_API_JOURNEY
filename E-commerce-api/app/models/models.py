@@ -17,7 +17,10 @@ class RoleType(enum.Enum):
     admin = "admin"
     seller = "seller"
 
-class AddressType(enum.Enum):
+class AddressType(str, enum.Enum):
+    Home = "Home"
+    Office = "Office"
+    Other = "Other"
     shipping = "shipping"
     billing = "billing"
 
@@ -67,16 +70,47 @@ class Address(Base):
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    address_type = Column(Enum(AddressType), nullable=False)
-    street_address = Column(String, nullable=False)
+    full_name = Column(String, nullable=False, default="")
+    phone = Column(String, nullable=False, default="")
+    address_line_1 = Column(String, nullable=False, default="")
+    address_line_2 = Column(String, nullable=True)
     city = Column(String, nullable=False)
     state = Column(String, nullable=False)
     postal_code = Column(String, nullable=False)
     country = Column(String, nullable=False)
-    phone_number = Column(String, nullable=False)
+    address_type = Column(Enum(AddressType), default=AddressType.Home, nullable=False)
+    is_default_shipping = Column(Boolean, default=False, nullable=False)
+    is_default_billing = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     user = relationship("User", back_populates="addresses")
+
+    def __init__(self, **kwargs):
+        if "street_address" in kwargs and "address_line_1" not in kwargs:
+            kwargs["address_line_1"] = kwargs.pop("street_address")
+        if "phone_number" in kwargs and "phone" not in kwargs:
+            kwargs["phone"] = kwargs.pop("phone_number")
+        if "full_name" not in kwargs:
+            kwargs["full_name"] = "Default User"
+        super().__init__(**kwargs)
+
+    @property
+    def street_address(self) -> str:
+        return self.address_line_1
+
+    @street_address.setter
+    def street_address(self, value: str):
+        self.address_line_1 = value
+
+    @property
+    def phone_number(self) -> str:
+        return self.phone
+
+    @phone_number.setter
+    def phone_number(self, value: str):
+        self.phone = value
 
 # ============================
 # Product Catalog Module
