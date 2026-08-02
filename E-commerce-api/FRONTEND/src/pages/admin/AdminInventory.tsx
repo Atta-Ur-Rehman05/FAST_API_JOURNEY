@@ -44,55 +44,55 @@ export const AdminInventory: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-extrabold text-white">Inventory Stock Matrix</h1>
-        <p className="text-slate-400 text-sm mt-1">View and update stock levels for all variant SKUs in real-time</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#212121]">Inventory Stock Matrix</h1>
+        <p className="text-xs text-[#757575] mt-0.5">View and update stock levels for all variant SKUs</p>
       </div>
 
       {loading ? (
-        <div className="text-slate-400">Loading inventory data...</div>
+        <div className="text-center text-[#757575] text-xs py-12">Loading inventory matrix...</div>
       ) : (
-        <div className="glass-panel rounded-3xl overflow-hidden border border-slate-800">
+        <div className="ui-surface rounded-sm overflow-hidden border border-gray-200 shadow-xs">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="bg-slate-950/80 text-slate-400 uppercase text-xs font-mono border-b border-slate-800">
+            <table className="w-full text-left text-xs text-[#212121]">
+              <thead className="bg-[#EFF0F5] text-[#757575] uppercase text-[11px] font-bold border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-4">Variant SKU</th>
-                  <th className="px-6 py-4">Price Modifier</th>
-                  <th className="px-6 py-4">Stock Quantity</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4">Quick Update</th>
+                  <th className="px-4 py-3">Variant SKU</th>
+                  <th className="px-4 py-3">Price Modifier</th>
+                  <th className="px-4 py-3">Stock Quantity</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Quick Update</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-gray-200">
                 {variants.map((v) => {
                   const currentQty = quantities[v.id] ?? v.stock_quantity;
                   const isLow = currentQty <= 5;
                   return (
-                    <tr key={v.id} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="px-6 py-4 font-mono font-bold text-indigo-400">{v.sku}</td>
-                      <td className="px-6 py-4 font-mono text-slate-300">+${Number(v.price_modifier).toFixed(2)}</td>
-                      <td className="px-6 py-4 font-mono">
+                    <tr key={v.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 font-mono font-bold text-[#F85606]">{v.sku}</td>
+                      <td className="px-4 py-3 font-mono text-[#757575]">+Rs. {Number(v.price_modifier).toFixed(2)}</td>
+                      <td className="px-4 py-3 font-mono">
                         <input
                           type="number"
                           value={currentQty}
                           onChange={(e) => setQuantities({ ...quantities, [v.id]: parseInt(e.target.value) || 0 })}
-                          className="w-24 px-3 py-1.5 bg-slate-950/80 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm"
+                          className="w-20 px-2 py-1 bg-white border border-gray-300 rounded-xs text-[#212121] font-mono text-xs focus:outline-none focus:border-[#F85606]"
                         />
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold font-mono ${
-                          isLow ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-xs text-[10px] font-bold uppercase border ${
+                          isLow ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         }`}>
-                          {isLow ? 'LOW STOCK' : 'OK'}
+                          {isLow ? 'LOW STOCK' : 'IN STOCK'}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <button
                           onClick={() => handleUpdateStock(v.id)}
                           disabled={updatingId === v.id}
-                          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold text-xs flex items-center space-x-1.5 transition-all"
+                          className="btn-primary text-xs py-1 px-3 flex items-center space-x-1 font-bold shadow-xs disabled:opacity-50"
                         >
                           <Save className="w-3.5 h-3.5" />
                           <span>{updatingId === v.id ? 'Saving...' : 'Save Stock'}</span>

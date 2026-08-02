@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, Warehouse, Folders, ShoppingCart, ArrowLeft } from 'lucide-react';
+import { LayoutDashboard, Package, Warehouse, Folders, ShoppingCart, ArrowLeft, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export const AdminLayout: React.FC = () => {
@@ -10,10 +10,13 @@ export const AdminLayout: React.FC = () => {
 
   if (!isAdmin && !isSeller) {
     return (
-      <div className="max-w-md mx-auto my-24 p-8 glass-panel rounded-3xl text-center space-y-4">
-        <h2 className="text-2xl font-bold text-red-400">Access Denied</h2>
-        <p className="text-sm text-slate-400">You must be an administrator or seller to access the Admin Hub.</p>
-        <button onClick={() => navigate('/products')} className="px-6 py-2.5 bg-indigo-600 rounded-xl text-white font-semibold">
+      <div className="max-w-md mx-auto my-24 p-8 ui-surface rounded-sm text-center space-y-4 shadow-sm">
+        <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 mx-auto flex items-center justify-center border border-rose-200">
+          <ShieldAlert className="w-6 h-6" />
+        </div>
+        <h2 className="text-xl font-bold text-[#212121]">Access Denied</h2>
+        <p className="text-sm text-[#757575]">You must be an administrator or seller to access the Admin Hub.</p>
+        <button onClick={() => navigate('/products')} className="btn-primary w-full text-sm">
           Return to Storefront
         </button>
       </div>
@@ -29,22 +32,28 @@ export const AdminLayout: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#EFF0F5]">
       
       {/* Admin Sidebar */}
-      <aside className="w-full md:w-64 glass-panel border-r border-slate-800 p-6 flex flex-col justify-between">
-        <div className="space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+      <aside className="w-full md:w-64 bg-white border-r border-gray-200 p-4 flex flex-col justify-between shadow-xs">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-gray-200">
             <div>
-              <h2 className="text-lg font-bold text-white uppercase tracking-wider">Admin Hub</h2>
-              <p className="text-xs text-purple-400 capitalize">{user?.role} Portal</p>
+              <h2 className="text-sm font-bold text-[#212121] uppercase tracking-wider">Admin Hub</h2>
+              <span className="inline-block px-2 py-0.5 mt-1 text-[10px] font-bold uppercase rounded-xs bg-[#E7FFFD] text-[#0f766e] border border-[#b2f5f0]">
+                {user?.role} Portal
+              </span>
             </div>
-            <button onClick={() => navigate('/products')} className="p-2 text-slate-400 hover:text-white" title="Back to Storefront">
+            <button
+              onClick={() => navigate('/products')}
+              className="p-1.5 text-gray-500 hover:text-[#F85606] transition-colors rounded-sm"
+              title="Back to Storefront"
+            >
               <ArrowLeft className="w-4 h-4" />
             </button>
           </div>
 
-          <nav className="space-y-1.5">
+          <nav className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
@@ -52,13 +61,13 @@ export const AdminLayout: React.FC = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                      ? 'bg-[#F85606] text-white font-semibold shadow-xs'
+                      : 'text-gray-700 hover:bg-[#EFF0F5] hover:text-[#F85606]'
                   }`}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-4 h-4" />
                   <span>{item.label}</span>
                 </Link>
               );
@@ -66,13 +75,13 @@ export const AdminLayout: React.FC = () => {
           </nav>
         </div>
 
-        <div className="pt-6 border-t border-slate-800 text-xs text-slate-500 font-mono">
+        <div className="pt-4 border-t border-gray-200 text-[11px] text-gray-500 font-mono">
           FastAPI Engine Connected
         </div>
       </aside>
 
       {/* Main Admin Content Area */}
-      <main className="flex-1 p-6 md:p-8 overflow-y-auto">
+      <main className="flex-1 p-4 md:p-6 overflow-y-auto">
         <Outlet />
       </main>
 

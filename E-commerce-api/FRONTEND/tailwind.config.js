@@ -9,15 +9,22 @@ export default {
     extend: {
       colors: {
         brand: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          500: '#0284c7',
-          600: '#0284c7',
-          700: '#0369a1',
-          900: '#0c4a6e',
+          orange: '#F85606',
+          'orange-hover': '#D04400',
+          accent: '#E7FFFD',
+          canvas: '#EFF0F5',
+          surface: '#FFFFFF',
+          dark: '#212121',
+          muted: '#757575',
+          50: '#fff7ed',
+          100: '#ffedd5',
+          500: '#F85606',
+          600: '#D04400',
+          700: '#c23b00',
         }
       }
     },
   },
   plugins: [],
 }
+

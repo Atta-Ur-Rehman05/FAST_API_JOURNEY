@@ -24,35 +24,35 @@ export const AdminDashboard: React.FC = () => {
   }, []);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-extrabold text-white">System Dashboard</h1>
-        <p className="text-slate-400 text-sm mt-1">Overview of catalog, stock metrics, and fulfillment</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#212121]">System Dashboard</h1>
+        <p className="text-xs text-[#757575] mt-0.5">Overview of catalog items, inventory status, and fulfillment queue</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="glass-panel p-6 rounded-3xl space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="ui-surface p-5 rounded-sm space-y-2 shadow-xs border-l-4 border-l-[#F85606]">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Products</span>
-            <Package className="w-6 h-6 text-purple-400" />
+            <span className="text-xs font-bold text-[#757575] uppercase tracking-wider">Total Products</span>
+            <Package className="w-5 h-5 text-[#F85606]" />
           </div>
-          <div className="text-3xl font-extrabold text-white font-mono">{stats.productsCount}</div>
+          <div className="text-2xl font-black text-[#212121]">{stats.productsCount}</div>
         </div>
 
-        <div className="glass-panel p-6 rounded-3xl space-y-3">
+        <div className="ui-surface p-5 rounded-sm space-y-2 shadow-xs border-l-4 border-l-[#0284C7]">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Inventory Variants</span>
-            <Warehouse className="w-6 h-6 text-indigo-400" />
+            <span className="text-xs font-bold text-[#757575] uppercase tracking-wider">Inventory Variants</span>
+            <Warehouse className="w-5 h-5 text-[#0284C7]" />
           </div>
-          <div className="text-3xl font-extrabold text-white font-mono">{stats.inventoryCount}</div>
+          <div className="text-2xl font-black text-[#212121]">{stats.inventoryCount}</div>
         </div>
 
-        <div className="glass-panel p-6 rounded-3xl space-y-3">
+        <div className="ui-surface p-5 rounded-sm space-y-2 shadow-xs border-l-4 border-l-emerald-600">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">System Health</span>
-            <TrendingUp className="w-6 h-6 text-emerald-400" />
+            <span className="text-xs font-bold text-[#757575] uppercase tracking-wider">System Health</span>
+            <TrendingUp className="w-5 h-5 text-emerald-600" />
           </div>
-          <div className="text-3xl font-extrabold text-emerald-400 font-mono">ONLINE</div>
+          <div className="text-2xl font-black text-emerald-700">ONLINE</div>
         </div>
       </div>
     </div>

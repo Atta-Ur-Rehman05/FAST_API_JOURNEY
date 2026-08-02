@@ -68,15 +68,15 @@ export const AdminProducts: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold text-white">Product Catalog Manager</h1>
-          <p className="text-slate-400 text-sm mt-1">Create, edit, and inspect store items and variants</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#212121]">Product Catalog Manager</h1>
+          <p className="text-xs text-[#757575] mt-0.5">Create, edit, and inspect storefront items</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-semibold flex items-center space-x-2 shadow-lg shadow-purple-600/30 transition-all text-sm"
+          className="btn-primary text-xs font-bold flex items-center space-x-1.5 shadow-xs"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Product</span>
@@ -84,34 +84,36 @@ export const AdminProducts: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="text-slate-400">Loading products...</div>
+        <div className="text-center text-[#757575] text-xs py-12">Loading products...</div>
       ) : (
-        <div className="glass-panel rounded-3xl overflow-hidden border border-slate-800">
+        <div className="ui-surface rounded-sm overflow-hidden shadow-xs border border-gray-200">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="bg-slate-950/80 text-slate-400 uppercase text-xs font-mono border-b border-slate-800">
+            <table className="w-full text-left text-xs text-[#212121]">
+              <thead className="bg-[#EFF0F5] text-[#757575] uppercase text-[11px] font-bold border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-4">Product Name</th>
-                  <th className="px-6 py-4">Category</th>
-                  <th className="px-6 py-4">Base Price</th>
-                  <th className="px-6 py-4">Variants</th>
-                  <th className="px-6 py-4">Actions</th>
+                  <th className="px-4 py-3">Product Name</th>
+                  <th className="px-4 py-3">Category</th>
+                  <th className="px-4 py-3">Base Price</th>
+                  <th className="px-4 py-3">Variants</th>
+                  <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-gray-200">
                 {products.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="px-6 py-4 font-bold text-white">
+                  <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 font-bold text-[#212121]">
                       {p.name}
-                      <span className="block text-xs font-mono text-slate-500 font-normal">Slug: {p.slug}</span>
+                      <span className="block text-[11px] font-mono text-[#757575] font-normal">Slug: {p.slug}</span>
                     </td>
-                    <td className="px-6 py-4">{p.category?.name || `ID: ${p.category_id}`}</td>
-                    <td className="px-6 py-4 font-mono font-bold text-emerald-400">${Number(p.base_price).toFixed(2)}</td>
-                    <td className="px-6 py-4 font-mono text-indigo-400">{p.variants?.length || 0} Variant(s)</td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 text-[#757575]">{p.category?.name || `ID: ${p.category_id}`}</td>
+                    <td className="px-4 py-3 font-mono font-bold text-[#F85606]">
+                      Rs. {Number(p.base_price).toFixed(2)}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-[#0284C7] font-semibold">{p.variants?.length || 0} Variant(s)</td>
+                    <td className="px-4 py-3">
                       <button
                         onClick={() => handleDeleteProduct(p.id)}
-                        className="p-2 text-slate-500 hover:text-red-400 transition-colors"
+                        className="p-1.5 text-gray-400 hover:text-rose-600 transition-colors"
                         title="Delete Product"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -127,18 +129,18 @@ export const AdminProducts: React.FC = () => {
 
       {/* Add Product Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg glass-panel p-6 rounded-3xl space-y-6">
-            <h2 className="text-xl font-bold text-white">Add New Product</h2>
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-white p-6 rounded-sm space-y-4 shadow-xl border border-gray-200">
+            <h2 className="text-base font-bold text-[#212121] border-b border-gray-200 pb-2">Add New Product</h2>
 
-            <form onSubmit={handleCreateProduct} className="space-y-4">
+            <form onSubmit={handleCreateProduct} className="space-y-3">
               <input
                 type="text"
                 required
                 placeholder="Product Name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
-                className="w-full p-3 bg-slate-950/60 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500"
+                className="w-full p-2.5 border border-gray-300 rounded-xs text-xs text-[#212121] focus:outline-none focus:border-[#F85606]"
               />
 
               <input
@@ -147,16 +149,16 @@ export const AdminProducts: React.FC = () => {
                 placeholder="Slug"
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                className="w-full p-3 bg-slate-950/60 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500 font-mono"
+                className="w-full p-2.5 border border-gray-300 rounded-xs text-xs font-mono text-[#212121] focus:outline-none focus:border-[#F85606]"
               />
 
               <select
                 value={formData.category_id}
                 onChange={(e) => setFormData({ ...formData, category_id: Number(e.target.value) })}
-                className="w-full p-3 bg-slate-950/60 border border-slate-700 rounded-xl text-sm text-slate-100"
+                className="w-full p-2.5 border border-gray-300 rounded-xs text-xs text-[#212121] focus:outline-none focus:border-[#F85606]"
               >
                 {categories.map((c) => (
-                  <option key={c.id} value={c.id} className="bg-slate-900">{c.name}</option>
+                  <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
 
@@ -164,10 +166,10 @@ export const AdminProducts: React.FC = () => {
                 type="number"
                 step="0.01"
                 required
-                placeholder="Base Price ($)"
+                placeholder="Base Price (Rs.)"
                 value={formData.base_price}
                 onChange={(e) => setFormData({ ...formData, base_price: parseFloat(e.target.value) })}
-                className="w-full p-3 bg-slate-950/60 border border-slate-700 rounded-xl text-sm text-slate-100 font-mono"
+                className="w-full p-2.5 border border-gray-300 rounded-xs text-xs font-mono text-[#212121] focus:outline-none focus:border-[#F85606]"
               />
 
               <textarea
@@ -175,20 +177,20 @@ export const AdminProducts: React.FC = () => {
                 placeholder="Product Description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full p-3 bg-slate-950/60 border border-slate-700 rounded-xl text-sm text-slate-100 placeholder-slate-500"
+                className="w-full p-2.5 border border-gray-300 rounded-xs text-xs text-[#212121] focus:outline-none focus:border-[#F85606]"
               />
 
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex justify-end space-x-2 pt-2 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2.5 border border-slate-700 text-slate-300 rounded-xl text-sm font-semibold"
+                  className="px-3 py-2 border border-gray-300 text-xs font-semibold text-[#757575] hover:bg-gray-100 rounded-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-semibold"
+                  className="btn-primary text-xs font-bold py-2 px-4"
                 >
                   Create Product
                 </button>
