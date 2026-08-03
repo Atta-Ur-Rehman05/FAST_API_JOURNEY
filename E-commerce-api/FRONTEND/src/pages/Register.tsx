@@ -36,8 +36,8 @@ export const Register: React.FC = () => {
           <div className="w-12 h-12 rounded-full bg-[#FFE8DE] text-[#F85606] mx-auto flex items-center justify-center border border-[#F85606]/30">
             <UserPlus className="w-6 h-6" />
           </div>
-          <h1 className="text-xl font-bold text-[#212121]">Create Daraz Account</h1>
-          <p className="text-xs text-[#757575]">Join Daraz Store for instant deals and vouchers</p>
+          <h1 className="text-xl font-bold text-[#212121]">Create ZetaMall Account</h1>
+          <p className="text-xs text-[#757575]">Join ZetaMall Store for instant deals and vouchers</p>
         </div>
 
         {error && (

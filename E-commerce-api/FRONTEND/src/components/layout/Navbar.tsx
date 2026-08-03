@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, LogOut, LayoutDashboard, Search, User as UserIcon, HelpCircle, Smartphone, Tag } from 'lucide-react';
+import { ShoppingCart, LogOut, LayoutDashboard, Search, User as UserIcon, HelpCircle, Tag } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCartStore } from '../../store/cartStore';
 
@@ -24,14 +24,11 @@ export const Navbar: React.FC = () => {
   return (
     <header className="sticky top-0 z-40 w-full shadow-md">
       
-      {/* 1. Top Utility Announcement Strip (Daraz Brand Standard) */}
+      {/* 1. Top Utility Announcement Strip (ZetaMall Design Standard) */}
       <div className="bg-[#E04B00] text-white text-[11px] font-medium py-1 px-4 border-b border-[#F85606]/30">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-6">
-            <span className="hover:underline cursor-pointer flex items-center gap-1">
-              <Smartphone className="w-3 h-3 text-[#E7FFFD]" /> SAVE MORE ON APP
-            </span>
-            <span className="hover:underline cursor-pointer">SELL ON DARAZ</span>
+            <span className="hover:underline cursor-pointer font-semibold">BECOME A SELLER</span>
             <span className="hover:underline cursor-pointer flex items-center gap-1">
               <HelpCircle className="w-3 h-3" /> HELP & SUPPORT
             </span>
@@ -58,7 +55,7 @@ export const Navbar: React.FC = () => {
           <Link to="/" className="flex items-center space-x-2 group flex-shrink-0">
             <div className="bg-white text-[#F85606] font-black tracking-wider px-2.5 py-0.5 rounded-sm text-xl flex items-center shadow-sm">
               <Tag className="w-5 h-5 mr-1 fill-[#F85606]" />
-              <span>Daraz</span>
+              <span>ZetaMall</span>
             </div>
             <span className="hidden sm:inline-block text-xs font-semibold uppercase tracking-widest text-[#E7FFFD] border-l border-white/30 pl-2">
               Store
@@ -71,7 +68,7 @@ export const Navbar: React.FC = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search in Daraz"
+              placeholder="Search in ZetaMall..."
               className="w-full py-2 pl-4 pr-12 text-sm text-[#212121] bg-white rounded-sm focus:outline-none placeholder-gray-400 shadow-inner"
             />
             <button

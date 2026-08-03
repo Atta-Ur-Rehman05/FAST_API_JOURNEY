@@ -49,7 +49,7 @@ export const Products: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       
-      {/* 1. Promotional Flash Banner (Daraz High-Contrast Hero Banner) */}
+      {/* 1. Promotional Flash Banner (ZetaMall High-Contrast Hero Banner) */}
       <div className="bg-gradient-to-r from-[#F85606] via-[#FF6A1A] to-[#D04400] text-white rounded-sm p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 border-b-4 border-[#E7FFFD]/40 relative overflow-hidden">
         <div className="space-y-2 z-10">
           <div className="inline-flex items-center gap-1.5 bg-[#E7FFFD] text-[#0f766e] text-xs font-extrabold px-2.5 py-1 rounded-xs uppercase tracking-wider">
