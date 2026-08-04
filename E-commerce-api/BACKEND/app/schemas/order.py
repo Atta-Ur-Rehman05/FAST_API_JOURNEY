@@ -10,12 +10,14 @@ class OrderItemBase(BaseModel):
     quantity: int = Field(gt=0)
     price_per_item: Decimal
 
-class OrderItemCreate(OrderItemBase):
-    pass
+class OrderItemCreate(BaseModel):
+    variant_id: UUID
+    quantity: int = Field(gt=0)
+
+    model_config = ConfigDict(extra="forbid")
 
 class OrderItemUpdate(BaseModel):
     quantity: Optional[int] = Field(default=None, gt=0)
-    price_per_item: Optional[Decimal] = None
 
 class OrderItemResponse(OrderItemBase):
     id: int
@@ -28,16 +30,25 @@ class OrderBase(BaseModel):
     shipping_address_id: UUID
     billing_address_id: UUID
     total_amount: Decimal
-    order_status: OrderStatus = OrderStatus.pending
+    order_status: OrderStatus = OrderStatus.draft
 
-class OrderCreate(OrderBase):
-    pass
+class OrderCreate(BaseModel):
+    shipping_address_id: UUID
+    billing_address_id: UUID
+
+    model_config = ConfigDict(extra="forbid")
 
 class OrderUpdate(BaseModel):
     shipping_address_id: Optional[UUID] = None
     billing_address_id: Optional[UUID] = None
-    total_amount: Optional[Decimal] = None
-    order_status: Optional[OrderStatus] = None
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class OrderStatusUpdate(BaseModel):
+    order_status: OrderStatus
+
+    model_config = ConfigDict(extra="forbid")
 
 class OrderResponse(OrderBase):
     id: UUID

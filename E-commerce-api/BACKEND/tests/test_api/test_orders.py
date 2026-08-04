@@ -83,8 +83,8 @@ async def test_order_lifecycle(client: AsyncClient, auth_headers_customer: dict,
     res_ownership = await client.get(f"/api/v1/orders/{order_id}", headers=auth_headers_other)
     assert res_ownership.status_code == 403 # Typically 403 or 400
 
-    # Update order
-    update_res = await client.patch(f"/api/v1/orders/{order_id}", json={
+    # Status changes use the explicit state-transition endpoint.
+    update_res = await client.patch(f"/api/v1/orders/{order_id}/status", json={
         "order_status": OrderStatus.processing.value
     }, headers=auth_headers_admin)
     assert update_res.status_code == 200
@@ -93,38 +93,30 @@ async def test_order_lifecycle(client: AsyncClient, auth_headers_customer: dict,
     admin_get = await client.get(f"/api/v1/orders/{order_id}", headers=auth_headers_admin)
     assert admin_get.status_code == 200
 
-    # Add order item
+    # Checkout has made this order pending/processing, so customers cannot
+    # alter line items, pricing, totals, or inventory after purchase.
     add_item_res = await client.post(f"/api/v1/orders/{order_id}/items", json={
         "variant_id": str(variant_id),
-        "quantity": 1,
-        "price_per_item": 50.0
+        "quantity": 1
     }, headers=auth_headers_customer)
-    assert add_item_res.status_code == 201
-    item_id = add_item_res.json()["id"]
+    assert add_item_res.status_code == 409
 
-    # Update order item
-    up_item_res = await client.patch(f"/api/v1/orders/{order_id}/items/{item_id}", json={
-        "quantity": 3
-    }, headers=auth_headers_customer)
-    assert up_item_res.status_code == 200
-
-    # Delete order item
-    del_item_res = await client.delete(f"/api/v1/orders/{order_id}/items/{item_id}", headers=auth_headers_customer)
-    assert del_item_res.status_code == 204
-
-    # Delete order
+    # Financial records cannot be deleted; cancellation is a status transition
+    # that performs restocking when eligible.
     del_res = await client.delete(f"/api/v1/orders/{order_id}", headers=auth_headers_admin)
-    assert del_res.status_code == 204
+    assert del_res.status_code == 409
+
+    cancel_res = await client.patch(f"/api/v1/orders/{order_id}/status", json={
+        "order_status": OrderStatus.cancelled.value
+    }, headers=auth_headers_admin)
+    assert cancel_res.status_code == 200
+    assert cancel_res.json()["order_status"] == OrderStatus.cancelled.value
 
 @pytest.mark.asyncio
 async def test_create_order_direct_and_address_errors(client: AsyncClient, auth_headers_customer: dict):
     fake_addr_id = str(uuid.uuid4())
     res = await client.post("/api/v1/orders/", json={
         "shipping_address_id": fake_addr_id,
-        "billing_address_id": fake_addr_id,
-        "total_amount": 100.0,
-        "order_status": "pending"
+        "billing_address_id": fake_addr_id
     }, headers=auth_headers_customer)
     assert res.status_code == 404
-
-

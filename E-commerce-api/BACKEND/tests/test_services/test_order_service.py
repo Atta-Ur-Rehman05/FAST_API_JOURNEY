@@ -1,5 +1,6 @@
 import pytest
 import uuid
+from decimal import Decimal
 from app.services.order import (
     OrderService,
     AddressNotFoundError,
@@ -9,8 +10,16 @@ from app.services.order import (
     ProductVariantNotFoundError,
     InsufficientStockError
 )
-from app.schemas.order import OrderCreate, OrderItemCreate
-from app.models.models import Address, AddressType, User, RoleType
+from app.schemas.order import OrderCreate, OrderItemCreate, OrderItemUpdate
+from app.models.models import (
+    Address,
+    AddressType,
+    Category,
+    Product,
+    ProductVariant,
+    RoleType,
+    User,
+)
 
 @pytest.mark.asyncio
 async def test_order_service_unit_edge_cases(db_session):
@@ -28,24 +37,57 @@ async def test_order_service_unit_edge_cases(db_session):
     # 1. Address not found error
     with pytest.raises(AddressNotFoundError):
         await order_svc.create_order(u1.id, OrderCreate(
-            shipping_address_id=uuid.uuid4(), billing_address_id=addr1.id, total_amount=100
+            shipping_address_id=uuid.uuid4(), billing_address_id=addr1.id
         ))
 
     # 2. Address ownership error (u2 trying to use u1's address)
     with pytest.raises(AddressOwnershipError):
         await order_svc.create_order(u2.id, OrderCreate(
-            shipping_address_id=addr1.id, billing_address_id=addr1.id, total_amount=100
+            shipping_address_id=addr1.id, billing_address_id=addr1.id
         ))
 
     # 3. Create valid order for u1
     order = await order_svc.create_order(u1.id, OrderCreate(
-        shipping_address_id=addr1.id, billing_address_id=addr1.id, total_amount=100
+        shipping_address_id=addr1.id, billing_address_id=addr1.id
     ))
+
+    # Draft line-item prices and totals are always calculated server-side.
+    category = Category(name="Order test", slug=f"order-test-{uuid.uuid4()}")
+    db_session.add(category)
+    await db_session.flush()
+    product = Product(
+        category_id=category.id,
+        name="Order product",
+        slug=f"order-product-{uuid.uuid4()}",
+        base_price=Decimal("10.00"),
+    )
+    db_session.add(product)
+    await db_session.flush()
+    variant = ProductVariant(
+        product_id=product.id,
+        sku=f"ORDER-{uuid.uuid4()}",
+        price_modifier=Decimal("2.50"),
+        stock_quantity=10,
+    )
+    db_session.add(variant)
+    await db_session.commit()
+
+    item = await order_svc.add_item(
+        u1.id, order.id, OrderItemCreate(variant_id=variant.id, quantity=2)
+    )
+    assert item.price_per_item == Decimal("12.50")
+    assert (await order_svc.get_order(order.id)).total_amount == Decimal("25.00")
+
+    await order_svc.update_item(u1.id, order.id, item.id, OrderItemUpdate(quantity=3))
+    assert (await order_svc.get_order(order.id)).total_amount == Decimal("37.50")
+
+    await order_svc.delete_item(u1.id, order.id, item.id)
+    assert (await order_svc.get_order(order.id)).total_amount == Decimal("0.00")
 
     # 4. Add item with non-existent variant ID -> ProductVariantNotFoundError
     with pytest.raises(ProductVariantNotFoundError):
         await order_svc.add_item(u1.id, order.id, OrderItemCreate(
-            variant_id=uuid.uuid4(), quantity=1, price_per_item=10
+            variant_id=uuid.uuid4(), quantity=1
         ))
 
     # 5. Order item not found

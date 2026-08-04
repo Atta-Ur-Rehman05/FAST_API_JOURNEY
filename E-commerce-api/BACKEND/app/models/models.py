@@ -25,6 +25,7 @@ class AddressType(str, enum.Enum):
     billing = "billing"
 
 class OrderStatus(enum.Enum):
+    draft = "draft"
     pending = "pending"
     processing = "processing"
     shipped = "shipped"
@@ -243,7 +244,7 @@ class Order(Base):
     shipping_address_id = Column(UUID(as_uuid=True), ForeignKey("addresses.id"), nullable=False)
     billing_address_id = Column(UUID(as_uuid=True), ForeignKey("addresses.id"), nullable=False)
     total_amount = Column(Numeric(10, 2), nullable=False)
-    order_status = Column(Enum(OrderStatus), default=OrderStatus.pending, nullable=False)
+    order_status = Column(Enum(OrderStatus), default=OrderStatus.draft, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

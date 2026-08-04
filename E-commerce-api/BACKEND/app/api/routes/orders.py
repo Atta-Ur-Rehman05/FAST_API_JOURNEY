@@ -15,12 +15,16 @@ from app.schemas.order import (
     OrderItemResponse,
     OrderItemUpdate,
     OrderResponse,
+    OrderStatusUpdate,
     OrderUpdate,
 )
 from app.services.order import (
     AddressNotFoundError,
     AddressOwnershipError,
     InsufficientStockError,
+    InvalidOrderTransitionError,
+    OrderDeletionNotAllowedError,
+    OrderNotEditableError,
     OrderItemNotFoundError,
     OrderItemOwnershipError,
     OrderNotFoundError,
@@ -29,6 +33,7 @@ from app.services.order import (
     OrderServiceError,
     ProductUnavailableError,
     ProductVariantNotFoundError,
+    RefundRequiredError,
 )
 
 router = APIRouter()
@@ -59,6 +64,17 @@ def _raise_order_http_error(error: OrderServiceError) -> None:
 
     if isinstance(error, OrderOwnershipError):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=error.detail)
+
+    if isinstance(
+        error,
+        (
+            InvalidOrderTransitionError,
+            OrderDeletionNotAllowedError,
+            OrderNotEditableError,
+            RefundRequiredError,
+        ),
+    ):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=error.detail)
 
     raise HTTPException(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -144,6 +160,20 @@ async def delete_order(
     order_service = OrderService(session)
     try:
         await order_service.delete_order(order_id)
+    except OrderServiceError as error:
+        _raise_order_http_error(error)
+
+
+@router.patch("/{order_id}/status", response_model=OrderResponse)
+async def transition_order_status(
+    order_id: UUID,
+    status_in: OrderStatusUpdate,
+    session: SessionDep,
+    _: Annotated[User, Depends(get_current_admin_user)],
+):
+    order_service = OrderService(session)
+    try:
+        return await order_service.transition_status(order_id, status_in.order_status)
     except OrderServiceError as error:
         _raise_order_http_error(error)
 

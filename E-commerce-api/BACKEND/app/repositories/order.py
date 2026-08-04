@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -18,7 +18,7 @@ class OrderRepository:
         result = await self.session.execute(
             select(Order)
             .where(Order.id == order_id)
-            .options(selectinload(Order.items))
+            .options(selectinload(Order.items), selectinload(Order.payment))
         )
         return result.scalars().first()
 
@@ -59,11 +59,6 @@ class OrderRepository:
         await self.session.commit()
         return await self.get_by_id(order.id)
 
-    async def delete(self, order: Order) -> None:
-        await self.session.delete(order)
-        await self.session.commit()
-
-
 class OrderItemRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -74,13 +69,19 @@ class OrderItemRepository:
         )
         return result.scalars().first()
 
-    async def create(self, order: Order, item_in: OrderItemCreate) -> OrderItem:
-        item = OrderItem(order_id=order.id, **item_in.model_dump())
+    async def create(
+        self, order: Order, *, variant_id: UUID, quantity: int, price_per_item
+    ) -> OrderItem:
+        item = OrderItem(
+            order_id=order.id,
+            variant_id=variant_id,
+            quantity=quantity,
+            price_per_item=price_per_item,
+        )
         order.updated_at = datetime.utcnow()
         self.session.add(order)
         self.session.add(item)
-        await self.session.commit()
-        await self.session.refresh(item)
+        await self.session.flush()
         return item
 
     async def update(self, order: Order, item: OrderItem, item_in: OrderItemUpdate) -> OrderItem:
@@ -91,15 +92,24 @@ class OrderItemRepository:
         order.updated_at = datetime.utcnow()
         self.session.add(order)
         self.session.add(item)
-        await self.session.commit()
-        await self.session.refresh(item)
+        await self.session.flush()
         return item
 
     async def delete(self, order: Order, item: OrderItem) -> None:
         order.updated_at = datetime.utcnow()
         self.session.add(order)
         await self.session.delete(item)
-        await self.session.commit()
+        await self.session.flush()
+
+    async def recalculate_total(self, order: Order) -> None:
+        result = await self.session.execute(
+            select(func.coalesce(func.sum(OrderItem.quantity * OrderItem.price_per_item), 0))
+            .where(OrderItem.order_id == order.id)
+        )
+        order.total_amount = result.scalar_one()
+        order.updated_at = datetime.utcnow()
+        self.session.add(order)
+        await self.session.flush()
 
 
 class OrderAddressRepository:
@@ -124,3 +134,15 @@ class OrderProductVariantRepository:
             .options(selectinload(ProductVariant.product))
         )
         return result.scalars().first()
+
+    async def lock_by_ids(self, variant_ids: list[UUID]) -> dict[UUID, ProductVariant]:
+        if not variant_ids:
+            return {}
+        result = await self.session.execute(
+            select(ProductVariant)
+            .where(ProductVariant.id.in_(variant_ids))
+            .order_by(ProductVariant.id)
+            .with_for_update()
+        )
+        variants = result.scalars().all()
+        return {variant.id: variant for variant in variants}
