@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Plus, Trash2, CheckCircle2, Star } from 'lucide-react';
+import { MapPin, Plus, Trash2, CheckCircle2, Pencil, Star } from 'lucide-react';
 import type { Address } from '../types/api';
 import { apiClient } from '../lib/api-client';
 
@@ -7,6 +7,7 @@ export const Addresses: React.FC = () => {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -17,7 +18,7 @@ export const Addresses: React.FC = () => {
     state: '',
     postal_code: '',
     country: '',
-    address_type: 'Home' as const,
+    address_type: 'Home' as Address['address_type'],
   });
 
   const fetchAddresses = async () => {
@@ -35,26 +36,35 @@ export const Addresses: React.FC = () => {
     fetchAddresses();
   }, []);
 
-  const handleAddAddress = async (e: React.FormEvent) => {
+  const resetForm = () => setFormData({
+    full_name: '', phone: '', address_line_1: '', address_line_2: '', city: '', state: '', postal_code: '', country: '', address_type: 'Home' as Address['address_type'],
+  });
+
+  const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await apiClient.post('/addresses/', formData);
+      if (editingAddressId) {
+        await apiClient.put(`/addresses/${editingAddressId}`, formData);
+      } else {
+        await apiClient.post('/addresses/', formData);
+      }
       setShowAddModal(false);
+      setEditingAddressId(null);
       fetchAddresses();
-      setFormData({
-        full_name: '',
-        phone: '',
-        address_line_1: '',
-        address_line_2: '',
-        city: '',
-        state: '',
-        postal_code: '',
-        country: '',
-        address_type: 'Home',
-      });
+      resetForm();
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to add address.');
     }
+  };
+
+  const startEditing = (address: Address) => {
+    setEditingAddressId(address.id);
+    setFormData({
+      full_name: address.full_name, phone: address.phone, address_line_1: address.address_line_1,
+      address_line_2: address.address_line_2 || '', city: address.city, state: address.state,
+      postal_code: address.postal_code, country: address.country, address_type: address.address_type,
+    });
+    setShowAddModal(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -94,7 +104,7 @@ export const Addresses: React.FC = () => {
           <p className="text-xs text-[#757575] mt-0.5">Manage your shipping and billing delivery locations</p>
         </div>
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={() => { resetForm(); setEditingAddressId(null); setShowAddModal(true); }}
           className="btn-primary text-xs font-bold flex items-center space-x-1.5 shadow-xs"
         >
           <Plus className="w-4 h-4" />
@@ -119,9 +129,10 @@ export const Addresses: React.FC = () => {
                   <span className="px-2 py-0.5 rounded-xs bg-[#E7FFFD] text-[#0f766e] text-[10px] font-bold uppercase border border-[#b2f5f0]">
                     {addr.address_type}
                   </span>
-                  <button onClick={() => handleDelete(addr.id)} className="text-gray-400 hover:text-rose-600 transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex gap-2">
+                    <button onClick={() => startEditing(addr)} className="text-gray-400 hover:text-[#F85606] transition-colors" aria-label="Edit address"><Pencil className="w-4 h-4" /></button>
+                    <button onClick={() => handleDelete(addr.id)} className="text-gray-400 hover:text-rose-600 transition-colors" aria-label="Delete address"><Trash2 className="w-4 h-4" /></button>
+                  </div>
                 </div>
                 <h3 className="text-sm font-bold text-[#212121] pt-1">{addr.full_name}</h3>
                 <p className="text-xs text-[#212121]">{addr.address_line_1} {addr.address_line_2}</p>
@@ -163,9 +174,9 @@ export const Addresses: React.FC = () => {
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-white p-6 rounded-sm space-y-4 shadow-xl border border-gray-200">
-            <h2 className="text-base font-bold text-[#212121] border-b border-gray-200 pb-2">Add New Address</h2>
+            <h2 className="text-base font-bold text-[#212121] border-b border-gray-200 pb-2">{editingAddressId ? 'Edit Address' : 'Add New Address'}</h2>
 
-            <form onSubmit={handleAddAddress} className="space-y-3">
+            <form onSubmit={handleSaveAddress} className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 <input
                   type="text"
@@ -191,6 +202,14 @@ export const Addresses: React.FC = () => {
                 placeholder="Address Line 1"
                 value={formData.address_line_1}
                 onChange={(e) => setFormData({ ...formData, address_line_1: e.target.value })}
+                className="w-full p-2.5 border border-gray-300 rounded-xs text-xs text-[#212121] focus:outline-none focus:border-[#F85606]"
+              />
+
+              <input
+                type="text"
+                placeholder="Address Line 2 (optional)"
+                value={formData.address_line_2}
+                onChange={(e) => setFormData({ ...formData, address_line_2: e.target.value })}
                 className="w-full p-2.5 border border-gray-300 rounded-xs text-xs text-[#212121] focus:outline-none focus:border-[#F85606]"
               />
 
@@ -235,7 +254,7 @@ export const Addresses: React.FC = () => {
               <div className="flex justify-end space-x-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => { setShowAddModal(false); setEditingAddressId(null); resetForm(); }}
                   className="px-3 py-2 border border-gray-300 text-xs font-semibold text-[#757575] hover:bg-gray-100 rounded-xs"
                 >
                   Cancel
@@ -244,7 +263,7 @@ export const Addresses: React.FC = () => {
                   type="submit"
                   className="btn-primary text-xs font-bold py-2 px-4"
                 >
-                  Save Address
+                  {editingAddressId ? 'Save Changes' : 'Save Address'}
                 </button>
               </div>
             </form>

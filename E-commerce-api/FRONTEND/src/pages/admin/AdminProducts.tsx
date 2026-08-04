@@ -1,13 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { ImagePlus, Pencil, Plus, Trash2, X } from 'lucide-react';
 import type { Product, Category } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
+
+type VariantDraft = {
+  id?: string;
+  sku: string;
+  price_modifier: number;
+  stock_quantity: number;
+  attributes: string;
+};
+
+type ImageDraft = {
+  id?: number;
+  image_url: string;
+  is_primary: boolean;
+};
+
+const emptyVariant = (): VariantDraft => ({
+  sku: '',
+  price_modifier: 0,
+  stock_quantity: 0,
+  attributes: '',
+});
+
+const emptyImage = (): ImageDraft => ({ image_url: '', is_primary: false });
 
 export const AdminProducts: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [variants, setVariants] = useState<VariantDraft[]>([]);
+  const [images, setImages] = useState<ImageDraft[]>([]);
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -40,8 +67,48 @@ export const AdminProducts: React.FC = () => {
 
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    let variantPayload: Array<Omit<VariantDraft, 'attributes'> & { attributes?: Record<string, unknown> }>;
     try {
-      await apiClient.post('/products/', formData);
+      variantPayload = variants.map((variant) => ({
+        sku: variant.sku.trim(),
+        price_modifier: variant.price_modifier,
+        stock_quantity: variant.stock_quantity,
+        ...(variant.attributes.trim() ? { attributes: JSON.parse(variant.attributes) as Record<string, unknown> } : {}),
+      }));
+    } catch {
+      alert('Variant attributes must be valid JSON, for example {"color":"Blue"}.');
+      return;
+    }
+
+    if (variantPayload.some((variant) => !variant.sku)) {
+      alert('Every variant needs an SKU.');
+      return;
+    }
+
+    if (images.some((image) => !image.image_url.trim())) {
+      alert('Every image needs a URL.');
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const productId = editingProduct
+        ? (await apiClient.patch<Product>(`/products/${editingProduct.id}`, formData)).data.id
+        : (await apiClient.post<Product>('/products/', formData)).data.id;
+
+      await Promise.all([
+        ...variantPayload.map((variant, index) => variants[index].id
+          ? apiClient.patch(`/products/${productId}/variants/${variants[index].id}`, variant)
+          : apiClient.post(`/products/${productId}/variants`, variant)),
+        ...images.map((image) => images.findIndex((candidate) => candidate === image) >= 0 && image.id
+          ? apiClient.patch(`/products/${productId}/images/${image.id}`, {
+              image_url: image.image_url.trim(), is_primary: image.is_primary,
+            })
+          : apiClient.post(`/products/${productId}/images`, {
+          image_url: image.image_url.trim(),
+          is_primary: image.is_primary,
+          })),
+      ]);
       setShowAddModal(false);
       fetchData();
       setFormData({
@@ -52,9 +119,48 @@ export const AdminProducts: React.FC = () => {
         category_id: categories[0]?.id || 1,
         is_active: true,
       });
+      setVariants([]);
+      setImages([]);
+      setEditingProduct(null);
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to create product.');
+    } finally {
+      setIsCreating(false);
     }
+  };
+
+  const startEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    setFormData({ name: product.name, slug: product.slug, description: product.description || '', base_price: Number(product.base_price), category_id: product.category_id, is_active: product.is_active });
+    setVariants(product.variants.map((variant) => ({ id: variant.id, sku: variant.sku, price_modifier: Number(variant.price_modifier), stock_quantity: variant.stock_quantity, attributes: variant.attributes ? JSON.stringify(variant.attributes) : '' })));
+    setImages(product.images.map((image) => ({ id: image.id, image_url: image.image_url, is_primary: image.is_primary })));
+    setShowAddModal(true);
+  };
+
+  const removeVariant = async (index: number) => {
+    const variant = variants[index];
+    if (editingProduct && variant.id) await apiClient.delete(`/products/${editingProduct.id}/variants/${variant.id}`);
+    setVariants((current) => current.filter((_, itemIndex) => itemIndex !== index));
+  };
+
+  const removeImage = async (index: number) => {
+    const image = images[index];
+    if (editingProduct && image.id) await apiClient.delete(`/products/${editingProduct.id}/images/${image.id}`);
+    setImages((current) => current.filter((_, itemIndex) => itemIndex !== index));
+  };
+
+  const updateVariant = (index: number, updates: Partial<VariantDraft>) => {
+    setVariants((current) => current.map((variant, itemIndex) => (
+      itemIndex === index ? { ...variant, ...updates } : variant
+    )));
+  };
+
+  const updateImage = (index: number, updates: Partial<ImageDraft>) => {
+    setImages((current) => current.map((image, itemIndex) => ({
+      ...image,
+      ...updates,
+      is_primary: updates.is_primary ? itemIndex === index : image.is_primary,
+    })));
   };
 
   const handleDeleteProduct = async (id: string) => {
@@ -111,6 +217,7 @@ export const AdminProducts: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 font-mono text-[#0284C7] font-semibold">{p.variants?.length || 0} Variant(s)</td>
                     <td className="px-4 py-3">
+                      <button onClick={() => startEditProduct(p)} className="p-1.5 text-gray-400 hover:text-[#F85606] transition-colors" title="Edit product"><Pencil className="w-4 h-4" /></button>
                       <button
                         onClick={() => handleDeleteProduct(p.id)}
                         className="p-1.5 text-gray-400 hover:text-rose-600 transition-colors"
@@ -130,8 +237,8 @@ export const AdminProducts: React.FC = () => {
       {/* Add Product Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-white p-6 rounded-sm space-y-4 shadow-xl border border-gray-200">
-            <h2 className="text-base font-bold text-[#212121] border-b border-gray-200 pb-2">Add New Product</h2>
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white p-6 rounded-sm space-y-4 shadow-xl border border-gray-200">
+            <h2 className="text-base font-bold text-[#212121] border-b border-gray-200 pb-2">{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
 
             <form onSubmit={handleCreateProduct} className="space-y-3">
               <input
@@ -180,19 +287,64 @@ export const AdminProducts: React.FC = () => {
                 className="w-full p-2.5 border border-gray-300 rounded-xs text-xs text-[#212121] focus:outline-none focus:border-[#F85606]"
               />
 
+              <label className="flex items-center gap-2 text-xs font-semibold text-[#212121]"><input type="checkbox" checked={formData.is_active} onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })} /> Product is active in the storefront</label>
+
+              <section className="space-y-3 border-t border-gray-200 pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xs font-bold text-[#212121] uppercase tracking-wider">Variants</h3>
+                    <p className="text-[11px] text-[#757575]">Optional. Add each purchasable SKU and its stock.</p>
+                  </div>
+                  <button type="button" onClick={() => setVariants((current) => [...current, emptyVariant()])} className="text-xs font-bold text-[#F85606] hover:text-[#D04400] flex items-center gap-1">
+                    <Plus className="w-3.5 h-3.5" /> Add Variant
+                  </button>
+                </div>
+
+                {variants.map((variant, index) => (
+                  <div key={index} className="relative grid grid-cols-1 sm:grid-cols-3 gap-2 rounded-xs border border-gray-200 bg-[#EFF0F5]/50 p-3 pr-9">
+                    <input type="text" required placeholder="SKU" value={variant.sku} onChange={(e) => updateVariant(index, { sku: e.target.value })} className="w-full p-2 border border-gray-300 rounded-xs text-xs font-mono text-[#212121] focus:outline-none focus:border-[#F85606]" />
+                    <input type="number" step="0.01" placeholder="Price modifier" value={variant.price_modifier} onChange={(e) => updateVariant(index, { price_modifier: Number(e.target.value) || 0 })} className="w-full p-2 border border-gray-300 rounded-xs text-xs font-mono text-[#212121] focus:outline-none focus:border-[#F85606]" />
+                    <input type="number" min="0" placeholder="Stock quantity" value={variant.stock_quantity} onChange={(e) => updateVariant(index, { stock_quantity: Math.max(0, Number(e.target.value) || 0) })} className="w-full p-2 border border-gray-300 rounded-xs text-xs font-mono text-[#212121] focus:outline-none focus:border-[#F85606]" />
+                    <input type="text" placeholder={'Attributes JSON, e.g. {"color":"Blue"}'} value={variant.attributes} onChange={(e) => updateVariant(index, { attributes: e.target.value })} className="sm:col-span-3 w-full p-2 border border-gray-300 rounded-xs text-xs font-mono text-[#212121] focus:outline-none focus:border-[#F85606]" />
+                    <button type="button" onClick={() => removeVariant(index)} className="absolute right-2 top-2 text-gray-400 hover:text-rose-600" aria-label="Remove variant"><X className="w-4 h-4" /></button>
+                  </div>
+                ))}
+              </section>
+
+              <section className="space-y-3 border-t border-gray-200 pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xs font-bold text-[#212121] uppercase tracking-wider">Product Images</h3>
+                    <p className="text-[11px] text-[#757575]">Optional. The API accepts image URLs.</p>
+                  </div>
+                  <button type="button" onClick={() => setImages((current) => [...current, emptyImage()])} className="text-xs font-bold text-[#F85606] hover:text-[#D04400] flex items-center gap-1">
+                    <ImagePlus className="w-3.5 h-3.5" /> Add Image
+                  </button>
+                </div>
+
+                {images.map((image, index) => (
+                  <div key={index} className="relative flex items-center gap-3 rounded-xs border border-gray-200 bg-[#EFF0F5]/50 p-3 pr-9">
+                    <input type="url" required placeholder="https://example.com/product-image.jpg" value={image.image_url} onChange={(e) => updateImage(index, { image_url: e.target.value })} className="min-w-0 flex-1 p-2 border border-gray-300 rounded-xs text-xs text-[#212121] focus:outline-none focus:border-[#F85606]" />
+                    <label className="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-semibold text-[#212121]"><input type="radio" name="primary-image" checked={image.is_primary} onChange={() => updateImage(index, { is_primary: true })} /> Primary</label>
+                    <button type="button" onClick={() => removeImage(index)} className="absolute right-2 top-3 text-gray-400 hover:text-rose-600" aria-label="Remove image"><X className="w-4 h-4" /></button>
+                  </div>
+                ))}
+              </section>
+
               <div className="flex justify-end space-x-2 pt-2 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => { setShowAddModal(false); setEditingProduct(null); setVariants([]); setImages([]); }}
                   className="px-3 py-2 border border-gray-300 text-xs font-semibold text-[#757575] hover:bg-gray-100 rounded-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  disabled={isCreating}
                   className="btn-primary text-xs font-bold py-2 px-4"
                 >
-                  Create Product
+                  {isCreating ? 'Saving...' : editingProduct ? 'Save Changes' : 'Create Product'}
                 </button>
               </div>
             </form>

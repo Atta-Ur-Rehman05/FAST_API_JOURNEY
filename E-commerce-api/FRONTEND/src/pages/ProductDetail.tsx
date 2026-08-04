@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Star, ShoppingCart, ArrowLeft, Zap } from 'lucide-react';
+import { Pencil, Star, ShoppingCart, ArrowLeft, Trash2, Zap } from 'lucide-react';
 import type { Product, ProductVariant, Review } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { useCartStore } from '../store/cartStore';
@@ -21,6 +21,7 @@ export const ProductDetail: React.FC = () => {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProductDetails = async () => {
@@ -62,6 +63,27 @@ export const ProductDetail: React.FC = () => {
     } finally {
       setSubmittingReview(false);
     }
+  };
+
+  const startReviewEdit = (review: Review) => {
+    setEditingReviewId(review.id);
+    setRating(review.rating);
+    setComment(review.comment || '');
+  };
+
+  const saveReviewEdit = async () => {
+    if (!editingReviewId) return;
+    try {
+      const response = await apiClient.patch<Review>(`/reviews/${editingReviewId}`, { rating, comment });
+      setReviews((current) => current.map((review) => review.id === editingReviewId ? response.data : review));
+      setEditingReviewId(null); setComment(''); setRating(5);
+    } catch (err: any) { alert(err.response?.data?.detail || 'Failed to update review.'); }
+  };
+
+  const deleteReview = async (reviewId: string) => {
+    if (!confirm('Delete this review?')) return;
+    try { await apiClient.delete(`/reviews/${reviewId}`); setReviews((current) => current.filter((review) => review.id !== reviewId)); }
+    catch (err: any) { alert(err.response?.data?.detail || 'Failed to delete review.'); }
   };
 
   if (loading) {
@@ -203,7 +225,7 @@ export const ProductDetail: React.FC = () => {
         {/* Submit Review Form */}
         {user ? (
           <form onSubmit={handleReviewSubmit} className="p-4 rounded-sm bg-[#EFF0F5]/50 border border-gray-200 space-y-3">
-            <h4 className="text-xs font-bold text-[#212121] uppercase tracking-wider">Leave a Review</h4>
+            <h4 className="text-xs font-bold text-[#212121] uppercase tracking-wider">{editingReviewId ? 'Edit Your Review' : 'Leave a Review'}</h4>
             
             <div className="flex items-center space-x-1">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -227,13 +249,10 @@ export const ProductDetail: React.FC = () => {
               className="w-full p-3 bg-white border border-gray-300 rounded-xs text-xs text-[#212121] placeholder-gray-400 focus:outline-none focus:border-[#F85606]"
             />
 
-            <button
-              type="submit"
-              disabled={submittingReview}
-              className="btn-primary text-xs py-2 px-4"
-            >
-              {submittingReview ? 'Submitting...' : 'Submit Review'}
-            </button>
+            <div className="flex gap-2">
+              <button type={editingReviewId ? 'button' : 'submit'} onClick={editingReviewId ? saveReviewEdit : undefined} disabled={submittingReview} className="btn-primary text-xs py-2 px-4">{editingReviewId ? 'Save Review' : submittingReview ? 'Submitting...' : 'Submit Review'}</button>
+              {editingReviewId && <button type="button" onClick={() => { setEditingReviewId(null); setComment(''); setRating(5); }} className="px-3 py-2 border border-gray-300 text-xs font-semibold text-[#757575] rounded-xs">Cancel</button>}
+            </div>
           </form>
         ) : (
           <p className="text-xs text-[#757575] italic">Please sign in to post a review.</p>
@@ -255,7 +274,12 @@ export const ProductDetail: React.FC = () => {
                       />
                     ))}
                   </div>
-
+                  {(user?.id === rev.user_id || user?.role === 'admin') && (
+                    <div className="flex gap-2">
+                      {user?.id === rev.user_id && <button onClick={() => startReviewEdit(rev)} className="text-gray-400 hover:text-[#F85606]" aria-label="Edit review"><Pencil className="w-3.5 h-3.5" /></button>}
+                      <button onClick={() => deleteReview(rev.id)} className="text-gray-400 hover:text-rose-600" aria-label="Delete review"><Trash2 className="w-3.5 h-3.5" /></button>
+                    </div>
+                  )}
                 </div>
                 <p className="text-xs text-[#212121] mt-1">{rev.comment}</p>
               </div>

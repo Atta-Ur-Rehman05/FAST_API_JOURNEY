@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Trash2 } from 'lucide-react';
 import type { Order, OrderStatus } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
 
@@ -35,6 +35,12 @@ export const AdminOrders: React.FC = () => {
     }
   };
 
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!confirm('Delete this order? This cannot be undone.')) return;
+    try { await apiClient.delete(`/orders/${orderId}`); fetchOrders(); }
+    catch (err: any) { alert(err.response?.data?.detail || 'Failed to delete order.'); }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -63,6 +69,7 @@ export const AdminOrders: React.FC = () => {
                   <th className="px-4 py-3">Total Amount</th>
                   <th className="px-4 py-3">Current Status</th>
                   <th className="px-4 py-3">Update Status</th>
+                  <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -77,6 +84,7 @@ export const AdminOrders: React.FC = () => {
                         {o.order_status}
                       </span>
                     </td>
+                    <td className="px-4 py-3"><button onClick={() => handleDeleteOrder(o.id)} className="p-1.5 text-gray-400 hover:text-rose-600" title="Delete order"><Trash2 className="w-4 h-4" /></button></td>
                     <td className="px-4 py-3">
                       <select
                         value={o.order_status}

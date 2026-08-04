@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Clock, CheckCircle, Truck, XCircle } from 'lucide-react';
+import { Package, Clock, CheckCircle, Save, Trash2, Truck, XCircle } from 'lucide-react';
 import type { Order } from '../types/api';
 import { apiClient } from '../lib/api-client';
 
 export const Orders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [itemQuantities, setItemQuantities] = useState<Record<number, number>>({});
+  const [updatingItemId, setUpdatingItemId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -20,6 +22,26 @@ export const Orders: React.FC = () => {
     };
     fetchOrders();
   }, []);
+
+  const updateItem = async (orderId: string, itemId: number, quantity: number) => {
+    if (quantity <= 0) return;
+    setUpdatingItemId(itemId);
+    try {
+      const response = await apiClient.patch(`/orders/${orderId}/items/${itemId}`, { quantity });
+      setOrders((current) => current.map((order) => order.id !== orderId ? order : {
+        ...order, items: order.items.map((item) => item.id === itemId ? { ...item, ...response.data } : item),
+      }));
+    } catch (err: any) { alert(err.response?.data?.detail || 'Failed to update order item.'); }
+    finally { setUpdatingItemId(null); }
+  };
+
+  const deleteItem = async (orderId: string, itemId: number) => {
+    if (!confirm('Remove this item from the order?')) return;
+    try {
+      await apiClient.delete(`/orders/${orderId}/items/${itemId}`);
+      setOrders((current) => current.map((order) => order.id !== orderId ? order : { ...order, items: order.items.filter((item) => item.id !== itemId) }));
+    } catch (err: any) { alert(err.response?.data?.detail || 'Failed to remove order item.'); }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -72,13 +94,18 @@ export const Orders: React.FC = () => {
               {/* Order Items Breakdown */}
               <div className="space-y-1.5">
                 {order.items?.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center text-xs p-2.5 rounded-xs bg-[#EFF0F5]/50 border border-gray-100">
+                  <div key={item.id} className="flex flex-wrap justify-between items-center gap-2 text-xs p-2.5 rounded-xs bg-[#EFF0F5]/50 border border-gray-100">
                     <span className="text-[#212121] font-mono text-[11px]">
                       SKU: {item.variant?.sku || `#${item.variant_id.slice(0, 8)}`} (Qty: {item.quantity})
                     </span>
                     <span className="font-bold text-[#F85606]">
                       Rs. {Number(item.price_per_item).toFixed(2)} / ea
                     </span>
+                    <div className="flex items-center gap-1.5">
+                      <input type="number" min="1" value={itemQuantities[item.id] ?? item.quantity} onChange={(e) => setItemQuantities({ ...itemQuantities, [item.id]: Math.max(1, Number(e.target.value) || 1) })} className="w-14 p-1 border border-gray-300 rounded-xs text-xs font-mono" aria-label="Item quantity" />
+                      <button onClick={() => updateItem(order.id, item.id, itemQuantities[item.id] ?? item.quantity)} disabled={updatingItemId === item.id} className="p-1 text-[#F85606] hover:bg-[#FFE8DE]" title="Update quantity"><Save className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => deleteItem(order.id, item.id)} className="p-1 text-rose-600 hover:bg-rose-50" title="Remove item"><Trash2 className="w-3.5 h-3.5" /></button>
+                    </div>
                   </div>
                 ))}
               </div>

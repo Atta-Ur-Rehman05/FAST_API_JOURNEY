@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import type { Category } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
 
@@ -7,10 +7,12 @@ export const AdminCategories: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
+    parent_id: '' as number | '',
   });
 
   const fetchCategories = async () => {
@@ -28,16 +30,31 @@ export const AdminCategories: React.FC = () => {
     fetchCategories();
   }, []);
 
-  const handleCreateCategory = async (e: React.FormEvent) => {
+  const handleSaveCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await apiClient.post('/categories/', formData);
+      const payload = { ...formData, parent_id: formData.parent_id || null };
+      if (editingId) await apiClient.patch(`/categories/${editingId}`, payload);
+      else await apiClient.post('/categories/', payload);
       setShowAddModal(false);
+      setEditingId(null);
       fetchCategories();
-      setFormData({ name: '', slug: '' });
+      setFormData({ name: '', slug: '', parent_id: '' });
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to create category.');
     }
+  };
+
+  const startEdit = (category: Category) => {
+    setFormData({ name: category.name, slug: category.slug, parent_id: category.parent_id || '' });
+    setEditingId(category.id);
+    setShowAddModal(true);
+  };
+
+  const deleteCategory = async (id: number) => {
+    if (!confirm('Delete this category? Categories with products or children cannot be deleted.')) return;
+    try { await apiClient.delete(`/categories/${id}`); fetchCategories(); }
+    catch (err: any) { alert(err.response?.data?.detail || 'Failed to delete category.'); }
   };
 
   return (
@@ -48,7 +65,7 @@ export const AdminCategories: React.FC = () => {
           <p className="text-xs text-[#757575] mt-0.5">Organize product categories and storefront navigation</p>
         </div>
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={() => { setFormData({ name: '', slug: '', parent_id: '' }); setEditingId(null); setShowAddModal(true); }}
           className="btn-primary text-xs font-bold flex items-center space-x-1.5 shadow-xs"
         >
           <Plus className="w-4 h-4" />
@@ -71,6 +88,11 @@ export const AdminCategories: React.FC = () => {
                 </span>
               </div>
               <h3 className="text-sm font-bold text-[#212121] pt-1">{c.name}</h3>
+              <p className="text-[11px] text-[#757575]">{c.parent_id ? `Parent category: #${c.parent_id}` : 'Top-level category'}</p>
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => startEdit(c)} className="text-xs text-[#F85606] font-bold flex items-center gap-1"><Pencil className="w-3.5 h-3.5" /> Edit</button>
+                <button onClick={() => deleteCategory(c.id)} className="text-xs text-rose-600 font-bold flex items-center gap-1"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
+              </div>
             </div>
           ))}
         </div>
@@ -80,9 +102,9 @@ export const AdminCategories: React.FC = () => {
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-white p-6 rounded-sm space-y-4 shadow-xl border border-gray-200">
-            <h2 className="text-base font-bold text-[#212121] border-b border-gray-200 pb-2">Add New Category</h2>
+            <h2 className="text-base font-bold text-[#212121] border-b border-gray-200 pb-2">{editingId ? 'Edit Category' : 'Add New Category'}</h2>
 
-            <form onSubmit={handleCreateCategory} className="space-y-3">
+            <form onSubmit={handleSaveCategory} className="space-y-3">
               <input
                 type="text"
                 required
@@ -91,6 +113,11 @@ export const AdminCategories: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
                 className="w-full p-2.5 border border-gray-300 rounded-xs text-xs text-[#212121] focus:outline-none focus:border-[#F85606]"
               />
+
+              <select value={formData.parent_id} onChange={(e) => setFormData({ ...formData, parent_id: e.target.value ? Number(e.target.value) : '' })} className="w-full p-2.5 border border-gray-300 rounded-xs text-xs text-[#212121] focus:outline-none focus:border-[#F85606]">
+                <option value="">No parent (top-level category)</option>
+                {categories.filter((category) => category.id !== editingId).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+              </select>
 
               <input
                 type="text"
@@ -104,7 +131,7 @@ export const AdminCategories: React.FC = () => {
               <div className="flex justify-end space-x-2 pt-2 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => { setShowAddModal(false); setEditingId(null); }}
                   className="px-3 py-2 border border-gray-300 text-xs font-semibold text-[#757575] hover:bg-gray-100 rounded-xs"
                 >
                   Cancel
@@ -113,7 +140,7 @@ export const AdminCategories: React.FC = () => {
                   type="submit"
                   className="btn-primary text-xs font-bold py-2 px-4"
                 >
-                  Create Category
+                  {editingId ? 'Save Changes' : 'Create Category'}
                 </button>
               </div>
             </form>
