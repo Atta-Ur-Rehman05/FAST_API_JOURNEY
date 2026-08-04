@@ -2,7 +2,7 @@ import uuid
 import enum
 from datetime import datetime
 
-from sqlalchemy import Column, String, Integer, Text, Boolean, Numeric, ForeignKey, DateTime, Enum
+from sqlalchemy import Column, String, Integer, Text, Boolean, Numeric, ForeignKey, DateTime, Enum, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
@@ -220,6 +220,20 @@ class CartItem(Base):
     # Relationships
     cart = relationship("Cart", back_populates="items")
     variant = relationship("ProductVariant")
+
+
+class CheckoutRequest(Base):
+    """Records a client retry key and the order produced by that checkout."""
+    __tablename__ = "checkout_requests"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    idempotency_key = Column(String(255), nullable=False)
+    request_fingerprint = Column(String(64), nullable=False)
+    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id"), nullable=True, unique=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (UniqueConstraint("user_id", "idempotency_key", name="uq_checkout_requests_user_key"),)
 
 class Order(Base):
     __tablename__ = "orders"

@@ -89,13 +89,28 @@ async def test_checkout_success_and_stock_error(client: AsyncClient, auth_header
     assert cart_add_res.status_code == 201, cart_add_res.text
 
     # 4. Successful checkout
-    res_success = await client.post("/api/v1/checkout/", json={
+    checkout_payload = {
         "shipping_address_id": str(addr.id),
         "billing_address_id": str(addr.id),
         "payment_method": "credit_card"
-    }, headers=auth_headers_customer)
+    }
+    idempotency_headers = {
+        **auth_headers_customer,
+        "Idempotency-Key": f"checkout-{uuid.uuid4()}",
+    }
+    res_success = await client.post(
+        "/api/v1/checkout/", json=checkout_payload, headers=idempotency_headers
+    )
     assert res_success.status_code == 201
     assert "id" in res_success.json()["order"]
+
+    # Retrying after the cart has been cleared returns the original result;
+    # it must not create another order or decrement stock again.
+    retry_response = await client.post(
+        "/api/v1/checkout/", json=checkout_payload, headers=idempotency_headers
+    )
+    assert retry_response.status_code == 201
+    assert retry_response.json()["order"]["id"] == res_success.json()["order"]["id"]
 
     # 5. InsufficientStockError (second checkout try on new cart with more than remaining)
     # The first checkout clears the cart!

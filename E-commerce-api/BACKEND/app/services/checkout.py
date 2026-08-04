@@ -1,4 +1,6 @@
 from decimal import Decimal
+import hashlib
+import json
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,30 +44,97 @@ class InsufficientStockError(CheckoutServiceError):
     pass
 
 
+class IdempotencyConflictError(CheckoutServiceError):
+    pass
+
+
 class CheckoutService:
     def __init__(self, session: AsyncSession):
         self.checkout_repo = CheckoutRepository(session)
 
-    async def checkout(self, user_id: UUID, checkout_in: CheckoutCreate):
-        await self._validate_user_address(user_id, checkout_in.shipping_address_id)
-        await self._validate_user_address(user_id, checkout_in.billing_address_id)
+    async def checkout(
+        self,
+        user_id: UUID,
+        checkout_in: CheckoutCreate,
+        idempotency_key: str | None = None,
+    ):
+        """Create an order atomically, with database locks held until commit."""
+        fingerprint = self._request_fingerprint(checkout_in)
 
-        cart = await self.checkout_repo.get_cart_for_checkout(user_id)
-        self._validate_cart(cart)
+        # The request's authentication dependency may already have started a
+        # transaction with its user lookup.  Continue in that transaction so
+        # locks acquired below remain held through the final commit.
+        try:
+            await self._validate_user_address(user_id, checkout_in.shipping_address_id)
+            await self._validate_user_address(user_id, checkout_in.billing_address_id)
 
-        total_amount = Decimal("0")
-        for item in cart.items:
-            variant = item.variant
-            self._validate_variant(variant)
-            self._validate_stock(variant, item.quantity)
-            total_amount += (variant.product.base_price + variant.price_modifier) * item.quantity
+            # Locking the cart serializes attempts for this customer.  This
+            # also makes a retried idempotent request observe the completed
+            # checkout record instead of attempting a second order.
+            cart = await self.checkout_repo.get_cart_for_checkout(user_id)
 
-        return await self.checkout_repo.create_checkout_order(
-            user_id=user_id,
-            cart=cart,
-            checkout_in=checkout_in,
-            total_amount=total_amount,
+            checkout_request = None
+            if idempotency_key:
+                checkout_request = await self.checkout_repo.get_checkout_request(
+                    user_id, idempotency_key
+                )
+                if checkout_request is not None:
+                    if checkout_request.request_fingerprint != fingerprint:
+                        raise IdempotencyConflictError(
+                            "Idempotency-Key was already used with a different checkout request."
+                        )
+                    if checkout_request.order_id is not None:
+                        return await self.checkout_repo.get_checkout_result(
+                            checkout_request.order_id
+                        )
+                else:
+                    checkout_request = await self.checkout_repo.create_checkout_request(
+                        user_id=user_id,
+                        idempotency_key=idempotency_key,
+                        request_fingerprint=fingerprint,
+                    )
+
+            self._validate_cart(cart)
+
+            locked_variants = await self.checkout_repo.lock_variants(
+                [item.variant_id for item in cart.items]
+            )
+            total_amount = Decimal("0")
+            for item in cart.items:
+                variant = locked_variants.get(item.variant_id)
+                self._validate_variant(variant)
+                self._validate_stock(variant, item.quantity)
+                # Use the locked instance for both the price and decrement.
+                item.variant = variant
+                total_amount += (variant.product.base_price + variant.price_modifier) * item.quantity
+
+            order, payment = await self.checkout_repo.create_checkout_order(
+                user_id=user_id,
+                cart=cart,
+                checkout_in=checkout_in,
+                total_amount=total_amount,
+                checkout_request=checkout_request,
+            )
+            await self.checkout_repo.session.commit()
+            # Reload relationships explicitly; FastAPI response serialization
+            # must not trigger lazy loading from an async session.
+            return await self.checkout_repo.get_checkout_result(order.id)
+        except CheckoutServiceError:
+            # Validation errors happen before a database write.  Leave the
+            # session usable; the request-scoped session will close normally.
+            raise
+        except Exception:
+            await self.checkout_repo.session.rollback()
+            raise
+
+    @staticmethod
+    def _request_fingerprint(checkout_in: CheckoutCreate) -> str:
+        payload = json.dumps(
+            checkout_in.model_dump(mode="json"),
+            sort_keys=True,
+            separators=(",", ":"),
         )
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
     async def _validate_user_address(self, user_id: UUID, address_id: UUID) -> Address:
         address = await self.checkout_repo.get_address_by_id(address_id)

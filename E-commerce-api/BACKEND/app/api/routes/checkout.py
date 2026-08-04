@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 
 from app.api.dependencies import SessionDep, get_current_active_user
 from app.models.models import User
@@ -12,6 +12,7 @@ from app.services.checkout import (
     CheckoutService,
     CheckoutServiceError,
     EmptyCartError,
+    IdempotencyConflictError,
     InsufficientStockError,
     ProductUnavailableError,
     ProductVariantNotFoundError,
@@ -38,6 +39,9 @@ def _raise_checkout_http_error(error: CheckoutServiceError) -> None:
     ):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error.detail)
 
+    if isinstance(error, IdempotencyConflictError):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=error.detail)
+
     raise HTTPException(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         detail="Unexpected checkout service error.",
@@ -49,10 +53,15 @@ async def checkout(
     checkout_in: CheckoutCreate,
     session: SessionDep,
     current_user: Annotated[User, Depends(get_current_active_user)],
+    idempotency_key: Annotated[
+        str | None, Header(alias="Idempotency-Key", max_length=255)
+    ] = None,
 ):
     checkout_service = CheckoutService(session)
     try:
-        order, payment = await checkout_service.checkout(current_user.id, checkout_in)
+        order, payment = await checkout_service.checkout(
+            current_user.id, checkout_in, idempotency_key
+        )
         return {"order": order, "payment": payment}
     except CheckoutServiceError as error:
         _raise_checkout_http_error(error)
