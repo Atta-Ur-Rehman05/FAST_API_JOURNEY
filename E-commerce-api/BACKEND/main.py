@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.db.db import create_tables
 from app.api.routes import api_router
+from app.core.config import settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -13,13 +14,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="E-Commerce API", lifespan=lifespan)
 
-# Add CORS Middleware to allow requests from Frontend
+# CORS origins must be explicitly configured per environment.  Wildcards are
+# unsafe with credentialed requests because any website could invoke the API
+# using a visitor's browser credentials.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows requests from Vite (http://localhost:5173, 5174, etc.)
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Idempotency-Key"],
 )
 
 app.include_router(api_router, prefix="/api/v1")

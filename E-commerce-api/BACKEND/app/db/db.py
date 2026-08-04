@@ -8,7 +8,9 @@ from app.core.config import settings
 
 
 #   create async engine
-engine = create_async_engine(settings.DATABASE_URL, echo=True)
+# SQL statements can include personal and financial data.  Keep statement
+# logging off by default and enable it only with SQL_ECHO=true while debugging.
+engine = create_async_engine(settings.DATABASE_URL, echo=settings.SQL_ECHO)
 
 # create async session
 AsyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession, expire_on_commit=False)
