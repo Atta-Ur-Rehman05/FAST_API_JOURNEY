@@ -2,7 +2,7 @@ import uuid
 import enum
 from datetime import datetime
 
-from sqlalchemy import Column, String, Integer, Text, Boolean, Numeric, ForeignKey, DateTime, Enum, UniqueConstraint
+from sqlalchemy import CheckConstraint, Column, String, Integer, Text, Boolean, Numeric, ForeignKey, DateTime, Enum, Index, UniqueConstraint, text
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
@@ -70,7 +70,7 @@ class Address(Base):
     __tablename__ = "addresses"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     full_name = Column(String, nullable=False, default="")
     phone = Column(String, nullable=False, default="")
     address_line_1 = Column(String, nullable=False, default="")
@@ -87,6 +87,17 @@ class Address(Base):
 
     # Relationships
     user = relationship("User", back_populates="addresses")
+
+    __table_args__ = (
+        Index(
+            "uq_addresses_default_shipping_per_user", "user_id", unique=True,
+            postgresql_where=text("is_default_shipping"), sqlite_where=text("is_default_shipping"),
+        ),
+        Index(
+            "uq_addresses_default_billing_per_user", "user_id", unique=True,
+            postgresql_where=text("is_default_billing"), sqlite_where=text("is_default_billing"),
+        ),
+    )
 
     def __init__(self, **kwargs):
         if "street_address" in kwargs and "address_line_1" not in kwargs:
@@ -123,7 +134,7 @@ class Category(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
     slug = Column(String, unique=True, nullable=False)
-    parent_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
+    parent_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True, index=True)
 
     # Relationships
     parent = relationship("Category", remote_side=[id], back_populates="subcategories")
@@ -134,7 +145,7 @@ class Product(Base):
     __tablename__ = "products"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="RESTRICT"), nullable=False, index=True)
     name = Column(String, nullable=False)
     slug = Column(String, unique=True, nullable=False)
     description = Column(Text, nullable=True)
@@ -149,24 +160,31 @@ class Product(Base):
     images = relationship("ProductImage", back_populates="product", cascade="all, delete-orphan")
     reviews = relationship("Review", back_populates="product", cascade="all, delete-orphan")
 
+    __table_args__ = (CheckConstraint("base_price >= 0", name="ck_products_base_price_non_negative"),)
+
 class ProductVariant(Base):
     __tablename__ = "product_variants"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"), nullable=False)
+    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id", ondelete="CASCADE"), nullable=False, index=True)
     sku = Column(String, unique=True, nullable=False)
     price_modifier = Column(Numeric(10, 2), default=0.0)
-    stock_quantity = Column(Integer, default=0)
+    stock_quantity = Column(Integer, default=0, nullable=False)
     attributes = Column(JSONB, nullable=True)
 
     # Relationships
     product = relationship("Product", back_populates="variants")
 
+    __table_args__ = (
+        CheckConstraint("price_modifier >= 0", name="ck_product_variants_price_modifier_non_negative"),
+        CheckConstraint("stock_quantity >= 0", name="ck_product_variants_stock_non_negative"),
+    )
+
 class ProductImage(Base):
     __tablename__ = "product_images"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"), nullable=False)
+    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id", ondelete="CASCADE"), nullable=False, index=True)
     image_url = Column(String, nullable=False)
     is_primary = Column(Boolean, default=False)
 
@@ -182,8 +200,8 @@ class Review(Base):
     __tablename__ = "reviews"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"), nullable=False)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     rating = Column(Integer, nullable=False)
     comment = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -192,6 +210,11 @@ class Review(Base):
     # Relationships
     user = relationship("User", back_populates="reviews")
     product = relationship("Product", back_populates="reviews")
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "product_id", name="uq_reviews_user_product"),
+        CheckConstraint("rating BETWEEN 1 AND 5", name="ck_reviews_rating_range"),
+    )
 
 
 # ============================
@@ -202,7 +225,7 @@ class Cart(Base):
     __tablename__ = "carts"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -214,13 +237,15 @@ class CartItem(Base):
     __tablename__ = "cart_items"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    cart_id = Column(UUID(as_uuid=True), ForeignKey("carts.id"), nullable=False)
-    variant_id = Column(UUID(as_uuid=True), ForeignKey("product_variants.id"), nullable=False)
-    quantity = Column(Integer, default=1)
+    cart_id = Column(UUID(as_uuid=True), ForeignKey("carts.id", ondelete="CASCADE"), nullable=False, index=True)
+    variant_id = Column(UUID(as_uuid=True), ForeignKey("product_variants.id", ondelete="RESTRICT"), nullable=False, index=True)
+    quantity = Column(Integer, default=1, nullable=False)
 
     # Relationships
     cart = relationship("Cart", back_populates="items")
     variant = relationship("ProductVariant")
+
+    __table_args__ = (CheckConstraint("quantity > 0", name="ck_cart_items_quantity_positive"),)
 
 
 class CheckoutRequest(Base):
@@ -228,10 +253,10 @@ class CheckoutRequest(Base):
     __tablename__ = "checkout_requests"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     idempotency_key = Column(String(255), nullable=False)
     request_fingerprint = Column(String(64), nullable=False)
-    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id"), nullable=True, unique=True)
+    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id", ondelete="RESTRICT"), nullable=True, unique=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     __table_args__ = (UniqueConstraint("user_id", "idempotency_key", name="uq_checkout_requests_user_key"),)
@@ -240,9 +265,9 @@ class Order(Base):
     __tablename__ = "orders"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    shipping_address_id = Column(UUID(as_uuid=True), ForeignKey("addresses.id"), nullable=False)
-    billing_address_id = Column(UUID(as_uuid=True), ForeignKey("addresses.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True)
+    shipping_address_id = Column(UUID(as_uuid=True), ForeignKey("addresses.id", ondelete="RESTRICT"), nullable=False, index=True)
+    billing_address_id = Column(UUID(as_uuid=True), ForeignKey("addresses.id", ondelete="RESTRICT"), nullable=False, index=True)
     total_amount = Column(Numeric(10, 2), nullable=False)
     order_status = Column(Enum(OrderStatus), default=OrderStatus.draft, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -256,18 +281,25 @@ class Order(Base):
     shipping_address = relationship("Address", foreign_keys=[shipping_address_id])
     billing_address = relationship("Address", foreign_keys=[billing_address_id])
 
+    __table_args__ = (CheckConstraint("total_amount >= 0", name="ck_orders_total_amount_non_negative"),)
+
 class OrderItem(Base):
     __tablename__ = "order_items"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False)
-    variant_id = Column(UUID(as_uuid=True), ForeignKey("product_variants.id"), nullable=False)
+    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, index=True)
+    variant_id = Column(UUID(as_uuid=True), ForeignKey("product_variants.id", ondelete="RESTRICT"), nullable=False, index=True)
     quantity = Column(Integer, nullable=False)
     price_per_item = Column(Numeric(10, 2), nullable=False)
 
     # Relationships
     order = relationship("Order", back_populates="items")
     variant = relationship("ProductVariant")
+
+    __table_args__ = (
+        CheckConstraint("quantity > 0", name="ck_order_items_quantity_positive"),
+        CheckConstraint("price_per_item >= 0", name="ck_order_items_price_non_negative"),
+    )
 
 
 # ============================
@@ -278,7 +310,7 @@ class Payment(Base):
     __tablename__ = "payments"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id"), nullable=False)
+    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, unique=True)
     payment_method = Column(Enum(PaymentMethod), nullable=False)
     transaction_id = Column(String, nullable=True)
     amount = Column(Numeric(10, 2), nullable=False)
@@ -287,3 +319,5 @@ class Payment(Base):
 
     # Relationships
     order = relationship("Order", back_populates="payment")
+
+    __table_args__ = (CheckConstraint("amount >= 0", name="ck_payments_amount_non_negative"),)
