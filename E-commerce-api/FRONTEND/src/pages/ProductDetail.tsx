@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Star, ShoppingCart, ArrowLeft, ShieldCheck, Truck, Zap } from 'lucide-react';
+import { Star, ShoppingCart, ArrowLeft, Zap } from 'lucide-react';
 import type { Product, ProductVariant, Review } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { useCartStore } from '../store/cartStore';
@@ -28,7 +28,7 @@ export const ProductDetail: React.FC = () => {
       try {
         const [prodRes, revRes] = await Promise.all([
           apiClient.get<Product>(`/products/${id}`),
-          apiClient.get<Review[]>(`/reviews/product/${id}`),
+          apiClient.get<Review[]>('/reviews/', { params: { product_id: id } }),
         ]);
         setProduct(prodRes.data);
         setReviews(revRes.data);
@@ -82,7 +82,6 @@ export const ProductDetail: React.FC = () => {
   const basePrice = Number(product.base_price);
   const priceModifier = selectedVariant ? Number(selectedVariant.price_modifier) : 0;
   const totalPrice = basePrice + priceModifier;
-  const strikePrice = totalPrice * 1.35;
   const inStock = selectedVariant ? selectedVariant.stock_quantity > 0 : false;
 
   return (
@@ -108,15 +107,6 @@ export const ProductDetail: React.FC = () => {
             ) : (
               <div className="text-gray-400 font-mono text-xs">NO IMAGE PREVIEW</div>
             )}
-
-            <span className="absolute top-2 left-2 px-2 py-1 bg-[#F85606] text-white text-xs font-extrabold uppercase rounded-xs">
-              -26% OFF
-            </span>
-          </div>
-
-          <div className="flex items-center space-x-4 p-3 bg-[#E7FFFD]/40 rounded-xs border border-[#b2f5f0] text-xs text-[#0f766e]">
-            <ShieldCheck className="w-5 h-5 flex-shrink-0 text-[#F85606]" />
-            <span>100% Authentic Product • 7 Days Return Warranty</span>
           </div>
         </div>
 
@@ -138,22 +128,13 @@ export const ProductDetail: React.FC = () => {
               <span className="text-3xl font-black text-[#F85606]">
                 Rs. {totalPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
               </span>
-              <span className="text-sm text-[#9E9E9E] line-through">
-                Rs. {strikePrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-              </span>
-              <span className="text-xs font-bold text-[#F85606] bg-[#FFE8DE] px-1.5 py-0.5 rounded-xs">
-                -26%
-              </span>
             </div>
 
-            <div className="pt-2 flex items-center justify-between">
+            <div className="pt-2 flex items-center">
               <span className={`px-2 py-0.5 rounded-xs text-[11px] font-bold uppercase border ${
                 inStock ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'
               }`}>
                 {inStock ? `${selectedVariant?.stock_quantity} ITEMS IN STOCK` : 'OUT OF STOCK'}
-              </span>
-              <span className="text-[11px] text-[#757575] flex items-center gap-1">
-                <Truck className="w-3.5 h-3.5 text-[#F85606]" /> Standard Delivery: 2-4 Days
               </span>
             </div>
           </div>
@@ -274,9 +255,7 @@ export const ProductDetail: React.FC = () => {
                       />
                     ))}
                   </div>
-                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-xs font-semibold">
-                    Verified Buyer
-                  </span>
+
                 </div>
                 <p className="text-xs text-[#212121] mt-1">{rev.comment}</p>
               </div>

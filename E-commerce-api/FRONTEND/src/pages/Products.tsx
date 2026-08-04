@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Filter, ShoppingCart, Tag, Eye, Zap, ShieldCheck, ChevronRight } from 'lucide-react';
+import { Filter, ShoppingCart, Tag, Eye, ChevronRight } from 'lucide-react';
 import type { Product, Category } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { useCartStore } from '../store/cartStore';
@@ -49,44 +49,15 @@ export const Products: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       
-      {/* 1. Promotional Flash Banner (ZetaMall High-Contrast Hero Banner) */}
-      <div className="bg-gradient-to-r from-[#F85606] via-[#FF6A1A] to-[#D04400] text-white rounded-sm p-6 sm:p-8 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 border-b-4 border-[#E7FFFD]/40 relative overflow-hidden">
-        <div className="space-y-2 z-10">
-          <div className="inline-flex items-center gap-1.5 bg-[#E7FFFD] text-[#0f766e] text-xs font-extrabold px-2.5 py-1 rounded-xs uppercase tracking-wider">
-            <Zap className="w-3.5 h-3.5 fill-[#F85606] text-[#F85606]" />
-            <span>BEST PRICE GUARANTEED</span>
-          </div>
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Flash Sale & Guaranteed Discounts
-          </h1>
-          <p className="text-white/90 text-sm max-w-xl">
-            Get the best deals online with fast shipping, exclusive vouchers, and 100% genuine products.
-          </p>
-        </div>
-
-        <div className="hidden lg:flex items-center space-x-4 z-10">
-          <div className="bg-white/10 backdrop-blur-xs p-4 rounded-xs border border-white/20 text-center space-y-1">
-            <ShieldCheck className="w-8 h-8 text-[#E7FFFD] mx-auto" />
-            <p className="text-xs font-bold text-white">Free Shipping</p>
-            <p className="text-[10px] text-white/80">On select orders</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-xs p-4 rounded-xs border border-white/20 text-center space-y-1">
-            <Tag className="w-8 h-8 text-[#E7FFFD] mx-auto" />
-            <p className="text-xs font-bold text-white">Exclusive Vouchers</p>
-            <p className="text-[10px] text-white/80">Extra 15% Off</p>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Flash Sale Section Strip */}
+      {/* Page Header */}
       <div className="ui-surface p-4 rounded-sm flex items-center justify-between border-l-4 border-l-[#F85606]">
         <div className="flex items-center space-x-3">
-          <h2 className="text-lg font-bold text-[#F85606] uppercase tracking-wide flex items-center gap-1.5">
-            <Zap className="w-5 h-5 fill-[#F85606]" />
-            Flash Sale
-          </h2>
+          <h1 className="text-lg font-bold text-[#F85606] uppercase tracking-wide flex items-center gap-1.5">
+            <Tag className="w-5 h-5 fill-[#F85606]" />
+            Product Catalog
+          </h1>
           <span className="text-xs text-[#757575] border-l border-gray-300 pl-3 hidden sm:inline">
-            On Sale Now
+            Browse All Items
           </span>
         </div>
         <button
@@ -169,7 +140,6 @@ export const Products: React.FC = () => {
               {filteredProducts.map((product) => {
                 const primaryVariant = product.variants?.[0];
                 const displayPrice = Number(product.base_price) + (primaryVariant ? Number(primaryVariant.price_modifier) : 0);
-                const strikePrice = displayPrice * 1.35; // Simulated original price for Daraz high-contrast discount display
                 const hasStock = primaryVariant ? primaryVariant.stock_quantity > 0 : false;
 
                 return (
@@ -189,12 +159,6 @@ export const Products: React.FC = () => {
                         ) : (
                           <div className="text-gray-400 font-mono text-[10px]">NO IMAGE</div>
                         )}
-                        
-                        {/* Discount Badge */}
-                        <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-xs bg-[#F85606] text-white text-[10px] font-black uppercase shadow-xs">
-                          -26%
-                        </span>
-
                         {/* Stock Tag */}
                         <span className={`absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-xs text-[10px] font-bold uppercase border ${
                           hasStock ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'
@@ -214,14 +178,6 @@ export const Products: React.FC = () => {
                       <div>
                         <div className="text-base sm:text-lg font-extrabold text-[#F85606] leading-none">
                           Rs. {displayPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-                        </div>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <span className="text-[11px] text-[#9E9E9E] line-through">
-                            Rs. {strikePrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-                          </span>
-                          <span className="text-[10px] text-[#212121] font-semibold bg-[#E7FFFD] px-1 rounded-xs">
-                            -26%
-                          </span>
                         </div>
                       </div>
 

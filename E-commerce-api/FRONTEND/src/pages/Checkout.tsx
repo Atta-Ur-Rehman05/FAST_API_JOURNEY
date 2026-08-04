@@ -21,10 +21,11 @@ export const Checkout: React.FC = () => {
     const initCheckout = async () => {
       try {
         await fetchCart();
-        const addrRes = await apiClient.get<Address[]>('/addresses/');
-        setAddresses(addrRes.data);
-        const defaultShipping = addrRes.data.find(a => a.is_default_shipping) || addrRes.data[0];
-        const defaultBilling = addrRes.data.find(a => a.is_default_billing) || addrRes.data[0];
+        const addrRes = await apiClient.get<{items: Address[], total: number}>('/addresses/');
+        const addrList = addrRes.data.items;
+        setAddresses(addrList);
+        const defaultShipping = addrList.find(a => a.is_default_shipping) || addrList[0];
+        const defaultBilling = addrList.find(a => a.is_default_billing) || addrList[0];
         if (defaultShipping) setSelectedShippingId(defaultShipping.id);
         if (defaultBilling) setSelectedBillingId(defaultBilling.id);
       } catch (err) {
@@ -200,10 +201,7 @@ export const Checkout: React.FC = () => {
                 Rs. {(cart?.items?.reduce((sum, item) => sum + (item.variant?.price_modifier || 0) * item.quantity, 0) || 0).toFixed(2)}
               </span>
             </div>
-            <div className="flex justify-between text-[#757575]">
-              <span>Delivery Fee</span>
-              <span className="text-emerald-700 font-bold bg-emerald-50 px-1 rounded-xs">FREE</span>
-            </div>
+
             <div className="flex justify-between text-[#212121] font-black text-base pt-2 border-t border-gray-200">
               <span>Total Amount</span>
               <span className="text-[#F85606]">

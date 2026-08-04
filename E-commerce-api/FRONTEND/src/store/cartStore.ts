@@ -48,7 +48,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   updateItem: async (itemId: number, quantity: number) => {
     set({ isLoading: true });
     try {
-      await apiClient.put(`/cart/items/${itemId}`, { quantity });
+      await apiClient.patch(`/cart/items/${itemId}`, { quantity });
       await get().fetchCart();
     } finally {
       set({ isLoading: false });
@@ -68,7 +68,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   clearCart: async () => {
     set({ isLoading: true });
     try {
-      await apiClient.delete('/cart/clear');
+      await apiClient.delete('/cart/items');
       await get().fetchCart();
     } finally {
       set({ isLoading: false });

@@ -148,3 +148,14 @@ export interface Review {
   created_at?: string;
   user?: Partial<User>;
 }
+
+export interface InventoryItem {
+  variant_id: string;
+  product_id: string;
+  product_name: string | null;
+  sku: string;
+  stock_quantity: number;
+  low_stock_threshold: number;
+  is_low_stock: boolean;
+  is_out_of_stock: boolean;
+}

@@ -22,8 +22,8 @@ export const Addresses: React.FC = () => {
 
   const fetchAddresses = async () => {
     try {
-      const res = await apiClient.get<Address[]>('/addresses/');
-      setAddresses(res.data);
+      const res = await apiClient.get<{items: Address[], total: number}>('/addresses/');
+      setAddresses(res.data.items);
     } catch (err) {
       console.error('Error fetching addresses:', err);
     } finally {

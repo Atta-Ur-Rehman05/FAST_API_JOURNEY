@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, LogOut, LayoutDashboard, Search, User as UserIcon, HelpCircle, Tag } from 'lucide-react';
+import { ShoppingCart, LogOut, LayoutDashboard, Search, User as UserIcon, Tag } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCartStore } from '../../store/cartStore';
 
 export const Navbar: React.FC = () => {
-  const { user, logout, isAdmin, isSeller } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const { cart, toggleCart } = useCartStore();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -26,13 +26,7 @@ export const Navbar: React.FC = () => {
       
       {/* 1. Top Utility Announcement Strip (ZetaMall Design Standard) */}
       <div className="bg-[#E04B00] text-white text-[11px] font-medium py-1 px-4 border-b border-[#F85606]/30">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-6">
-            <span className="hover:underline cursor-pointer font-semibold">BECOME A SELLER</span>
-            <span className="hover:underline cursor-pointer flex items-center gap-1">
-              <HelpCircle className="w-3 h-3" /> HELP & SUPPORT
-            </span>
-          </div>
+        <div className="max-w-7xl mx-auto flex items-center justify-end">
           <div className="flex items-center space-x-4">
             {user ? (
               <span className="text-[#E7FFFD]">Welcome, {user.first_name}!</span>
@@ -84,7 +78,7 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center space-x-4 sm:space-x-6 flex-shrink-0">
             
             {/* Admin Hub Switcher */}
-            {(isAdmin || isSeller) && (
+            {isAdmin && (
               <button
                 onClick={() => navigate('/admin')}
                 className="hidden md:flex items-center space-x-1.5 px-2.5 py-1 rounded-sm bg-[#E7FFFD] text-[#0f766e] text-xs font-bold hover:bg-white transition-all shadow-sm"
