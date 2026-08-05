@@ -45,7 +45,7 @@ async def test_review_lifecycle(
     # 5. List Reviews
     list_res = await client.get("/api/v1/reviews/")
     assert list_res.status_code == 200
-    assert any(r["id"] == review_id for r in list_res.json())
+    assert any(r["id"] == review_id for r in list_res.json()["items"])
 
     # 6. Update Review
     update_res = await client.patch(f"/api/v1/reviews/{review_id}", json={

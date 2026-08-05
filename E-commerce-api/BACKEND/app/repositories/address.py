@@ -1,12 +1,12 @@
 from typing import List, Optional
 from uuid import UUID
-from datetime import datetime
 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import Address
 from app.schemas.address import AddressCreate, AddressUpdate
+from app.core.time import utc_now
 
 
 class AddressRepository:
@@ -77,7 +77,7 @@ class AddressRepository:
         for field, value in update_data.items():
             setattr(address, field, value)
 
-        address.updated_at = datetime.utcnow()
+        address.updated_at = utc_now()
         self.session.add(address)
         await self.session.commit()
         await self.session.refresh(address)
@@ -94,7 +94,7 @@ class AddressRepository:
 
         await self._reset_default_shipping(user_id, exclude_id=address_id)
         address.is_default_shipping = True
-        address.updated_at = datetime.utcnow()
+        address.updated_at = utc_now()
         self.session.add(address)
         await self.session.commit()
         await self.session.refresh(address)
@@ -107,7 +107,7 @@ class AddressRepository:
 
         await self._reset_default_billing(user_id, exclude_id=address_id)
         address.is_default_billing = True
-        address.updated_at = datetime.utcnow()
+        address.updated_at = utc_now()
         self.session.add(address)
         await self.session.commit()
         await self.session.refresh(address)

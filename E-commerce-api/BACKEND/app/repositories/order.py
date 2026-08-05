@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
@@ -8,6 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from app.models.models import Address, Order, OrderItem, ProductVariant
 from app.schemas.order import OrderCreate, OrderItemCreate, OrderItemUpdate, OrderUpdate
+from app.core.time import utc_now
 
 
 class OrderRepository:
@@ -59,7 +59,7 @@ class OrderRepository:
         for field, value in update_data.items():
             setattr(order, field, value)
 
-        order.updated_at = datetime.utcnow()
+        order.updated_at = utc_now()
         self.session.add(order)
         await self.session.commit()
         return await self.get_by_id(order.id)
@@ -83,7 +83,7 @@ class OrderItemRepository:
             quantity=quantity,
             price_per_item=price_per_item,
         )
-        order.updated_at = datetime.utcnow()
+        order.updated_at = utc_now()
         self.session.add(order)
         self.session.add(item)
         await self.session.flush()
@@ -94,14 +94,14 @@ class OrderItemRepository:
         for field, value in update_data.items():
             setattr(item, field, value)
 
-        order.updated_at = datetime.utcnow()
+        order.updated_at = utc_now()
         self.session.add(order)
         self.session.add(item)
         await self.session.flush()
         return item
 
     async def delete(self, order: Order, item: OrderItem) -> None:
-        order.updated_at = datetime.utcnow()
+        order.updated_at = utc_now()
         self.session.add(order)
         await self.session.delete(item)
         await self.session.flush()
@@ -112,7 +112,7 @@ class OrderItemRepository:
             .where(OrderItem.order_id == order.id)
         )
         order.total_amount = result.scalar_one()
-        order.updated_at = datetime.utcnow()
+        order.updated_at = utc_now()
         self.session.add(order)
         await self.session.flush()
 

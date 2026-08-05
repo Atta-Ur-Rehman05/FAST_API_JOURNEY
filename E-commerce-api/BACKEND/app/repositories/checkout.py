@@ -1,4 +1,3 @@
-from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 from uuid import UUID
@@ -20,6 +19,7 @@ from app.models.models import (
     ProductVariant,
 )
 from app.schemas.checkout import CheckoutCreate
+from app.core.time import utc_now
 
 
 class CheckoutRepository:
@@ -119,7 +119,7 @@ class CheckoutRepository:
             await self.session.delete(cart_item)
         cart.items.clear()
 
-        cart.updated_at = datetime.utcnow()
+        cart.updated_at = utc_now()
         payment = Payment(
             order_id=order.id,
             payment_method=checkout_in.payment_method,

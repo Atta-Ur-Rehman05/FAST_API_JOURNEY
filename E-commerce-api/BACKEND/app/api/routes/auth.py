@@ -12,6 +12,7 @@ from sqlalchemy import select, update
 from app.api.dependencies import SessionDep
 from app.core.config import settings
 from app.core.rate_limit import login_rate_limiter
+from app.core.time import utc_now
 from app.core.security import (create_access_token, create_refresh_token,
                                get_password_hash, hash_token, verify_password)
 from app.models.models import PasswordResetToken, RefreshToken
@@ -64,7 +65,7 @@ async def refresh_access_token(payload: RefreshTokenRequest, session: SessionDep
     except (JWTError, ValueError):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token", headers={"WWW-Authenticate": "Bearer"})
     token = (await session.execute(select(RefreshToken).where(RefreshToken.token_id == claims["jti"]))).scalar_one_or_none()
-    now = datetime.utcnow()
+    now = utc_now()
     if not token or token.user_id != user_id or token.token_hash != hash_token(payload.refresh_token) or token.revoked_at or token.expires_at <= now:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or revoked refresh token", headers={"WWW-Authenticate": "Bearer"})
     # Rotation makes a stolen token single-use.
@@ -77,7 +78,7 @@ async def refresh_access_token(payload: RefreshTokenRequest, session: SessionDep
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(payload: RefreshTokenRequest, session: SessionDep) -> Response:
     # Logout is intentionally idempotent and never reveals token state.
-    await session.execute(update(RefreshToken).where(RefreshToken.token_hash == hash_token(payload.refresh_token), RefreshToken.revoked_at.is_(None)).values(revoked_at=datetime.utcnow()))
+    await session.execute(update(RefreshToken).where(RefreshToken.token_hash == hash_token(payload.refresh_token), RefreshToken.revoked_at.is_(None)).values(revoked_at=utc_now()))
     await session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -89,7 +90,7 @@ async def request_password_reset(payload: PasswordResetRequest, session: Session
     response = {"message": "If the account exists, password reset instructions will be sent."}
     if user:
         raw_token = secrets.token_urlsafe(32)
-        session.add(PasswordResetToken(user_id=user.id, token_hash=hash_token(raw_token), expires_at=datetime.utcnow() + timedelta(minutes=settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES)))
+        session.add(PasswordResetToken(user_id=user.id, token_hash=hash_token(raw_token), expires_at=utc_now() + timedelta(minutes=settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES)))
         await session.commit()
         logger.info("password_reset_requested", extra={"user_id": str(user.id)})
         # A mail provider should deliver this token. This opt-in is solely for
@@ -101,7 +102,7 @@ async def request_password_reset(payload: PasswordResetRequest, session: Session
 @router.post("/password-reset/confirm", status_code=status.HTTP_204_NO_CONTENT)
 async def confirm_password_reset(payload: PasswordResetConfirm, session: SessionDep) -> Response:
     token = (await session.execute(select(PasswordResetToken).where(PasswordResetToken.token_hash == hash_token(payload.token)))).scalar_one_or_none()
-    now = datetime.utcnow()
+    now = utc_now()
     if not token or token.used_at or token.expires_at <= now:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired password reset token")
     user = await UserRepository(session).get_by_id(token.user_id)

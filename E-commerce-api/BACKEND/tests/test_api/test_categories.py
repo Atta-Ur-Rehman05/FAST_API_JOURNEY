@@ -30,8 +30,9 @@ async def test_list_categories(client: AsyncClient, auth_headers_admin: dict):
     response = await client.get("/api/v1/categories/")
     assert response.status_code == 200
     data = response.json()
-    assert isinstance(data, list)
-    assert len(data) > 0
+    assert isinstance(data["items"], list)
+    assert len(data["items"]) > 0
+    assert data["total"] > 0
 
 @pytest.mark.asyncio
 async def test_get_category_by_id(client: AsyncClient, auth_headers_admin: dict):
@@ -77,7 +78,7 @@ async def test_category_tree_and_parent_errors(client: AsyncClient, auth_headers
     # 3. Get category tree
     tree_res = await client.get("/api/v1/categories/tree")
     assert tree_res.status_code == 200
-    assert len(tree_res.json()) > 0
+    assert len(tree_res.json()["items"]) > 0
 
     # 4. Duplicate slug error (400)
     dup_res = await client.post("/api/v1/categories/", json={"name": "DupCat", "slug": "parent-cat"}, headers=auth_headers_admin)
@@ -90,4 +91,3 @@ async def test_category_tree_and_parent_errors(client: AsyncClient, auth_headers
     # 6. Self parent error (400)
     self_parent_res = await client.patch(f"/api/v1/categories/{parent_id}", json={"parent_id": parent_id}, headers=auth_headers_admin)
     assert self_parent_res.status_code == 400
-

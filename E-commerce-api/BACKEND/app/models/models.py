@@ -1,12 +1,12 @@
 import uuid
 import enum
-from datetime import datetime
 
 from sqlalchemy import CheckConstraint, Column, String, Integer, Text, Boolean, Numeric, ForeignKey, DateTime, Enum, Index, UniqueConstraint, text
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 from app.db.db import Base
+from app.core.time import utc_now
 
 # ============================
 # Enums
@@ -56,8 +56,8 @@ class User(Base):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     role = Column(Enum(RoleType), default=RoleType.customer, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
     # Relationships
     addresses = relationship("Address", back_populates="user", cascade="all, delete-orphan")
@@ -73,9 +73,9 @@ class RefreshToken(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     token_id = Column(String(36), nullable=False, unique=True, index=True)
     token_hash = Column(String(64), nullable=False, unique=True)
-    expires_at = Column(DateTime, nullable=False)
-    revoked_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     user = relationship("User", back_populates="refresh_tokens")
 
 class PasswordResetToken(Base):
@@ -83,9 +83,9 @@ class PasswordResetToken(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     token_hash = Column(String(64), nullable=False, unique=True)
-    expires_at = Column(DateTime, nullable=False)
-    used_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    used_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     user = relationship("User", back_populates="password_reset_tokens")
 
 class Address(Base):
@@ -104,8 +104,8 @@ class Address(Base):
     address_type = Column(Enum(AddressType), default=AddressType.Home, nullable=False)
     is_default_shipping = Column(Boolean, default=False, nullable=False)
     is_default_billing = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
     # Relationships
     user = relationship("User", back_populates="addresses")
@@ -173,8 +173,8 @@ class Product(Base):
     description = Column(Text, nullable=True)
     base_price = Column(Numeric(10, 2), nullable=False)
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
     # Relationships
     category = relationship("Category", back_populates="products")
@@ -236,8 +236,8 @@ class Review(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     rating = Column(Integer, nullable=False)
     comment = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
     # Relationships
     user = relationship("User", back_populates="reviews")
@@ -258,8 +258,8 @@ class Cart(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
     # Relationships
     user = relationship("User", back_populates="cart")
@@ -289,7 +289,7 @@ class CheckoutRequest(Base):
     idempotency_key = Column(String(255), nullable=False)
     request_fingerprint = Column(String(64), nullable=False)
     order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id", ondelete="RESTRICT"), nullable=True, unique=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
 
     __table_args__ = (UniqueConstraint("user_id", "idempotency_key", name="uq_checkout_requests_user_key"),)
 
@@ -302,8 +302,8 @@ class Order(Base):
     billing_address_id = Column(UUID(as_uuid=True), ForeignKey("addresses.id", ondelete="RESTRICT"), nullable=False, index=True)
     total_amount = Column(Numeric(10, 2), nullable=False)
     order_status = Column(Enum(OrderStatus), default=OrderStatus.draft, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
     # Relationships
     user = relationship("User", back_populates="orders")
@@ -349,7 +349,7 @@ class Payment(Base):
     transaction_id = Column(String, nullable=True)
     amount = Column(Numeric(10, 2), nullable=False)
     payment_status = Column(Enum(PaymentStatus), default=PaymentStatus.pending, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
 
     # Relationships
     order = relationship("Order", back_populates="payment")
@@ -368,4 +368,4 @@ class StripeWebhookEvent(Base):
     stripe_event_id = Column(String(255), nullable=False, unique=True)
     event_type = Column(String(100), nullable=False)
     payment_id = Column(UUID(as_uuid=True), ForeignKey("payments.id", ondelete="SET NULL"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)

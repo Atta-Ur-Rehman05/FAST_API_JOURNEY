@@ -1,4 +1,3 @@
-from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.models import ProductVariant
 from app.repositories.inventory import InventoryRepository
 from app.schemas.inventory import InventoryAdjustmentResponse, InventoryResponse
+from app.core.time import utc_now
 
 
 class InventoryServiceError(Exception):
@@ -204,5 +204,5 @@ class InventoryService:
             ),
             reserved_adjustment_quantity=reserved_adjustment_quantity,
             reason=reason,
-            adjusted_at=datetime.utcnow(),
+            adjusted_at=utc_now(),
         )
