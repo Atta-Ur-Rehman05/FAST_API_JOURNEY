@@ -49,6 +49,20 @@ async def create_payment_intent(*, amount: Decimal, order_id: UUID, payment_id: 
         raise StripeGatewayError("Unable to create the Stripe payment intent.") from exc
 
 
+async def create_refund(*, payment_intent_id: str, payment_id: UUID):
+    api_key = _require_secret_key()
+    try:
+        return await asyncio.to_thread(
+            stripe.Refund.create,
+            payment_intent=payment_intent_id,
+            # A retry of the API request cannot create a second refund.
+            idempotency_key=f"ecommerce-refund-{payment_id}",
+            api_key=api_key,
+        )
+    except stripe.StripeError as exc: 
+        raise StripeGatewayError("Unable to create the Stripe refund.") from exc
+
+
 def construct_webhook_event(payload: bytes, signature: str):
     _require_secret_key()
     if not settings.STRIPE_WEBHOOK_SECRET:

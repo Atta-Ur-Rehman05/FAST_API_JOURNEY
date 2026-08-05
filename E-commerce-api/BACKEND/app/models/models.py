@@ -312,6 +312,8 @@ class Payment(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False, unique=True)
     payment_method = Column(Enum(PaymentMethod), nullable=False)
+    # For Stripe this is the PaymentIntent ID. A provider transaction may
+    # belong to only one local payment record.
     transaction_id = Column(String, nullable=True)
     amount = Column(Numeric(10, 2), nullable=False)
     payment_status = Column(Enum(PaymentStatus), default=PaymentStatus.pending, nullable=False)
@@ -320,7 +322,10 @@ class Payment(Base):
     # Relationships
     order = relationship("Order", back_populates="payment")
 
-    __table_args__ = (CheckConstraint("amount >= 0", name="ck_payments_amount_non_negative"),)
+    __table_args__ = (
+        CheckConstraint("amount >= 0", name="ck_payments_amount_non_negative"),
+        UniqueConstraint("transaction_id", name="uq_payments_transaction_id"),
+    )
 
 
 class StripeWebhookEvent(Base):

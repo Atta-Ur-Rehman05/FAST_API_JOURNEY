@@ -1,15 +1,19 @@
 from typing import Annotated
+from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from app.api.dependencies import SessionDep
-from app.models.models import Payment, PaymentMethod, PaymentStatus, StripeWebhookEvent
+from app.api.dependencies import SessionDep, get_current_admin_user
+from app.models.models import Payment, PaymentMethod, PaymentStatus, StripeWebhookEvent, User
+from app.schemas.payment import PaymentResponse
+from app.services.payment import transition_payment_status
 from app.services.stripe import (
     StripeGatewayError,
     StripeNotConfiguredError,
     construct_webhook_event,
+    create_refund,
 )
 
 router = APIRouter()
@@ -56,12 +60,14 @@ async def stripe_webhook(
         )
 
     if payment:
-        if event_type == "payment_intent.succeeded" and payment.payment_status != PaymentStatus.refunded:
-            payment.payment_status = PaymentStatus.completed
-        elif event_type in {"payment_intent.payment_failed", "payment_intent.canceled"} and payment.payment_status == PaymentStatus.pending:
-            payment.payment_status = PaymentStatus.failed
-        elif event_type == "charge.refunded":
-            payment.payment_status = PaymentStatus.refunded
+        if event_type == "payment_intent.succeeded":
+            transition_payment_status(payment, PaymentStatus.completed)
+        elif event_type in {"payment_intent.payment_failed", "payment_intent.canceled"}:
+            transition_payment_status(payment, PaymentStatus.failed)
+        elif event_type == "charge.refunded" or (
+            event_type == "refund.updated" and stripe_object.get("status") == "succeeded"
+        ):
+            transition_payment_status(payment, PaymentStatus.refunded)
 
     session.add(
         StripeWebhookEvent(
@@ -77,3 +83,37 @@ async def stripe_webhook(
         # makes the losing request a successful no-op.
         await session.rollback()
     return {"received": True}
+
+
+@router.post("/{payment_id}/refund", response_model=PaymentResponse)
+async def refund_stripe_payment(
+    payment_id: UUID,
+    session: SessionDep,
+    _: Annotated[User, Depends(get_current_admin_user)],
+):
+    """Start (or safely retry) a full Stripe refund for a completed payment."""
+    payment = await session.scalar(select(Payment).where(Payment.id == payment_id))
+    if payment is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payment not found.")
+    if payment.payment_method != PaymentMethod.stripe:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only Stripe payments can be refunded here.")
+    if payment.payment_status == PaymentStatus.refunded:
+        return payment
+    if payment.payment_status != PaymentStatus.completed or not payment.transaction_id:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only completed Stripe payments can be refunded.")
+
+    try:
+        refund = await create_refund(
+            payment_intent_id=payment.transaction_id, payment_id=payment.id
+        )
+    except StripeNotConfiguredError as error:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error))
+    except StripeGatewayError as error:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error))
+
+    # Stripe may return a pending refund. Its signed webhook remains the
+    # source of truth in that case; a synchronous success can be recorded now.
+    if refund.status == "succeeded":
+        transition_payment_status(payment, PaymentStatus.refunded)
+        await session.commit()
+    return payment
