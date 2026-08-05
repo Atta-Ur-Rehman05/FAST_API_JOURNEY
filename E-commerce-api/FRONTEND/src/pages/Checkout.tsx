@@ -1,9 +1,76 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, CreditCard, Truck, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import type { Address, PaymentMethod, CheckoutResponse } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { useCartStore } from '../store/cartStore';
+
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
+
+interface StripePaymentFormProps {
+  onSuccess: () => Promise<void>;
+}
+
+const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ onSuccess }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!stripe || !elements) return;
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      const { error: validationError } = await elements.submit();
+      if (validationError) {
+        setError(validationError.message || 'Please check your payment details.');
+        return;
+      }
+
+      const { error: paymentError, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/account/orders`,
+        },
+        redirect: 'if_required',
+      });
+
+      if (paymentError) {
+        setError(paymentError.message || 'Your payment could not be confirmed.');
+        return;
+      }
+
+      if (paymentIntent?.status !== 'succeeded') {
+        setError('Your payment is still processing. Check your order history shortly.');
+        return;
+      }
+
+      await onSuccess();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="ui-surface max-w-xl mx-auto p-6 rounded-sm space-y-5 shadow-xs">
+      <div>
+        <h1 className="text-xl font-bold text-[#212121]">Complete Stripe payment</h1>
+        <p className="text-xs text-[#757575] mt-1">Your order will be confirmed once Stripe approves the payment.</p>
+      </div>
+      <PaymentElement />
+      {error && <p role="alert" className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xs p-3">{error}</p>}
+      <button type="submit" disabled={!stripe || submitting} className="btn-primary w-full text-xs font-bold py-3 disabled:opacity-50">
+        {submitting ? 'Confirming payment...' : 'Pay securely'}
+      </button>
+    </form>
+  );
+};
 
 export const Checkout: React.FC = () => {
   const navigate = useNavigate();
@@ -16,6 +83,7 @@ export const Checkout: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [orderResult, setOrderResult] = useState<CheckoutResponse | null>(null);
+  const [stripeCheckout, setStripeCheckout] = useState<CheckoutResponse | null>(null);
 
   useEffect(() => {
     const initCheckout = async () => {
@@ -43,6 +111,10 @@ export const Checkout: React.FC = () => {
       alert('Please select both shipping and billing addresses.');
       return;
     }
+    if (paymentMethod === 'stripe' && !stripePromise) {
+      alert('Stripe is not configured. Set VITE_STRIPE_PUBLISHABLE_KEY and try again.');
+      return;
+    }
     setSubmitting(true);
     try {
       const res = await apiClient.post<CheckoutResponse>('/checkout/', {
@@ -50,8 +122,15 @@ export const Checkout: React.FC = () => {
         billing_address_id: selectedBillingId,
         payment_method: paymentMethod,
       });
-      setOrderResult(res.data);
       await fetchCart();
+      if (paymentMethod === 'stripe') {
+        if (!res.data.stripe_client_secret) {
+          throw new Error('Stripe checkout did not return a client secret.');
+        }
+        setStripeCheckout(res.data);
+      } else {
+        setOrderResult(res.data);
+      }
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to complete checkout.');
     } finally {
@@ -85,6 +164,22 @@ export const Checkout: React.FC = () => {
             View My Orders
           </button>
         </div>
+      </div>
+    );
+  }
+
+  if (stripeCheckout?.stripe_client_secret && stripePromise) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <Elements stripe={stripePromise} options={{ clientSecret: stripeCheckout.stripe_client_secret }}>
+          <StripePaymentForm
+            onSuccess={async () => {
+              setOrderResult(stripeCheckout);
+              setStripeCheckout(null);
+              await fetchCart();
+            }}
+          />
+        </Elements>
       </div>
     );
   }

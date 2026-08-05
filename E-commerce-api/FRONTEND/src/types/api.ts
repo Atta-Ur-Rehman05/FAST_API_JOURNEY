@@ -142,6 +142,7 @@ export interface CheckoutCreate {
 export interface CheckoutResponse {
   order: Order;
   payment: Payment;
+  stripe_client_secret?: string | null;
 }
 
 export interface Review {
