@@ -24,7 +24,7 @@ class ProductRepository:
         result = await self.session.execute(
             select(Product)
             .where(Product.id == product_id)
-            .options(selectinload(Product.images), selectinload(Product.variants))
+            .options(selectinload(Product.images), selectinload(Product.variants), selectinload(Product.category))
         )
         return result.scalars().first()
 
@@ -32,7 +32,7 @@ class ProductRepository:
         result = await self.session.execute(
             select(Product)
             .where(Product.slug == slug)
-            .options(selectinload(Product.images), selectinload(Product.variants))
+            .options(selectinload(Product.images), selectinload(Product.variants), selectinload(Product.category))
         )
         return result.scalars().first()
 
@@ -47,7 +47,7 @@ class ProductRepository:
     ) -> list[Product]:
         stmt = (
             select(Product)
-            .options(selectinload(Product.images), selectinload(Product.variants))
+            .options(selectinload(Product.images), selectinload(Product.variants), selectinload(Product.category))
             .order_by(Product.created_at.desc())
             .offset(skip)
             .limit(limit)

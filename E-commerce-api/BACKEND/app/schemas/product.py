@@ -3,6 +3,7 @@ from typing import Optional, List, Dict, Any
 from uuid import UUID
 from datetime import datetime
 from decimal import Decimal
+from app.schemas.category import CategoryResponse
 
 # Product Image Schemas
 class ProductImageBase(BaseModel):
@@ -73,5 +74,6 @@ class ProductResponse(ProductBase):
     updated_at: datetime
     images: List[ProductImageResponse] = Field(default_factory=list)
     variants: List[ProductVariantResponse] = Field(default_factory=list)
+    category: CategoryResponse | None = None
 
     model_config = ConfigDict(from_attributes=True)

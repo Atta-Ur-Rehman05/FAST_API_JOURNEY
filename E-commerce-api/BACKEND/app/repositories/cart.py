@@ -16,13 +16,13 @@ class CartRepository:
 
     async def get_by_id(self, cart_id: UUID) -> Optional[Cart]:
         result = await self.session.execute(
-            select(Cart).where(Cart.id == cart_id).options(selectinload(Cart.items))
+            select(Cart).where(Cart.id == cart_id).options(selectinload(Cart.items).selectinload(CartItem.variant).selectinload(ProductVariant.product))
         )
         return result.scalars().first()
 
     async def get_by_user_id(self, user_id: UUID) -> Optional[Cart]:
         result = await self.session.execute(
-            select(Cart).where(Cart.user_id == user_id).options(selectinload(Cart.items))
+            select(Cart).where(Cart.user_id == user_id).options(selectinload(Cart.items).selectinload(CartItem.variant).selectinload(ProductVariant.product))
         )
         return result.scalars().first()
 
@@ -34,7 +34,7 @@ class CartRepository:
 
     async def get_item_by_id(self, item_id: int) -> Optional[CartItem]:
         result = await self.session.execute(
-            select(CartItem).where(CartItem.id == item_id)
+            select(CartItem).where(CartItem.id == item_id).options(selectinload(CartItem.variant).selectinload(ProductVariant.product))
         )
         return result.scalars().first()
 
@@ -59,8 +59,7 @@ class CartRepository:
         self.session.add(cart)
         self.session.add(item)
         await self.session.commit()
-        await self.session.refresh(item)
-        return item
+        return await self.get_item_by_id(item.id)
 
     async def update_item_quantity(self, cart: Cart, item: CartItem, quantity: int) -> CartItem:
         item.quantity = quantity
@@ -68,8 +67,7 @@ class CartRepository:
         self.session.add(cart)
         self.session.add(item)
         await self.session.commit()
-        await self.session.refresh(item)
-        return item
+        return await self.get_item_by_id(item.id)
 
     async def delete_item(self, cart: Cart, item: CartItem) -> None:
         cart.updated_at = datetime.utcnow()

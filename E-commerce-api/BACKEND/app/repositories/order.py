@@ -18,7 +18,7 @@ class OrderRepository:
         result = await self.session.execute(
             select(Order)
             .where(Order.id == order_id)
-            .options(selectinload(Order.items), selectinload(Order.payment))
+            .options(selectinload(Order.items).selectinload(OrderItem.variant).selectinload(ProductVariant.product), selectinload(Order.payment), selectinload(Order.shipping_address), selectinload(Order.billing_address))
         )
         return result.scalars().first()
 
@@ -31,7 +31,7 @@ class OrderRepository:
     ) -> list[Order]:
         stmt = (
             select(Order)
-            .options(selectinload(Order.items))
+            .options(selectinload(Order.items).selectinload(OrderItem.variant).selectinload(ProductVariant.product), selectinload(Order.payment), selectinload(Order.shipping_address), selectinload(Order.billing_address))
             .order_by(Order.created_at.desc())
             .offset(skip)
             .limit(limit)

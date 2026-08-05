@@ -140,7 +140,7 @@ class CheckoutRepository:
         result = await self.session.execute(
             select(Order)
             .where(Order.id == order_id)
-            .options(selectinload(Order.items))
+            .options(selectinload(Order.items).selectinload(OrderItem.variant).selectinload(ProductVariant.product), selectinload(Order.payment), selectinload(Order.shipping_address), selectinload(Order.billing_address))
         )
         return result.scalars().one()
 

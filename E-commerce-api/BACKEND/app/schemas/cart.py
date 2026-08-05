@@ -2,6 +2,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
+from app.schemas.product import ProductVariantResponse
 
 class CartItemBase(BaseModel):
     variant_id: UUID
@@ -16,6 +17,7 @@ class CartItemUpdate(BaseModel):
 class CartItemResponse(CartItemBase):
     id: int
     cart_id: UUID
+    variant: ProductVariantResponse
 
     model_config = ConfigDict(from_attributes=True)
 

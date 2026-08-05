@@ -4,6 +4,9 @@ from uuid import UUID
 from datetime import datetime
 from decimal import Decimal
 from app.models.models import OrderStatus
+from app.schemas.address import AddressResponse
+from app.schemas.payment import PaymentResponse
+from app.schemas.product import ProductVariantResponse
 
 class OrderItemBase(BaseModel):
     variant_id: UUID
@@ -22,6 +25,7 @@ class OrderItemUpdate(BaseModel):
 class OrderItemResponse(OrderItemBase):
     id: int
     order_id: UUID
+    variant: ProductVariantResponse
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -56,5 +60,8 @@ class OrderResponse(OrderBase):
     created_at: datetime
     updated_at: datetime
     items: List[OrderItemResponse] = Field(default_factory=list)
+    payment: PaymentResponse | None = None
+    shipping_address: AddressResponse
+    billing_address: AddressResponse
 
     model_config = ConfigDict(from_attributes=True)
