@@ -1,7 +1,7 @@
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -60,6 +60,14 @@ class InventoryRepository:
             .options(selectinload(ProductVariant.product))
         )
         return result.scalars().first()
+
+    async def count(self, *, search=None, product_id=None, low_stock_threshold=None, low_stock_only=False, out_of_stock_only=False) -> int:
+        stmt = select(func.count(ProductVariant.id))
+        if product_id is not None: stmt = stmt.where(ProductVariant.product_id == product_id)
+        if search: stmt = stmt.join(Product).where(ProductVariant.sku.ilike(f"%{search}%") | Product.name.ilike(f"%{search}%"))
+        if out_of_stock_only: stmt = stmt.where(ProductVariant.stock_quantity - ProductVariant.reserved_quantity == 0)
+        elif low_stock_only and low_stock_threshold is not None: stmt = stmt.where(ProductVariant.stock_quantity - ProductVariant.reserved_quantity > 0, ProductVariant.stock_quantity - ProductVariant.reserved_quantity <= low_stock_threshold)
+        return (await self.session.execute(stmt)).scalar_one()
 
     async def get_by_sku(self, sku: str) -> Optional[ProductVariant]:
         result = await self.session.execute(

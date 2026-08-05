@@ -1,7 +1,7 @@
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import Review
@@ -50,6 +50,12 @@ class ReviewRepository:
 
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def count(self, *, product_id=None, user_id=None) -> int:
+        stmt = select(func.count(Review.id))
+        if product_id is not None: stmt = stmt.where(Review.product_id == product_id)
+        if user_id is not None: stmt = stmt.where(Review.user_id == user_id)
+        return (await self.session.execute(stmt)).scalar_one()
 
     async def create(self, user_id: UUID, review_in: ReviewCreate) -> Review:
         review = Review(**review_in.model_dump(), user_id=user_id)

@@ -101,6 +101,9 @@ class OrderService:
         await self.order_repo.session.commit()
         return await self.get_order(order.id)
 
+    async def count_orders(self, *, user_id: UUID | None = None) -> int:
+        return await self.order_repo.count(user_id=user_id)
+
     async def get_order(self, order_id: UUID) -> Order:
         order = await self.order_repo.get_by_id(order_id)
         if order is None:

@@ -57,7 +57,7 @@ async def test_order_lifecycle(client: AsyncClient, auth_headers_customer: dict,
     # List orders
     list_res = await client.get("/api/v1/orders/me", headers=auth_headers_customer)
     assert list_res.status_code == 200
-    assert len(list_res.json()) > 0
+    assert len(list_res.json()["items"]) > 0
 
     list_all_res = await client.get("/api/v1/orders/", headers=auth_headers_admin)
     assert list_all_res.status_code == 200

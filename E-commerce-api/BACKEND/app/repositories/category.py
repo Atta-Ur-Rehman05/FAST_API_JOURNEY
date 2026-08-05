@@ -47,6 +47,13 @@ class CategoryRepository:
         result = await self.session.execute(select(Category).order_by(Category.name))
         return list(result.scalars().all())
 
+    async def count(self, *, parent_id=None, root_only=False, search=None) -> int:
+        stmt = select(func.count(Category.id))
+        if root_only: stmt = stmt.where(Category.parent_id.is_(None))
+        elif parent_id is not None: stmt = stmt.where(Category.parent_id == parent_id)
+        if search: stmt = stmt.where(Category.name.ilike(f"%{search}%"))
+        return (await self.session.execute(stmt)).scalar_one()
+
     async def create(self, category_in: CategoryCreate) -> Category:
         category = Category(**category_in.model_dump())
         self.session.add(category)

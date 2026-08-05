@@ -58,6 +58,9 @@ class CategoryService:
         categories = await self.category_repo.list_all()
         return self._build_category_tree(categories)
 
+    async def count_categories(self, **filters) -> int:
+        return await self.category_repo.count(**filters)
+
     async def create_category(self, category_in: CategoryCreate) -> Category:
         existing_category = await self.category_repo.get_by_slug(category_in.slug)
         if existing_category:

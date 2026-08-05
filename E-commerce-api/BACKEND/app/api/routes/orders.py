@@ -18,6 +18,7 @@ from app.schemas.order import (
     OrderStatusUpdate,
     OrderUpdate,
 )
+from app.schemas.pagination import PaginatedResponse
 from app.services.order import (
     AddressNotFoundError,
     AddressOwnershipError,
@@ -82,7 +83,7 @@ def _raise_order_http_error(error: OrderServiceError) -> None:
     )
 
 
-@router.get("/", response_model=list[OrderResponse])
+@router.get("/", response_model=PaginatedResponse[OrderResponse])
 async def list_orders(
     session: SessionDep,
     _: Annotated[User, Depends(get_current_admin_user)],
@@ -90,10 +91,12 @@ async def list_orders(
     limit: Annotated[int, Query(ge=1, le=100)] = 100,
 ):
     order_service = OrderService(session)
-    return await order_service.list_orders(skip=skip, limit=limit)
+    items = await order_service.list_orders(skip=skip, limit=limit)
+    total = await order_service.count_orders()
+    return PaginatedResponse.create(items=items, total=total, skip=skip, limit=limit)
 
 
-@router.get("/me", response_model=list[OrderResponse])
+@router.get("/me", response_model=PaginatedResponse[OrderResponse])
 async def list_my_orders(
     session: SessionDep,
     current_user: Annotated[User, Depends(get_current_active_user)],
@@ -101,11 +104,13 @@ async def list_my_orders(
     limit: Annotated[int, Query(ge=1, le=100)] = 100,
 ):
     order_service = OrderService(session)
-    return await order_service.list_orders(
+    items = await order_service.list_orders(
         skip=skip,
         limit=limit,
         user_id=current_user.id,
     )
+    total = await order_service.count_orders(user_id=current_user.id)
+    return PaginatedResponse.create(items=items, total=total, skip=skip, limit=limit)
 
 
 @router.post("/", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)

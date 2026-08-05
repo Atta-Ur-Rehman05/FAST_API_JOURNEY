@@ -11,6 +11,7 @@ from app.schemas.inventory import (
     InventoryStockAdjustment,
     InventoryStockSet,
 )
+from app.schemas.pagination import PaginatedResponse
 from app.services.inventory import (
     InsufficientInventoryError,
     InsufficientReservationError,
@@ -35,7 +36,7 @@ def _raise_inventory_http_error(error: InventoryServiceError) -> None:
     )
 
 
-@router.get("/", response_model=list[InventoryResponse])
+@router.get("/", response_model=PaginatedResponse[InventoryResponse])
 async def list_inventory(
     session: SessionDep,
     _: Annotated[User, Depends(get_current_admin_user)],
@@ -48,7 +49,7 @@ async def list_inventory(
     out_of_stock_only: bool = False,
 ):
     inventory_service = InventoryService(session)
-    return await inventory_service.list_inventory(
+    items = await inventory_service.list_inventory(
         skip=skip,
         limit=limit,
         search=search,
@@ -57,6 +58,8 @@ async def list_inventory(
         low_stock_only=low_stock_only,
         out_of_stock_only=out_of_stock_only,
     )
+    total = await inventory_service.count_inventory(search=search, product_id=product_id, low_stock_threshold=low_stock_threshold, low_stock_only=low_stock_only, out_of_stock_only=out_of_stock_only)
+    return PaginatedResponse.create(items=items, total=total, skip=skip, limit=limit)
 
 
 @router.get("/sku/{sku}", response_model=InventoryResponse)

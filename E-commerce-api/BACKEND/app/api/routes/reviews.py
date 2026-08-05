@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.api.dependencies import SessionDep, get_current_active_user, get_current_admin_user
 from app.models.models import User
 from app.schemas.review import ReviewCreate, ReviewResponse, ReviewUpdate
+from app.schemas.pagination import PaginatedResponse
 from app.services.review import (
     DuplicateReviewError,
     ProductNotFoundError,
@@ -37,7 +38,7 @@ def _raise_review_http_error(error: ReviewServiceError) -> None:
     )
 
 
-@router.get("/", response_model=list[ReviewResponse])
+@router.get("/", response_model=PaginatedResponse[ReviewResponse])
 async def list_reviews(
     session: SessionDep,
     skip: Annotated[int, Query(ge=0)] = 0,
@@ -46,9 +47,11 @@ async def list_reviews(
     user_id: Optional[UUID] = None,
 ):
     review_service = ReviewService(session)
-    return await review_service.list_reviews(
+    items = await review_service.list_reviews(
         skip=skip, limit=limit, product_id=product_id, user_id=user_id
     )
+    total = await review_service.count_reviews(product_id=product_id, user_id=user_id)
+    return PaginatedResponse.create(items=items, total=total, skip=skip, limit=limit)
 
 
 @router.post("/", response_model=ReviewResponse, status_code=status.HTTP_201_CREATED)

@@ -1,7 +1,7 @@
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -64,6 +64,13 @@ class ProductRepository:
 
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
+
+    async def count(self, *, category_id=None, is_active=None, search=None) -> int:
+        stmt = select(func.count(Product.id))
+        if category_id is not None: stmt = stmt.where(Product.category_id == category_id)
+        if is_active is not None: stmt = stmt.where(Product.is_active == is_active)
+        if search: stmt = stmt.where(Product.name.ilike(f"%{search}%"))
+        return (await self.session.execute(stmt)).scalar_one()
 
     async def create(self, product_in: ProductCreate) -> Product:
         product = Product(**product_in.model_dump())

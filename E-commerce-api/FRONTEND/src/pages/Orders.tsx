@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Clock, CheckCircle, Save, Trash2, Truck, XCircle } from 'lucide-react';
-import type { Order } from '../types/api';
+import type { Order, PaginatedResponse } from '../types/api';
 import { apiClient } from '../lib/api-client';
 
 export const Orders: React.FC = () => {
@@ -12,8 +12,8 @@ export const Orders: React.FC = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await apiClient.get<Order[]>('/orders/me');
-        setOrders(res.data);
+        const res = await apiClient.get<PaginatedResponse<Order>>('/orders/me');
+        setOrders(res.data.items);
       } catch (err) {
         console.error('Error loading orders:', err);
       } finally {

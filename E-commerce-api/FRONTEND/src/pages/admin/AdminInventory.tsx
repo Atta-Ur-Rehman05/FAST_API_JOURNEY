@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Minus, Plus, Save } from 'lucide-react';
-import type { InventoryItem } from '../../types/api';
+import type { InventoryItem, PaginatedResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
 
 export const AdminInventory: React.FC = () => {
@@ -14,14 +14,14 @@ export const AdminInventory: React.FC = () => {
 
   const fetchInventory = async () => {
     try {
-      const res = await apiClient.get<InventoryItem[]>('/inventory/', { params: {
+      const res = await apiClient.get<PaginatedResponse<InventoryItem>>('/inventory/', { params: {
         search: search || undefined,
         low_stock_only: stockFilter === 'low' || undefined,
         out_of_stock_only: stockFilter === 'out' || undefined,
       } });
-      setInventory(res.data);
+      setInventory(res.data.items);
       const initialQty: Record<string, number> = {};
-      res.data.forEach((item) => {
+      res.data.items.forEach((item) => {
         initialQty[item.variant_id] = item.stock_quantity;
       });
       setQuantities(initialQty);

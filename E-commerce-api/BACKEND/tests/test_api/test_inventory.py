@@ -31,7 +31,7 @@ async def test_inventory_lifecycle(
     # 4. List inventory
     list_res = await client.get("/api/v1/inventory/", headers=auth_headers_admin)
     assert list_res.status_code == 200
-    inv_list = list_res.json()
+    inv_list = list_res.json()["items"]
     assert any(inv["variant_id"] == variant_id for inv in inv_list)
 
     # 5. Get inventory by id

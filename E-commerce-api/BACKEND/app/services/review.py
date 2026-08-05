@@ -55,6 +55,9 @@ class ReviewService:
             raise ReviewNotFoundError("Review not found.")
         return review
 
+    async def count_reviews(self, **filters) -> int:
+        return await self.review_repo.count(**filters)
+
     async def create_review(self, user_id: UUID, review_in: ReviewCreate) -> Review:
         # Validate product exists
         product = await self.product_repo.get_by_id(review_in.product_id)

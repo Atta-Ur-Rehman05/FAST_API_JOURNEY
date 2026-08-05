@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Warehouse, TrendingUp } from 'lucide-react';
 import { apiClient } from '../../lib/api-client';
+import type { InventoryItem, PaginatedResponse, Product } from '../../types/api';
 
 export const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState({ productsCount: 0, inventoryCount: 0 });
@@ -9,12 +10,12 @@ export const AdminDashboard: React.FC = () => {
     const fetchStats = async () => {
       try {
         const [prodRes, invRes] = await Promise.all([
-          apiClient.get('/products/'),
-          apiClient.get('/inventory/'),
+          apiClient.get<PaginatedResponse<Product>>('/products/'),
+          apiClient.get<PaginatedResponse<InventoryItem>>('/inventory/'),
         ]);
         setStats({
-          productsCount: prodRes.data.length,
-          inventoryCount: invRes.data.length,
+          productsCount: prodRes.data.total,
+          inventoryCount: invRes.data.total,
         });
       } catch (err) {
         console.error('Error fetching admin dashboard stats:', err);

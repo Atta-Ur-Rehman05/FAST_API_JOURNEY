@@ -61,6 +61,9 @@ class InventoryService:
         variant = await self._get_variant(variant_id)
         return InventoryResponse.from_variant(variant, low_stock_threshold)
 
+    async def count_inventory(self, **filters) -> int:
+        return await self.inventory_repo.count(**filters)
+
     async def get_inventory_by_sku(
         self, sku: str, low_stock_threshold: int = 5
     ) -> InventoryResponse:

@@ -79,6 +79,9 @@ class ProductService:
             search=search,
         )
 
+    async def count_products(self, **filters) -> int:
+        return await self.product_repo.count(**filters)
+
     async def create_product(self, product_in: ProductCreate) -> Product:
         existing_product = await self.product_repo.get_by_slug(product_in.slug)
         if existing_product:

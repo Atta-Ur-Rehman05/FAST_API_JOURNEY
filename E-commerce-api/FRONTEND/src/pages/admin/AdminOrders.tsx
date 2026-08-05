@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, Trash2 } from 'lucide-react';
-import type { Order, OrderStatus } from '../../types/api';
+import type { Order, OrderStatus, PaginatedResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
 
 export const AdminOrders: React.FC = () => {
@@ -10,8 +10,8 @@ export const AdminOrders: React.FC = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await apiClient.get<Order[]>('/orders/');
-      setOrders(res.data);
+      const res = await apiClient.get<PaginatedResponse<Order>>('/orders/');
+      setOrders(res.data.items);
     } catch (err) {
       console.error('Error fetching admin orders:', err);
     } finally {

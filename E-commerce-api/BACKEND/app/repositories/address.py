@@ -2,7 +2,7 @@ from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import Address
@@ -54,13 +54,17 @@ class AddressRepository:
         )
         return result.scalars().first()
 
-    async def get_user_addresses(self, user_id: UUID) -> List[Address]:
+    async def get_user_addresses(self, user_id: UUID, *, skip: int = 0, limit: int = 100) -> List[Address]:
         result = await self.session.execute(
             select(Address)
             .where(Address.user_id == user_id)
             .order_by(Address.created_at.desc())
+            .offset(skip).limit(limit)
         )
         return list(result.scalars().all())
+
+    async def count_user_addresses(self, user_id: UUID) -> int:
+        return (await self.session.execute(select(func.count(Address.id)).where(Address.user_id == user_id))).scalar_one()
 
     async def update_address(self, address: Address, address_in: AddressUpdate) -> Address:
         update_data = address_in.model_dump(exclude_unset=True)

@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import SessionDep, get_current_active_user
 from app.models.models import User
@@ -82,10 +82,14 @@ async def create_address(
 async def list_addresses(
     session: SessionDep,
     current_user: Annotated[User, Depends(get_current_active_user)],
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 100,
 ):
     service = AddressService(session)
-    addresses = await service.get_user_addresses(current_user.id)
-    return AddressListResponse(items=addresses, total=len(addresses))
+    addresses = await service.get_user_addresses(current_user.id, skip=skip, limit=limit)
+    total = await service.count_user_addresses(current_user.id)
+    page = skip // limit + 1
+    return AddressListResponse(items=addresses, total=total, page=page, page_size=limit, next_page=page + 1 if skip + len(addresses) < total else None)
 
 
 @router.get(

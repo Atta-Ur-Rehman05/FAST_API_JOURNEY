@@ -48,7 +48,11 @@ async def test_update_product(client: AsyncClient, auth_headers_admin: dict, tes
 async def test_list_products(client: AsyncClient):
     response = await client.get("/api/v1/products/")
     assert response.status_code == 200
-    assert isinstance(response.json(), list)
+    body = response.json()
+    assert isinstance(body["items"], list)
+    assert body["total"] == 0
+    assert body["page"] == 1
+    assert body["next_page"] is None
 
 @pytest.mark.asyncio
 async def test_create_variant(client: AsyncClient, auth_headers_admin: dict, test_category_id: int):
@@ -144,7 +148,7 @@ async def test_product_search_and_filters(client: AsyncClient, auth_headers_admi
     # Search filter
     res = await client.get(f"/api/v1/products/?search=iPhone&category_id={test_category_id}")
     assert res.status_code == 200
-    items = res.json()
+    items = res.json()["items"]
     assert len(items) == 1
     assert items[0]["slug"] == "apple-iphone-15"
 
@@ -156,4 +160,3 @@ async def test_product_not_found_errors(client: AsyncClient, auth_headers_admin:
 
     del_res = await client.delete(f"/api/v1/products/{fake_uuid}", headers=auth_headers_admin)
     assert del_res.status_code == 404
-

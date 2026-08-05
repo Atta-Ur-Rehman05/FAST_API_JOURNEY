@@ -16,6 +16,7 @@ from app.schemas.product import (
     ProductVariantResponse,
     ProductVariantUpdate,
 )
+from app.schemas.pagination import PaginatedResponse
 from app.services.product import (
     DuplicateProductSlugError,
     DuplicateProductVariantSkuError,
@@ -59,7 +60,7 @@ def _raise_product_http_error(error: ProductServiceError) -> None:
     )
 
 
-@router.get("/", response_model=list[ProductResponse])
+@router.get("/", response_model=PaginatedResponse[ProductResponse])
 async def list_products(
     session: SessionDep,
     skip: Annotated[int, Query(ge=0)] = 0,
@@ -69,13 +70,15 @@ async def list_products(
     search: Optional[str] = None,
 ):
     product_service = ProductService(session)
-    return await product_service.list_products(
+    items = await product_service.list_products(
         skip=skip,
         limit=limit,
         category_id=category_id,
         is_active=is_active,
         search=search,
     )
+    total = await product_service.count_products(category_id=category_id, is_active=is_active, search=search)
+    return PaginatedResponse.create(items=items, total=total, skip=skip, limit=limit)
 
 
 @router.post(

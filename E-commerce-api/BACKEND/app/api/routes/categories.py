@@ -10,6 +10,7 @@ from app.schemas.category import (
     CategoryTreeResponse,
     CategoryUpdate,
 )
+from app.schemas.pagination import PaginatedResponse
 from app.services.category import (
     CategoryDeleteRestrictedError,
     CategoryNotFoundError,
@@ -43,7 +44,7 @@ def _raise_category_http_error(error: CategoryServiceError) -> None:
     )
 
 
-@router.get("/", response_model=list[CategoryResponse])
+@router.get("/", response_model=PaginatedResponse[CategoryResponse])
 async def list_categories(
     session: SessionDep,
     skip: Annotated[int, Query(ge=0)] = 0,
@@ -53,19 +54,22 @@ async def list_categories(
     search: Optional[str] = None,
 ):
     category_service = CategoryService(session)
-    return await category_service.list_categories(
+    items = await category_service.list_categories(
         skip=skip,
         limit=limit,
         parent_id=parent_id,
         root_only=root_only,
         search=search,
     )
+    total = await category_service.count_categories(parent_id=parent_id, root_only=root_only, search=search)
+    return PaginatedResponse.create(items=items, total=total, skip=skip, limit=limit)
 
 
-@router.get("/tree", response_model=list[CategoryTreeResponse])
-async def get_category_tree(session: SessionDep):
+@router.get("/tree", response_model=PaginatedResponse[CategoryTreeResponse])
+async def get_category_tree(session: SessionDep, skip: Annotated[int, Query(ge=0)] = 0, limit: Annotated[int, Query(ge=1, le=100)] = 100):
     category_service = CategoryService(session)
-    return await category_service.get_category_tree()
+    tree = await category_service.get_category_tree()
+    return PaginatedResponse.create(items=tree[skip:skip + limit], total=len(tree), skip=skip, limit=limit)
 
 
 @router.post(

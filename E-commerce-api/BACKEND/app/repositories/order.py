@@ -43,6 +43,11 @@ class OrderRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
+    async def count(self, *, user_id: Optional[UUID] = None) -> int:
+        stmt = select(func.count(Order.id))
+        if user_id is not None: stmt = stmt.where(Order.user_id == user_id)
+        return (await self.session.execute(stmt)).scalar_one()
+
     async def create(self, user_id: UUID, order_in: OrderCreate) -> Order:
         order = Order(user_id=user_id, **order_in.model_dump())
         self.session.add(order)

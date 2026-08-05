@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
-import type { Category } from '../../types/api';
+import type { Category, PaginatedResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
 
 export const AdminCategories: React.FC = () => {
@@ -17,8 +17,8 @@ export const AdminCategories: React.FC = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await apiClient.get<Category[]>('/categories/');
-      setCategories(res.data);
+      const res = await apiClient.get<PaginatedResponse<Category>>('/categories/');
+      setCategories(res.data.items);
     } catch (err) {
       console.error('Error loading categories:', err);
     } finally {

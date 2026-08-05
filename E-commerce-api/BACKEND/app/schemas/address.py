@@ -133,3 +133,6 @@ class AddressResponse(AddressBase):
 class AddressListResponse(BaseModel):
     items: List[AddressResponse]
     total: int
+    page: int
+    page_size: int
+    next_page: int | None

@@ -44,8 +44,11 @@ class AddressService:
     async def create_address(self, user_id: UUID, address_in: AddressCreate) -> Address:
         return await self.address_repo.create_address(user_id, address_in)
 
-    async def get_user_addresses(self, user_id: UUID) -> List[Address]:
-        return await self.address_repo.get_user_addresses(user_id)
+    async def get_user_addresses(self, user_id: UUID, *, skip: int = 0, limit: int = 100) -> List[Address]:
+        return await self.address_repo.get_user_addresses(user_id, skip=skip, limit=limit)
+
+    async def count_user_addresses(self, user_id: UUID) -> int:
+        return await self.address_repo.count_user_addresses(user_id)
 
     async def get_address_by_id(self, user_id: UUID, address_id: UUID) -> Address:
         return await self._get_address_and_check_ownership(user_id, address_id)

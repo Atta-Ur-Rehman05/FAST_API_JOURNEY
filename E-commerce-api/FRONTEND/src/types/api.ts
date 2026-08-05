@@ -1,5 +1,7 @@
 export type RoleType = 'customer' | 'admin';
 
+export interface PaginatedResponse<T> { items: T[]; total: number; page: number; page_size: number; next_page: number | null; }
+
 export interface User {
   id: string;
   email: string;

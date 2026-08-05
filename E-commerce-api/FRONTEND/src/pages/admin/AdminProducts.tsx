@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ImagePlus, Pencil, Plus, Trash2, X } from 'lucide-react';
-import type { Product, Category } from '../../types/api';
+import type { Product, Category, PaginatedResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
 
 type VariantDraft = {
@@ -48,12 +48,12 @@ export const AdminProducts: React.FC = () => {
   const fetchData = async () => {
     try {
       const [prodRes, catRes] = await Promise.all([
-        apiClient.get<Product[]>('/products/'),
-        apiClient.get<Category[]>('/categories/'),
+        apiClient.get<PaginatedResponse<Product>>('/products/'),
+        apiClient.get<PaginatedResponse<Category>>('/categories/'),
       ]);
-      setProducts(prodRes.data);
-      setCategories(catRes.data);
-      if (catRes.data.length > 0) setFormData(f => ({ ...f, category_id: catRes.data[0].id }));
+      setProducts(prodRes.data.items);
+      setCategories(catRes.data.items);
+      if (catRes.data.items.length > 0) setFormData(f => ({ ...f, category_id: catRes.data.items[0].id }));
     } catch (err) {
       console.error('Error fetching products:', err);
     } finally {
