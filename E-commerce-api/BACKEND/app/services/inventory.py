@@ -22,6 +22,10 @@ class InsufficientInventoryError(InventoryServiceError):
     pass
 
 
+class InsufficientReservationError(InventoryServiceError):
+    pass
+
+
 class InventoryService:
     def __init__(self, session: AsyncSession):
         self.inventory_repo = InventoryRepository(session)
@@ -75,6 +79,10 @@ class InventoryService:
         low_stock_threshold: int = 5,
     ) -> InventoryAdjustmentResponse:
         variant = await self._get_variant(variant_id)
+        if stock_quantity < variant.reserved_quantity:
+            raise InsufficientInventoryError(
+                "Stock quantity cannot be lower than currently reserved stock."
+            )
         previous_stock = variant.stock_quantity
         variant.stock_quantity = stock_quantity
         saved_variant = await self.inventory_repo.save(variant)
@@ -124,11 +132,21 @@ class InventoryService:
         reason: str | None = None,
         low_stock_threshold: int = 5,
     ) -> InventoryAdjustmentResponse:
-        return await self.restock(
-            variant_id,
-            quantity,
-            reason=reason,
-            low_stock_threshold=low_stock_threshold,
+        variant = await self._get_variant(variant_id)
+        if quantity > variant.reserved_quantity:
+            raise InsufficientReservationError("Requested quantity exceeds reserved stock.")
+        previous_stock = variant.stock_quantity
+        previous_reserved = variant.reserved_quantity
+        variant.reserved_quantity -= quantity
+        saved_variant = await self.inventory_repo.save(variant)
+        return self._build_adjustment_response(
+            saved_variant,
+            previous_stock,
+            0,
+            reason,
+            low_stock_threshold,
+            previous_reserved_quantity=previous_reserved,
+            reserved_adjustment_quantity=-quantity,
         )
 
     async def _adjust_stock(
@@ -142,7 +160,7 @@ class InventoryService:
         variant = await self._get_variant(variant_id)
         previous_stock = variant.stock_quantity
         new_stock = previous_stock + adjustment_quantity
-        if new_stock < 0:
+        if new_stock < variant.reserved_quantity:
             raise InsufficientInventoryError("Requested quantity exceeds available stock.")
 
         variant.stock_quantity = new_stock
@@ -168,12 +186,20 @@ class InventoryService:
         adjustment_quantity: int,
         reason: str | None,
         low_stock_threshold: int,
+        previous_reserved_quantity: int | None = None,
+        reserved_adjustment_quantity: int = 0,
     ) -> InventoryAdjustmentResponse:
         inventory = InventoryResponse.from_variant(variant, low_stock_threshold)
         return InventoryAdjustmentResponse(
             **inventory.model_dump(),
             previous_stock_quantity=previous_stock,
             adjustment_quantity=adjustment_quantity,
+            previous_reserved_quantity=(
+                variant.reserved_quantity
+                if previous_reserved_quantity is None
+                else previous_reserved_quantity
+            ),
+            reserved_adjustment_quantity=reserved_adjustment_quantity,
             reason=reason,
             adjusted_at=datetime.utcnow(),
         )

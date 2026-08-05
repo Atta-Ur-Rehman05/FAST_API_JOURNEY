@@ -113,7 +113,7 @@ class CheckoutRepository:
                 quantity=cart_item.quantity,
                 price_per_item=unit_price,
             )
-            variant.stock_quantity -= cart_item.quantity
+            variant.reserved_quantity += cart_item.quantity
             self.session.add(order_item)
             self.session.add(variant)
             await self.session.delete(cart_item)

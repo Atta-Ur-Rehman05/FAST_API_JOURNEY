@@ -104,6 +104,16 @@ async def test_checkout_success_and_stock_error(client: AsyncClient, auth_header
     assert res_success.status_code == 201
     assert "id" in res_success.json()["order"]
 
+    # Checkout reserves stock; it does not remove physical inventory until
+    # the order is delivered.
+    inventory_res = await client.get(
+        f"/api/v1/inventory/{variant_id}", headers=auth_headers_admin
+    )
+    assert inventory_res.status_code == 200
+    assert inventory_res.json()["stock_quantity"] == 2
+    assert inventory_res.json()["reserved_quantity"] == 1
+    assert inventory_res.json()["available_quantity"] == 1
+
     # Retrying after the cart has been cleared returns the original result;
     # it must not create another order or decrement stock again.
     retry_response = await client.post(

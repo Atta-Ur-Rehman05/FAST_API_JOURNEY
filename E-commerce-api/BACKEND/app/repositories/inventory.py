@@ -41,11 +41,13 @@ class InventoryRepository:
             )
 
         if out_of_stock_only:
-            stmt = stmt.where(ProductVariant.stock_quantity == 0)
+            stmt = stmt.where(
+                ProductVariant.stock_quantity - ProductVariant.reserved_quantity == 0
+            )
         elif low_stock_only and low_stock_threshold is not None:
             stmt = stmt.where(
-                ProductVariant.stock_quantity > 0,
-                ProductVariant.stock_quantity <= low_stock_threshold,
+                ProductVariant.stock_quantity - ProductVariant.reserved_quantity > 0,
+                ProductVariant.stock_quantity - ProductVariant.reserved_quantity <= low_stock_threshold,
             )
 
         result = await self.session.execute(stmt)

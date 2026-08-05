@@ -65,13 +65,12 @@ async def test_inventory_lifecycle(
     assert deduct_res.status_code == 200
     assert deduct_res.json()["stock_quantity"] == 17
 
-    # 10. Release
-    # Release works identical to restock but for different reason/context
+    # 10. Release requires an existing reservation and does not change
+    # physical stock.  This variant has none, so the request is rejected.
     release_res = await client.post(f"/api/v1/inventory/{variant_id}/release", json={
         "quantity": 2, "reason": "released from reserved"
     }, headers=auth_headers_admin)
-    assert release_res.status_code == 200
-    assert release_res.json()["stock_quantity"] == 19
+    assert release_res.status_code == 400
 
 @pytest.mark.asyncio
 async def test_inventory_errors(
@@ -142,4 +141,3 @@ async def test_inventory_non_existent_operations(client: AsyncClient, auth_heade
 
     res3 = await client.post(f"/api/v1/inventory/{fake_id}/release", json={"quantity": 5}, headers=auth_headers_admin)
     assert res3.status_code == 404
-

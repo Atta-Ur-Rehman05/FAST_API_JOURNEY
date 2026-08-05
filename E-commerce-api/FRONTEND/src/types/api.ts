@@ -56,6 +56,8 @@ export interface ProductVariant {
   sku: string;
   price_modifier: number;
   stock_quantity: number;
+  reserved_quantity: number;
+  available_quantity: number;
   attributes?: Record<string, any>;
 }
 
@@ -155,6 +157,8 @@ export interface InventoryItem {
   product_name: string | null;
   sku: string;
   stock_quantity: number;
+  reserved_quantity: number;
+  available_quantity: number;
   low_stock_threshold: number;
   is_low_stock: boolean;
   is_out_of_stock: boolean;

@@ -101,8 +101,8 @@ async def test_order_lifecycle(client: AsyncClient, auth_headers_customer: dict,
     }, headers=auth_headers_customer)
     assert add_item_res.status_code == 409
 
-    # Financial records cannot be deleted; cancellation is a status transition
-    # that performs restocking when eligible.
+    # Financial records cannot be deleted; cancellation releases the checkout
+    # reservation without changing physical stock.
     del_res = await client.delete(f"/api/v1/orders/{order_id}", headers=auth_headers_admin)
     assert del_res.status_code == 409
 
@@ -111,6 +111,44 @@ async def test_order_lifecycle(client: AsyncClient, auth_headers_customer: dict,
     }, headers=auth_headers_admin)
     assert cancel_res.status_code == 200
     assert cancel_res.json()["order_status"] == OrderStatus.cancelled.value
+
+    inventory_res = await client.get(
+        f"/api/v1/inventory/{variant_id}", headers=auth_headers_admin
+    )
+    assert inventory_res.status_code == 200
+    assert inventory_res.json()["stock_quantity"] == 20
+    assert inventory_res.json()["reserved_quantity"] == 0
+    assert inventory_res.json()["available_quantity"] == 20
+
+    # A delivered order consumes the previously reserved physical inventory.
+    add_again = await client.post(
+        "/api/v1/cart/items",
+        json={"variant_id": variant_id, "quantity": 1},
+        headers=auth_headers_customer,
+    )
+    assert add_again.status_code == 201
+    checkout_again = await client.post("/api/v1/checkout/", json={
+        "shipping_address_id": str(addr.id),
+        "billing_address_id": str(addr.id),
+        "payment_method": "credit_card",
+    }, headers=auth_headers_customer)
+    assert checkout_again.status_code == 201
+    delivered_order_id = checkout_again.json()["order"]["id"]
+
+    for order_status in (OrderStatus.processing, OrderStatus.shipped, OrderStatus.delivered):
+        status_res = await client.patch(
+            f"/api/v1/orders/{delivered_order_id}/status",
+            json={"order_status": order_status.value},
+            headers=auth_headers_admin,
+        )
+        assert status_res.status_code == 200
+
+    delivered_inventory = await client.get(
+        f"/api/v1/inventory/{variant_id}", headers=auth_headers_admin
+    )
+    assert delivered_inventory.json()["stock_quantity"] == 19
+    assert delivered_inventory.json()["reserved_quantity"] == 0
+    assert delivered_inventory.json()["available_quantity"] == 19
 
 @pytest.mark.asyncio
 async def test_create_order_direct_and_address_errors(client: AsyncClient, auth_headers_customer: dict):

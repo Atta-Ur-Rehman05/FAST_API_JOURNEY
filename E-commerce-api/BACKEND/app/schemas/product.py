@@ -41,6 +41,8 @@ class ProductVariantUpdate(BaseModel):
 class ProductVariantResponse(ProductVariantBase):
     id: UUID
     product_id: UUID
+    reserved_quantity: int
+    available_quantity: int
 
     model_config = ConfigDict(from_attributes=True)
 

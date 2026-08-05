@@ -13,6 +13,7 @@ from app.schemas.inventory import (
 )
 from app.services.inventory import (
     InsufficientInventoryError,
+    InsufficientReservationError,
     InventoryService,
     InventoryServiceError,
     InventoryVariantNotFoundError,
@@ -25,7 +26,7 @@ def _raise_inventory_http_error(error: InventoryServiceError) -> None:
     if isinstance(error, InventoryVariantNotFoundError):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.detail)
 
-    if isinstance(error, InsufficientInventoryError):
+    if isinstance(error, (InsufficientInventoryError, InsufficientReservationError)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error.detail)
 
     raise HTTPException(
@@ -156,6 +157,7 @@ async def release_inventory(
 ):
     inventory_service = InventoryService(session)
     try:
+        # Releases a real reservation; it never increases physical stock.
         return await inventory_service.release(
             variant_id,
             adjustment_in.quantity,

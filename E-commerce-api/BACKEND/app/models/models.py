@@ -170,6 +170,9 @@ class ProductVariant(Base):
     sku = Column(String, unique=True, nullable=False)
     price_modifier = Column(Numeric(10, 2), default=0.0)
     stock_quantity = Column(Integer, default=0, nullable=False)
+    # Physical stock on hand. Open orders reserve part of it until delivery or
+    # cancellation, so sellable stock is stock_quantity - reserved_quantity.
+    reserved_quantity = Column(Integer, default=0, nullable=False)
     attributes = Column(JSONB, nullable=True)
 
     # Relationships
@@ -178,7 +181,14 @@ class ProductVariant(Base):
     __table_args__ = (
         CheckConstraint("price_modifier >= 0", name="ck_product_variants_price_modifier_non_negative"),
         CheckConstraint("stock_quantity >= 0", name="ck_product_variants_stock_non_negative"),
+        CheckConstraint("reserved_quantity >= 0", name="ck_product_variants_reserved_quantity_non_negative"),
+        CheckConstraint("reserved_quantity <= stock_quantity", name="ck_product_variants_reserved_quantity_within_stock"),
     )
+
+    @property
+    def available_quantity(self) -> int:
+        """Units that can still be added to a cart or checked out."""
+        return self.stock_quantity - self.reserved_quantity
 
 class ProductImage(Base):
     __tablename__ = "product_images"

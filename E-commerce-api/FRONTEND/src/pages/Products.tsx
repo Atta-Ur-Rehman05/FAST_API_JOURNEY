@@ -140,7 +140,7 @@ export const Products: React.FC = () => {
               {filteredProducts.map((product) => {
                 const primaryVariant = product.variants?.[0];
                 const displayPrice = Number(product.base_price) + (primaryVariant ? Number(primaryVariant.price_modifier) : 0);
-                const hasStock = primaryVariant ? primaryVariant.stock_quantity > 0 : false;
+                const hasStock = primaryVariant ? primaryVariant.available_quantity > 0 : false;
 
                 return (
                   <div

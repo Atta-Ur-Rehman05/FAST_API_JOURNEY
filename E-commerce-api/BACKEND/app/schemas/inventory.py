@@ -12,6 +12,8 @@ class InventoryResponse(BaseModel):
     product_name: str | None = None
     sku: str
     stock_quantity: int
+    reserved_quantity: int
+    available_quantity: int
     low_stock_threshold: int
     is_low_stock: bool
     is_out_of_stock: bool
@@ -26,9 +28,11 @@ class InventoryResponse(BaseModel):
             product_name=variant.product.name if variant.product else None,
             sku=variant.sku,
             stock_quantity=variant.stock_quantity,
+            reserved_quantity=variant.reserved_quantity,
+            available_quantity=variant.stock_quantity - variant.reserved_quantity,
             low_stock_threshold=low_stock_threshold,
-            is_low_stock=0 < variant.stock_quantity <= low_stock_threshold,
-            is_out_of_stock=variant.stock_quantity == 0,
+            is_low_stock=0 < (variant.stock_quantity - variant.reserved_quantity) <= low_stock_threshold,
+            is_out_of_stock=(variant.stock_quantity - variant.reserved_quantity) == 0,
         )
 
 
@@ -45,5 +49,7 @@ class InventoryStockAdjustment(BaseModel):
 class InventoryAdjustmentResponse(InventoryResponse):
     previous_stock_quantity: int
     adjustment_quantity: int
+    previous_reserved_quantity: int
+    reserved_adjustment_quantity: int = 0
     reason: str | None = None
     adjusted_at: datetime

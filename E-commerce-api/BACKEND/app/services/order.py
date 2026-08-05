@@ -160,9 +160,23 @@ class OrderService:
                     [item.variant_id for item in order.items]
                 )
                 for item in order.items:
-                    locked_variants[item.variant_id].stock_quantity += item.quantity
+                    variant = locked_variants[item.variant_id]
+                    # Checkout reserves physical inventory without reducing it.
+                    # Cancelling an open order therefore releases the reservation;
+                    # it must not add new stock.
+                    variant.reserved_quantity -= item.quantity
                 if order.payment:
                     order.payment.payment_status = PaymentStatus.failed
+
+        if new_status == OrderStatus.delivered:
+            locked_variants = await self.variant_repo.lock_by_ids(
+                [item.variant_id for item in order.items]
+            )
+            for item in order.items:
+                variant = locked_variants[item.variant_id]
+                # Delivery consumes the inventory that this order reserved.
+                variant.stock_quantity -= item.quantity
+                variant.reserved_quantity -= item.quantity
 
         order.order_status = new_status
         await self.order_repo.session.commit()

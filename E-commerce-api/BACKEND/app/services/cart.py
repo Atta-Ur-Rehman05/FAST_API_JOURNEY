@@ -108,5 +108,5 @@ class CartService:
         return variant
 
     def _validate_stock(self, variant: ProductVariant, quantity: int) -> None:
-        if quantity > variant.stock_quantity:
+        if quantity > variant.stock_quantity - variant.reserved_quantity:
             raise InsufficientStockError("Requested quantity exceeds available stock.")

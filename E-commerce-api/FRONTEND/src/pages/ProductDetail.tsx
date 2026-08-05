@@ -104,7 +104,7 @@ export const ProductDetail: React.FC = () => {
   const basePrice = Number(product.base_price);
   const priceModifier = selectedVariant ? Number(selectedVariant.price_modifier) : 0;
   const totalPrice = basePrice + priceModifier;
-  const inStock = selectedVariant ? selectedVariant.stock_quantity > 0 : false;
+  const inStock = selectedVariant ? selectedVariant.available_quantity > 0 : false;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -156,7 +156,7 @@ export const ProductDetail: React.FC = () => {
               <span className={`px-2 py-0.5 rounded-xs text-[11px] font-bold uppercase border ${
                 inStock ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'
               }`}>
-                {inStock ? `${selectedVariant?.stock_quantity} ITEMS IN STOCK` : 'OUT OF STOCK'}
+                {inStock ? `${selectedVariant?.available_quantity} ITEMS IN STOCK` : 'OUT OF STOCK'}
               </span>
             </div>
           </div>

@@ -86,7 +86,7 @@ export const AdminInventory: React.FC = () => {
                 <tr>
                   <th className="px-4 py-3">Product</th>
                   <th className="px-4 py-3">Variant SKU</th>
-                  <th className="px-4 py-3">Stock Quantity</th>
+                  <th className="px-4 py-3">Physical / Reserved / Available</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Quick Update</th>
                   <th className="px-4 py-3">Adjust Stock</th>
@@ -95,20 +95,24 @@ export const AdminInventory: React.FC = () => {
               <tbody className="divide-y divide-gray-200">
                 {inventory.map((item) => {
                   const currentQty = quantities[item.variant_id] ?? item.stock_quantity;
-                  const isOutOfStock = currentQty === 0;
-                  const isLow = currentQty > 0 && currentQty <= item.low_stock_threshold;
+                  const availableQty = currentQty - item.reserved_quantity;
+                  const isOutOfStock = availableQty === 0;
+                  const isLow = availableQty > 0 && availableQty <= item.low_stock_threshold;
                   return (
                     <tr key={item.variant_id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3 text-[#212121]">{item.product_name || 'Unnamed product'}</td>
                       <td className="px-4 py-3 font-mono font-bold text-[#F85606]">{item.sku}</td>
                       <td className="px-4 py-3 font-mono">
-                        <input
-                          type="number"
-                          min="0"
-                          value={currentQty}
-                          onChange={(e) => setQuantities({ ...quantities, [item.variant_id]: Math.max(0, Number(e.target.value) || 0) })}
-                          className="w-20 px-2 py-1 bg-white border border-gray-300 rounded-xs text-[#212121] font-mono text-xs focus:outline-none focus:border-[#F85606]"
-                        />
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min={item.reserved_quantity}
+                            value={currentQty}
+                            onChange={(e) => setQuantities({ ...quantities, [item.variant_id]: Math.max(item.reserved_quantity, Number(e.target.value) || 0) })}
+                            className="w-20 px-2 py-1 bg-white border border-gray-300 rounded-xs text-[#212121] font-mono text-xs focus:outline-none focus:border-[#F85606]"
+                          />
+                          <span className="text-[#757575]">/ {item.reserved_quantity} / {availableQty}</span>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded-xs text-[10px] font-bold uppercase border ${
