@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, status
 
 from app.api.dependencies import SessionDep, get_current_active_user
 from app.models.models import User
+from app.models.models import PaymentMethod
 from app.schemas.checkout import CheckoutCreate, CheckoutResponse
 from app.services.checkout import (
     AddressNotFoundError,
@@ -16,6 +17,11 @@ from app.services.checkout import (
     InsufficientStockError,
     ProductUnavailableError,
     ProductVariantNotFoundError,
+)
+from app.services.stripe import (
+    StripeGatewayError,
+    StripeNotConfiguredError,
+    create_payment_intent,
 )
 
 router = APIRouter()
@@ -62,6 +68,26 @@ async def checkout(
         order, payment = await checkout_service.checkout(
             current_user.id, checkout_in, idempotency_key
         )
-        return {"order": order, "payment": payment}
+        stripe_client_secret = None
+        if payment.payment_method == PaymentMethod.stripe:
+            intent = await create_payment_intent(
+                amount=payment.amount, order_id=order.id, payment_id=payment.id
+            )
+            # The provider-generated ID is the only transaction identifier
+            # trusted by this API.
+            if payment.transaction_id != intent.id:
+                payment.transaction_id = intent.id
+                session.add(payment)
+                await session.commit()
+            stripe_client_secret = intent.client_secret
+        return {
+            "order": order,
+            "payment": payment,
+            "stripe_client_secret": stripe_client_secret,
+        }
     except CheckoutServiceError as error:
         _raise_checkout_http_error(error)
+    except StripeNotConfiguredError as error:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error))
+    except StripeGatewayError as error:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error))

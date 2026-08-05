@@ -321,3 +321,14 @@ class Payment(Base):
     order = relationship("Order", back_populates="payment")
 
     __table_args__ = (CheckConstraint("amount >= 0", name="ck_payments_amount_non_negative"),)
+
+
+class StripeWebhookEvent(Base):
+    """A successfully processed Stripe event, retained for webhook idempotency."""
+    __tablename__ = "stripe_webhook_events"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    stripe_event_id = Column(String(255), nullable=False, unique=True)
+    event_type = Column(String(100), nullable=False)
+    payment_id = Column(UUID(as_uuid=True), ForeignKey("payments.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
