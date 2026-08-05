@@ -2,6 +2,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
+from decimal import Decimal
 from app.schemas.product import ProductVariantResponse
 
 class CartItemBase(BaseModel):
@@ -18,6 +19,7 @@ class CartItemResponse(CartItemBase):
     id: int
     cart_id: UUID
     variant: ProductVariantResponse
+    unit_price: Decimal
 
     model_config = ConfigDict(from_attributes=True)
 

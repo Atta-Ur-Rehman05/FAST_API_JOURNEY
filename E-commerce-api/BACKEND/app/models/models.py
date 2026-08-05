@@ -1,5 +1,6 @@
 import uuid
 import enum
+from decimal import Decimal
 
 from sqlalchemy import CheckConstraint, Column, String, Integer, Text, Boolean, Numeric, ForeignKey, DateTime, Enum, Index, UniqueConstraint, text
 from sqlalchemy.orm import relationship
@@ -278,6 +279,11 @@ class CartItem(Base):
     variant = relationship("ProductVariant")
 
     __table_args__ = (CheckConstraint("quantity > 0", name="ck_cart_items_quantity_positive"),)
+
+    @property
+    def unit_price(self) -> Decimal:
+        """Current checkout price for one unit of this cart item."""
+        return self.variant.product.base_price + self.variant.price_modifier
 
 
 class CheckoutRequest(Base):

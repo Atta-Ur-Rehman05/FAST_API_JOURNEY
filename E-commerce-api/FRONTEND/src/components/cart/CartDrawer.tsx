@@ -10,8 +10,7 @@ export const CartDrawer: React.FC = () => {
   if (!isOpen) return null;
 
   const totalAmount = cart?.items?.reduce((sum, item) => {
-    const basePrice = item.variant?.price_modifier || 0;
-    return sum + (basePrice * item.quantity);
+    return sum + (Number(item.unit_price) * item.quantity);
   }, 0) || 0;
 
   return (
@@ -57,7 +56,7 @@ export const CartDrawer: React.FC = () => {
                       Variant {item.variant?.sku || `#${item.variant_id.slice(0, 8)}`}
                     </p>
                     <p className="text-xs font-black text-[#F85606] mt-0.5">
-                      Rs. {((item.variant?.price_modifier || 0)).toFixed(2)}
+                      Rs. {Number(item.unit_price).toFixed(2)}
                     </p>
 
                     {/* Quantity Selector */}

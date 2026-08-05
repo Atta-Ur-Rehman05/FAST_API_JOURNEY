@@ -33,6 +33,7 @@ async def test_add_cart_item(client: AsyncClient, auth_headers_customer: dict, a
     }, headers=auth_headers_customer)
     assert item_res.status_code == 201
     assert item_res.json()["quantity"] == 2
+    assert item_res.json()["unit_price"] == "50.00"
 
     # Update item
     item_id = item_res.json()["id"]

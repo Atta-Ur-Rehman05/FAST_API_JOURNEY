@@ -83,6 +83,7 @@ export interface CartItem {
   cart_id: string;
   variant_id: string;
   quantity: number;
+  unit_price: number;
   variant?: ProductVariant;
 }
 

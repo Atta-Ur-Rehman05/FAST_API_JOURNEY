@@ -188,7 +188,7 @@ export const Checkout: React.FC = () => {
                   SKU: {item.variant?.sku || item.variant_id.slice(0, 6)} (x{item.quantity})
                 </span>
                 <span className="font-bold text-[#F85606]">
-                  Rs. {((item.variant?.price_modifier || 0) * item.quantity).toFixed(2)}
+                  Rs. {(Number(item.unit_price) * item.quantity).toFixed(2)}
                 </span>
               </div>
             ))}
@@ -198,14 +198,14 @@ export const Checkout: React.FC = () => {
             <div className="flex justify-between text-[#757575]">
               <span>Subtotal</span>
               <span className="font-semibold text-[#212121]">
-                Rs. {(cart?.items?.reduce((sum, item) => sum + (item.variant?.price_modifier || 0) * item.quantity, 0) || 0).toFixed(2)}
+                Rs. {(cart?.items?.reduce((sum, item) => sum + Number(item.unit_price) * item.quantity, 0) || 0).toFixed(2)}
               </span>
             </div>
 
             <div className="flex justify-between text-[#212121] font-black text-base pt-2 border-t border-gray-200">
               <span>Total Amount</span>
               <span className="text-[#F85606]">
-                Rs. {(cart?.items?.reduce((sum, item) => sum + (item.variant?.price_modifier || 0) * item.quantity, 0) || 0).toFixed(2)}
+                Rs. {(cart?.items?.reduce((sum, item) => sum + Number(item.unit_price) * item.quantity, 0) || 0).toFixed(2)}
               </span>
             </div>
           </div>
