@@ -15,7 +15,6 @@ from app.db.db import Base
 class RoleType(enum.Enum):
     customer = "customer"
     admin = "admin"
-    seller = "seller"
 
 class AddressType(str, enum.Enum):
     Home = "Home"

@@ -17,7 +17,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    role_type = postgresql.ENUM("customer", "admin", "seller", name="roletype", create_type=False)
+    role_type = postgresql.ENUM("customer", "admin", name="roletype", create_type=False)
     address_type = postgresql.ENUM("Home", "Office", "Other", "shipping", "billing", name="addresstype", create_type=False)
     order_status = postgresql.ENUM("pending", "processing", "shipped", "delivered", "cancelled", name="orderstatus", create_type=False)
     payment_method = postgresql.ENUM("credit_card", "paypal", "stripe", "cod", name="paymentmethod", create_type=False)

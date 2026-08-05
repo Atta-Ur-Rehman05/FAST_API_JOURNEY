@@ -17,7 +17,7 @@ This document serves as the single source of truth for AI Agents building the Fr
 
 ```typescript
 // User & Auth
-export type RoleType = "customer" | "admin" | "seller";
+export type RoleType = "customer" | "admin";
 
 export interface User {
   id: string; // UUID
@@ -193,10 +193,10 @@ export interface Review {
 | **Category**| `POST` | `/categories/` | Admin | Create category |
 | **Products**| `GET` | `/products/` | No | List products with pagination/search |
 | **Products**| `GET` | `/products/{id}` | No | Get detailed product info |
-| **Products**| `POST` | `/products/` | Admin/Seller | Create product |
-| **Products**| `PUT` | `/products/{id}` | Admin/Seller | Update product |
-| **Inventory**|`GET` | `/inventory/` | Admin/Seller | List inventory items |
-| **Inventory**|`PUT` | `/inventory/{variant_id}` | Admin/Seller | Body: `{ stock_quantity }` |
+| **Products**| `POST` | `/products/` | Admin | Create product |
+| **Products**| `PUT` | `/products/{id}` | Admin | Update product |
+| **Inventory**|`GET` | `/inventory/` | Admin | List inventory items |
+| **Inventory**|`PUT` | `/inventory/{variant_id}` | Admin | Body: `{ stock_quantity }` |
 | **Cart** | `GET` | `/cart/me` | Bearer Token | Get user shopping cart |
 | **Cart** | `POST` | `/cart/items` | Bearer Token | Body: `{ variant_id, quantity }` |
 | **Cart** | `PUT` | `/cart/items/{item_id}` | Bearer Token | Body: `{ quantity }` |

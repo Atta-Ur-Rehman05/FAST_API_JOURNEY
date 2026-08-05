@@ -4,18 +4,18 @@ import { LayoutDashboard, Package, Warehouse, Folders, ShoppingCart, ArrowLeft, 
 import { useAuth } from '../../context/AuthContext';
 
 export const AdminLayout: React.FC = () => {
-  const { user, isAdmin, isSeller } = useAuth();
+  const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  if (!isAdmin && !isSeller) {
+  if (!isAdmin) {
     return (
       <div className="max-w-md mx-auto my-24 p-8 ui-surface rounded-sm text-center space-y-4 shadow-sm">
         <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 mx-auto flex items-center justify-center border border-rose-200">
           <ShieldAlert className="w-6 h-6" />
         </div>
         <h2 className="text-xl font-bold text-[#212121]">Access Denied</h2>
-        <p className="text-sm text-[#757575]">You must be an administrator or seller to access the Admin Hub.</p>
+        <p className="text-sm text-[#757575]">You must be an administrator to access the Admin Hub.</p>
         <button onClick={() => navigate('/products')} className="btn-primary w-full text-sm">
           Return to Storefront
         </button>

@@ -47,7 +47,7 @@ export function App() {
                 <Route path="/account/orders" element={<Orders />} />
                 <Route path="/checkout" element={<Checkout />} />
 
-                {/* Admin & Seller Portal Routes */}
+                {/* Admin Portal Routes */}
                 <Route path="/admin" element={<AdminLayout />}>
                   <Route index element={<AdminDashboard />} />
                   <Route path="products" element={<AdminProducts />} />
