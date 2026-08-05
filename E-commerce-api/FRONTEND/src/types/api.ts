@@ -95,7 +95,7 @@ export interface Cart {
   updated_at?: string;
 }
 
-export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+export type OrderStatus = 'draft' | 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 export type PaymentMethod = 'credit_card' | 'paypal' | 'stripe' | 'cod';
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 

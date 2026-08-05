@@ -53,6 +53,8 @@ export const Orders: React.FC = () => {
         return <span className="px-2.5 py-0.5 rounded-xs bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold uppercase flex items-center gap-1"><Clock className="w-3 h-3" /><span>Processing</span></span>;
       case 'cancelled':
         return <span className="px-2.5 py-0.5 rounded-xs bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold uppercase flex items-center gap-1"><XCircle className="w-3 h-3" /><span>Cancelled</span></span>;
+      case 'draft':
+        return <span className="px-2.5 py-0.5 rounded-xs bg-gray-100 text-gray-700 border border-gray-200 text-[11px] font-bold uppercase">Draft</span>;
       default:
         return <span className="px-2.5 py-0.5 rounded-xs bg-gray-100 text-gray-700 border border-gray-200 text-[11px] font-bold uppercase">Pending</span>;
     }
@@ -92,6 +94,9 @@ export const Orders: React.FC = () => {
               </div>
 
               {/* Order Items Breakdown */}
+              {order.order_status === 'draft' && (
+                <p className="text-[11px] text-[#757575]">This draft order can still be edited.</p>
+              )}
               <div className="space-y-1.5">
                 {order.items?.map((item) => (
                   <div key={item.id} className="flex flex-wrap justify-between items-center gap-2 text-xs p-2.5 rounded-xs bg-[#EFF0F5]/50 border border-gray-100">
@@ -101,11 +106,13 @@ export const Orders: React.FC = () => {
                     <span className="font-bold text-[#F85606]">
                       Rs. {Number(item.price_per_item).toFixed(2)} / ea
                     </span>
-                    <div className="flex items-center gap-1.5">
-                      <input type="number" min="1" value={itemQuantities[item.id] ?? item.quantity} onChange={(e) => setItemQuantities({ ...itemQuantities, [item.id]: Math.max(1, Number(e.target.value) || 1) })} className="w-14 p-1 border border-gray-300 rounded-xs text-xs font-mono" aria-label="Item quantity" />
-                      <button onClick={() => updateItem(order.id, item.id, itemQuantities[item.id] ?? item.quantity)} disabled={updatingItemId === item.id} className="p-1 text-[#F85606] hover:bg-[#FFE8DE]" title="Update quantity"><Save className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => deleteItem(order.id, item.id)} className="p-1 text-rose-600 hover:bg-rose-50" title="Remove item"><Trash2 className="w-3.5 h-3.5" /></button>
-                    </div>
+                    {order.order_status === 'draft' && (
+                      <div className="flex items-center gap-1.5">
+                        <input type="number" min="1" value={itemQuantities[item.id] ?? item.quantity} onChange={(e) => setItemQuantities({ ...itemQuantities, [item.id]: Math.max(1, Number(e.target.value) || 1) })} className="w-14 p-1 border border-gray-300 rounded-xs text-xs font-mono" aria-label="Item quantity" />
+                        <button onClick={() => updateItem(order.id, item.id, itemQuantities[item.id] ?? item.quantity)} disabled={updatingItemId === item.id} className="p-1 text-[#F85606] hover:bg-[#FFE8DE]" title="Update quantity"><Save className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => deleteItem(order.id, item.id)} className="p-1 text-rose-600 hover:bg-rose-50" title="Remove item"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
