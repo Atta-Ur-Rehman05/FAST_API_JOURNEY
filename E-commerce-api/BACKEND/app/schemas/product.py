@@ -58,7 +58,8 @@ class ProductBase(BaseModel):
     category_id: int
 
 class ProductCreate(ProductBase):
-    pass
+    variants: List[ProductVariantCreate] = Field(default_factory=list)
+    images: List[ProductImageCreate] = Field(default_factory=list)
 
 class ProductUpdate(BaseModel):
     name: Optional[str] = None

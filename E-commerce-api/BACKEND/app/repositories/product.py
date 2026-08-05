@@ -73,10 +73,10 @@ class ProductRepository:
         return (await self.session.execute(stmt)).scalar_one()
 
     async def create(self, product_in: ProductCreate) -> Product:
-        product = Product(**product_in.model_dump())
+        product = Product(**product_in.model_dump(exclude={"variants", "images"}))
         self.session.add(product)
-        await self.session.commit()
-        return await self.get_by_id(product.id)
+        await self.session.flush()
+        return product
 
     async def update(self, product: Product, product_in: ProductUpdate) -> Product:
         update_data = product_in.model_dump(exclude_unset=True)
@@ -84,12 +84,12 @@ class ProductRepository:
             setattr(product, field, value)
 
         self.session.add(product)
-        await self.session.commit()
-        return await self.get_by_id(product.id)
+        await self.session.flush()
+        return product
 
     async def delete(self, product: Product) -> None:
         await self.session.delete(product)
-        await self.session.commit()
+        await self.session.flush()
 
 
 class ProductVariantRepository:
@@ -113,8 +113,7 @@ class ProductVariantRepository:
     ) -> ProductVariant:
         variant = ProductVariant(product_id=product_id, **variant_in.model_dump())
         self.session.add(variant)
-        await self.session.commit()
-        await self.session.refresh(variant)
+        await self.session.flush()
         return variant
 
     async def update(
@@ -125,13 +124,12 @@ class ProductVariantRepository:
             setattr(variant, field, value)
 
         self.session.add(variant)
-        await self.session.commit()
-        await self.session.refresh(variant)
+        await self.session.flush()
         return variant
 
     async def delete(self, variant: ProductVariant) -> None:
         await self.session.delete(variant)
-        await self.session.commit()
+        await self.session.flush()
 
 
 class ProductImageRepository:
@@ -147,8 +145,7 @@ class ProductImageRepository:
     async def create(self, product_id: UUID, image_in: ProductImageCreate) -> ProductImage:
         image = ProductImage(product_id=product_id, **image_in.model_dump())
         self.session.add(image)
-        await self.session.commit()
-        await self.session.refresh(image)
+        await self.session.flush()
         return image
 
     async def update(
@@ -159,13 +156,12 @@ class ProductImageRepository:
             setattr(image, field, value)
 
         self.session.add(image)
-        await self.session.commit()
-        await self.session.refresh(image)
+        await self.session.flush()
         return image
 
     async def delete(self, image: ProductImage) -> None:
         await self.session.delete(image)
-        await self.session.commit()
+        await self.session.flush()
 
     async def unset_primary_images(self, product_id: UUID) -> None:
         result = await self.session.execute(

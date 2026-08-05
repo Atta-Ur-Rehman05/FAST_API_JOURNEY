@@ -5,7 +5,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.models import Address, Cart, ProductVariant
+from app.models.models import Address, Cart, Payment, ProductVariant
 from app.repositories.checkout import CheckoutRepository
 from app.schemas.checkout import CheckoutCreate
 
@@ -84,9 +84,11 @@ class CheckoutService:
                             "Idempotency-Key was already used with a different checkout request."
                         )
                     if checkout_request.order_id is not None:
-                        return await self.checkout_repo.get_checkout_result(
+                        result = await self.checkout_repo.get_checkout_result(
                             checkout_request.order_id
                         )
+                        await self.checkout_repo.session.commit()
+                        return result
                 else:
                     checkout_request = await self.checkout_repo.create_checkout_request(
                         user_id=user_id,
@@ -120,8 +122,10 @@ class CheckoutService:
             # must not trigger lazy loading from an async session.
             return await self.checkout_repo.get_checkout_result(order.id)
         except CheckoutServiceError:
-            # Validation errors happen before a database write.  Leave the
-            # session usable; the request-scoped session will close normally.
+            # A request record may already have been flushed before a later
+            # validation fails.  The service owns the entire unit of work, so
+            # it must clear it rather than leaving a partial checkout pending.
+            await self.checkout_repo.session.rollback()
             raise
         except Exception:
             await self.checkout_repo.session.rollback()
@@ -163,3 +167,15 @@ class CheckoutService:
     def _validate_stock(self, variant: ProductVariant, quantity: int) -> None:
         if quantity > variant.stock_quantity - variant.reserved_quantity:
             raise InsufficientStockError("Requested quantity exceeds available stock.")
+
+    async def set_payment_transaction_id(
+        self, payment: Payment, transaction_id: str
+    ) -> None:
+        """Persist provider metadata as a separate, service-owned unit of work."""
+        try:
+            payment.transaction_id = transaction_id
+            self.checkout_repo.session.add(payment)
+            await self.checkout_repo.session.commit()
+        except Exception:
+            await self.checkout_repo.session.rollback()
+            raise

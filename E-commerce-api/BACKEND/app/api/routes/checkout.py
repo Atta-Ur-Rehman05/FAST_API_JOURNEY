@@ -76,9 +76,7 @@ async def checkout(
             # The provider-generated ID is the only transaction identifier
             # trusted by this API.
             if payment.transaction_id != intent.id:
-                payment.transaction_id = intent.id
-                session.add(payment)
-                await session.commit()
+                await checkout_service.set_payment_transaction_id(payment, intent.id)
             stripe_client_secret = intent.client_secret
         return {
             "order": order,

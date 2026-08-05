@@ -23,6 +23,29 @@ async def test_create_product(client: AsyncClient, auth_headers_admin: dict, tes
     assert "id" in data
 
 @pytest.mark.asyncio
+async def test_create_product_with_variants_and_images_is_atomic(client: AsyncClient, auth_headers_admin: dict, test_category_id: int):
+    response = await client.post("/api/v1/products/", json={
+        "category_id": test_category_id,
+        "name": "Bundled Product",
+        "slug": "bundled-product",
+        "base_price": 99.99,
+        "variants": [
+            {"sku": "BUNDLED-S", "stock_quantity": 5},
+            {"sku": "BUNDLED-L", "price_modifier": 10, "stock_quantity": 3},
+        ],
+        "images": [
+            {"image_url": "https://example.com/primary.jpg", "is_primary": True},
+            {"image_url": "https://example.com/alternate.jpg"},
+        ],
+    }, headers=auth_headers_admin)
+
+    assert response.status_code == 201, response.text
+    data = response.json()
+    assert {variant["sku"] for variant in data["variants"]} == {"BUNDLED-S", "BUNDLED-L"}
+    assert len(data["images"]) == 2
+    assert sum(image["is_primary"] for image in data["images"]) == 1
+
+@pytest.mark.asyncio
 async def test_get_product(client: AsyncClient, auth_headers_admin: dict, test_category_id: int):
     create_res = await client.post("/api/v1/products/", json={
         "category_id": test_category_id, "name": "Prod2", "slug": "prod2", "base_price": 10

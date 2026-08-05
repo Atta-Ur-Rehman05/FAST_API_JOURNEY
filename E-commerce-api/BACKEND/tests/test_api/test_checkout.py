@@ -19,6 +19,7 @@ async def test_checkout_errors(client: AsyncClient, auth_headers_customer: dict,
     )
     db_session.add(addr)
     await db_session.commit()
+    address_id = str(addr.id)
 
     # 1. AddressNotFoundError
     res_not_found = await client.post("/api/v1/checkout/", json={
@@ -39,16 +40,16 @@ async def test_checkout_errors(client: AsyncClient, auth_headers_customer: dict,
     other_token = login_res.json()["access_token"]
     
     res_ownership = await client.post("/api/v1/checkout/", json={
-        "shipping_address_id": str(addr.id),
-        "billing_address_id": str(addr.id),
+        "shipping_address_id": address_id,
+        "billing_address_id": address_id,
         "payment_method": "credit_card"
     }, headers={"Authorization": f"Bearer {other_token}"})
     assert res_ownership.status_code in [400, 403]
 
     # 3. CartNotFoundError or EmptyCartError
     checkout_data = {
-        "shipping_address_id": str(addr.id),
-        "billing_address_id": str(addr.id),
+        "shipping_address_id": address_id,
+        "billing_address_id": address_id,
         "payment_method": "credit_card"     
     }
     response = await client.post("/api/v1/checkout/", json=checkout_data, headers=auth_headers_customer)

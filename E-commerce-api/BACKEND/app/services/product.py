@@ -88,7 +88,21 @@ class ProductService:
             raise DuplicateProductSlugError("A product with this slug already exists.")
 
         await self._validate_category(product_in.category_id)
-        return await self.product_repo.create(product_in)
+        await self._validate_new_variants(product_in.variants)
+        if sum(image.is_primary for image in product_in.images) > 1:
+            raise ProductServiceError("Only one product image can be primary.")
+
+        try:
+            product = await self.product_repo.create(product_in)
+            for variant_in in product_in.variants:
+                await self.variant_repo.create(product.id, variant_in)
+            for image_in in product_in.images:
+                await self.image_repo.create(product.id, image_in)
+            await self.session.commit()
+        except Exception:
+            await self.session.rollback()
+            raise
+        return await self.get_product(product.id)
 
     async def get_product(self, product_id: UUID) -> Product:
         product = await self.product_repo.get_by_id(product_id)
@@ -111,11 +125,22 @@ class ProductService:
         if product_in.category_id is not None:
             await self._validate_category(product_in.category_id)
 
-        return await self.product_repo.update(product, product_in)
+        try:
+            await self.product_repo.update(product, product_in)
+            await self.session.commit()
+        except Exception:
+            await self.session.rollback()
+            raise
+        return await self.get_product(product.id)
 
     async def delete_product(self, product_id: UUID) -> None:
         product = await self.get_product(product_id)
-        await self.product_repo.delete(product)
+        try:
+            await self.product_repo.delete(product)
+            await self.session.commit()
+        except Exception:
+            await self.session.rollback()
+            raise
 
     async def create_variant(
         self, product_id: UUID, variant_in: ProductVariantCreate
@@ -127,7 +152,13 @@ class ProductService:
                 "A product variant with this SKU already exists."
             )
 
-        return await self.variant_repo.create(product_id, variant_in)
+        try:
+            variant = await self.variant_repo.create(product_id, variant_in)
+            await self.session.commit()
+        except Exception:
+            await self.session.rollback()
+            raise
+        return variant
 
     async def update_variant(
         self,
@@ -144,11 +175,22 @@ class ProductService:
                     "A product variant with this SKU already exists."
                 )
 
-        return await self.variant_repo.update(variant, variant_in)
+        try:
+            await self.variant_repo.update(variant, variant_in)
+            await self.session.commit()
+        except Exception:
+            await self.session.rollback()
+            raise
+        return variant
 
     async def delete_variant(self, product_id: UUID, variant_id: UUID) -> None:
         variant = await self._get_product_variant(product_id, variant_id)
-        await self.variant_repo.delete(variant)
+        try:
+            await self.variant_repo.delete(variant)
+            await self.session.commit()
+        except Exception:
+            await self.session.rollback()
+            raise
 
     async def create_image(
         self, product_id: UUID, image_in: ProductImageCreate
@@ -157,7 +199,13 @@ class ProductService:
         if image_in.is_primary:
             await self.image_repo.unset_primary_images(product_id)
 
-        return await self.image_repo.create(product_id, image_in)
+        try:
+            image = await self.image_repo.create(product_id, image_in)
+            await self.session.commit()
+        except Exception:
+            await self.session.rollback()
+            raise
+        return image
 
     async def update_image(
         self,
@@ -169,16 +217,38 @@ class ProductService:
         if image_in.is_primary:
             await self.image_repo.unset_primary_images(product_id)
 
-        return await self.image_repo.update(image, image_in)
+        try:
+            await self.image_repo.update(image, image_in)
+            await self.session.commit()
+        except Exception:
+            await self.session.rollback()
+            raise
+        return image
 
     async def delete_image(self, product_id: UUID, image_id: int) -> None:
         image = await self._get_product_image(product_id, image_id)
-        await self.image_repo.delete(image)
+        try:
+            await self.image_repo.delete(image)
+            await self.session.commit()
+        except Exception:
+            await self.session.rollback()
+            raise
 
     async def _validate_category(self, category_id: int) -> None:
         category = await self.category_repo.get_by_id(category_id)
         if category is None:
             raise ProductCategoryNotFoundError("Category not found.")
+
+    async def _validate_new_variants(
+        self, variants: list[ProductVariantCreate]
+    ) -> None:
+        seen_skus: set[str] = set()
+        for variant in variants:
+            if variant.sku in seen_skus or await self.variant_repo.get_by_sku(variant.sku):
+                raise DuplicateProductVariantSkuError(
+                    "A product variant with this SKU already exists."
+                )
+            seen_skus.add(variant.sku)
 
     async def _get_product_variant(
         self, product_id: UUID, variant_id: UUID
