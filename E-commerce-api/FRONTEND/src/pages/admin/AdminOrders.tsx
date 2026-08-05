@@ -3,6 +3,24 @@ import { RefreshCw, Trash2 } from 'lucide-react';
 import type { Order, OrderStatus, PaginatedResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
 
+const statusLabels: Record<OrderStatus, string> = {
+  draft: 'Draft',
+  pending: 'Pending',
+  processing: 'Processing',
+  shipped: 'Shipped',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
+};
+
+const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
+  draft: ['cancelled'],
+  pending: ['processing', 'cancelled'],
+  processing: ['shipped', 'cancelled'],
+  shipped: ['delivered'],
+  delivered: [],
+  cancelled: [],
+};
+
 export const AdminOrders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,8 +86,8 @@ export const AdminOrders: React.FC = () => {
                   <th className="px-4 py-3">Order ID</th>
                   <th className="px-4 py-3">Total Amount</th>
                   <th className="px-4 py-3">Current Status</th>
-                  <th className="px-4 py-3">Update Status</th>
                   <th className="px-4 py-3">Actions</th>
+                  <th className="px-4 py-3">Update Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -88,15 +106,14 @@ export const AdminOrders: React.FC = () => {
                     <td className="px-4 py-3">
                       <select
                         value={o.order_status}
-                        disabled={updatingId === o.id}
+                        disabled={updatingId === o.id || allowedTransitions[o.order_status].length === 0}
                         onChange={(e) => handleUpdateStatus(o.id, e.target.value as OrderStatus)}
                         className="px-2.5 py-1 bg-white border border-gray-300 rounded-xs text-[#212121] font-mono text-xs focus:outline-none focus:border-[#F85606]"
                       >
-                        <option value="pending">Pending</option>
-                        <option value="processing">Processing</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option value={o.order_status}>{statusLabels[o.order_status]}</option>
+                        {allowedTransitions[o.order_status].map((status) => (
+                          <option key={status} value={status}>{statusLabels[status]}</option>
+                        ))}
                       </select>
                     </td>
                   </tr>
