@@ -25,6 +25,10 @@ async def get_current_user(session: SessionDep, token: TokenDep) -> User:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
+        # Refresh tokens are only valid at the refresh endpoint.  They must
+        # never be accepted as bearer credentials for application routes.
+        if payload.get("type") != "access":
+            raise credentials_exception
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception

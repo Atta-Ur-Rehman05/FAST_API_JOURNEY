@@ -81,5 +81,14 @@ async def test_read_users_me(client: AsyncClient, auth_headers_customer: dict):
     data = response.json()
     assert "email" in data
 
+@pytest.mark.asyncio
+async def test_health_exposes_request_id_and_security_headers(client: AsyncClient):
+    response = await client.get("/health", headers={"X-Request-ID": "request-123"})
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+    assert response.headers["X-Request-ID"] == "request-123"
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "DENY"
+    assert response.headers["Content-Security-Policy"] == "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
 
 

@@ -3,7 +3,8 @@ from datetime import timedelta
 from jose import jwt
 from uuid import uuid4
 from fastapi import HTTPException
-from app.core.security import get_password_hash, verify_password, create_access_token
+from app.core.security import (create_access_token, create_refresh_token,
+                               get_password_hash, verify_password)
 from app.core.config import settings
 from app.api.dependencies import get_current_user
 from app.models.models import User, RoleType
@@ -50,3 +51,10 @@ async def test_auth_dependencies_invalid_token(db_session):
     with pytest.raises(HTTPException) as exc4:
         await get_current_user(db_session, non_existent_uuid_token)
     assert exc4.value.status_code == 401
+
+    # A refresh credential can only be used to rotate tokens; it is never an
+    # application bearer credential.
+    refresh_token, _, _ = create_refresh_token(subject=str(uuid4()))
+    with pytest.raises(HTTPException) as exc5:
+        await get_current_user(db_session, refresh_token)
+    assert exc5.value.status_code == 401
