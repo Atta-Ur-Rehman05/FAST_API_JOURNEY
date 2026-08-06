@@ -1,3 +1,5 @@
+# this file contain the checkout repo stuffs
+
 from decimal import Decimal
 from typing import Optional
 from uuid import UUID
