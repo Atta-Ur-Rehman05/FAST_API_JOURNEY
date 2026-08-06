@@ -1,3 +1,5 @@
+# this file contain the inventory repo
+
 from typing import Optional
 from uuid import UUID
 
