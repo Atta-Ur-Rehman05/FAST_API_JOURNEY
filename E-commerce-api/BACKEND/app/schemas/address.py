@@ -1,6 +1,6 @@
 #  this file contain address schema
 
-import re
+import re    # regular expression validation phone and postel code 
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
