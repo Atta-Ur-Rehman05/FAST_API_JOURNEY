@@ -6,34 +6,6 @@ from uuid import UUID
 from datetime import datetime
 from app.models.models import RoleType, AddressType
 
-# Address Schemas
-class AddressBase(BaseModel):
-    address_type: AddressType
-    street_address: str
-    city: str
-    state: str
-    postal_code: str
-    country: str
-    phone_number: str
-
-class AddressCreate(AddressBase):
-    pass
-
-class AddressUpdate(BaseModel):
-    address_type: Optional[AddressType] = None
-    street_address: Optional[str] = None
-    city: Optional[str] = None
-    state: Optional[str] = None
-    postal_code: Optional[str] = None
-    country: Optional[str] = None
-    phone_number: Optional[str] = None
-
-class AddressResponse(AddressBase):
-    id: UUID
-    user_id: UUID
-
-    model_config = ConfigDict(from_attributes=True)
-
 # User Schemas
 class UserBase(BaseModel):
     email: EmailStr
