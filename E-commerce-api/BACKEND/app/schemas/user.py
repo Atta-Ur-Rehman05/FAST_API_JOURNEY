@@ -1,3 +1,5 @@
+# this file contain the user schemas
+
 from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
 from typing import Optional, List
 from uuid import UUID
@@ -45,10 +47,10 @@ class UserCreate(UserBase):
     @field_validator("password")
     @classmethod
     def validate_password(cls, value: str) -> str:
-        from app.core.security import validate_password_policy
+        from app.core.security import validate_password_policy      # this prevnet circular import
         return validate_password_policy(value)
 
-class UserUpdate(BaseModel):
+class UserUpdate(BaseModel):      # partial update schema
     email: Optional[EmailStr] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
