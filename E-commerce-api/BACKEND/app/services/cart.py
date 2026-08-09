@@ -2,6 +2,7 @@
 
 from uuid import UUID
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import Cart, CartItem, ProductVariant
@@ -49,7 +50,11 @@ class CartService:
         if cart:
             return cart
 
-        return await self.cart_repo.create_for_user(user_id)
+        try:
+            return await self.cart_repo.create_for_user(user_id)
+        except IntegrityError:
+            await self.cart_repo.session.rollback()
+            return await self.cart_repo.get_by_user_id(user_id)
 
     async def add_item(self, user_id: UUID, item_in: CartItemCreate) -> CartItem:
         cart = await self.get_or_create_cart(user_id)
@@ -69,7 +74,20 @@ class CartService:
                 cart, existing_item, new_quantity
             )
 
-        return await self.cart_repo.add_item(cart, item_in)
+        try:
+            return await self.cart_repo.add_item(cart, item_in)
+        except IntegrityError:
+            await self.cart_repo.session.rollback()
+            existing_item = await self.cart_repo.get_item_by_cart_and_variant(
+                cart.id, item_in.variant_id
+            )
+            if existing_item:
+                new_quantity = existing_item.quantity + item_in.quantity
+                self._validate_stock(variant, new_quantity)
+                return await self.cart_repo.update_item_quantity(
+                    cart, existing_item, new_quantity
+                )
+            raise
 
     async def update_item(
         self, user_id: UUID, item_id: int, item_in: CartItemUpdate

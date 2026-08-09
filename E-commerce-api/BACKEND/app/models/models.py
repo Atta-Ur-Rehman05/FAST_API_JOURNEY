@@ -278,7 +278,10 @@ class CartItem(Base):
     cart = relationship("Cart", back_populates="items")
     variant = relationship("ProductVariant")
 
-    __table_args__ = (CheckConstraint("quantity > 0", name="ck_cart_items_quantity_positive"),)
+    __table_args__ = (
+        UniqueConstraint("cart_id", "variant_id", name="uq_cart_items_cart_variant"),
+        CheckConstraint("quantity > 0", name="ck_cart_items_quantity_positive"),
+    )
 
     @property
     def unit_price(self) -> Decimal:
