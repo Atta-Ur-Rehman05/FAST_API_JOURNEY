@@ -110,6 +110,25 @@ class ProductVariantRepository:
         )
         return result.scalars().first()
 
+    async def get_by_skus(self, skus: list[str]) -> list[ProductVariant]:
+        if not skus:
+            return []
+        result = await self.session.execute(
+            select(ProductVariant).where(ProductVariant.sku.in_(skus))
+        )
+        return list(result.scalars().all())
+
+    async def get_by_id_and_product(
+        self, variant_id: UUID, product_id: UUID
+    ) -> Optional[ProductVariant]:
+        result = await self.session.execute(
+            select(ProductVariant).where(
+                ProductVariant.id == variant_id,
+                ProductVariant.product_id == product_id,
+            )
+        )
+        return result.scalars().first()
+
     async def create(
         self, product_id: UUID, variant_in: ProductVariantCreate
     ) -> ProductVariant:
@@ -141,6 +160,17 @@ class ProductImageRepository:
     async def get_by_id(self, image_id: int) -> Optional[ProductImage]:
         result = await self.session.execute(
             select(ProductImage).where(ProductImage.id == image_id)
+        )
+        return result.scalars().first()
+
+    async def get_by_id_and_product(
+        self, image_id: int, product_id: UUID
+    ) -> Optional[ProductImage]:
+        result = await self.session.execute(
+            select(ProductImage).where(
+                ProductImage.id == image_id,
+                ProductImage.product_id == product_id,
+            )
         )
         return result.scalars().first()
 

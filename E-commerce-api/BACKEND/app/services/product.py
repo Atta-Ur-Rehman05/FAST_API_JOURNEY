@@ -1,6 +1,7 @@
 from typing import Optional
 from uuid import UUID
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.models import Product, ProductImage, ProductVariant
@@ -99,6 +100,16 @@ class ProductService:
             for image_in in product_in.images:
                 await self.image_repo.create(product.id, image_in)
             await self.session.commit()
+        except IntegrityError as exc:
+            await self.session.rollback()
+            err_msg = str(exc).lower()
+            if "slug" in err_msg:
+                raise DuplicateProductSlugError("A product with this slug already exists.") from exc
+            if "sku" in err_msg:
+                raise DuplicateProductVariantSkuError("A product variant with this SKU already exists.") from exc
+            if "is_primary" in err_msg or "one_primary_per_product" in err_msg:
+                raise ProductServiceError("Only one product image can be primary.") from exc
+            raise ProductServiceError("Data integrity error during product creation.") from exc
         except Exception:
             await self.session.rollback()
             raise
@@ -128,6 +139,12 @@ class ProductService:
         try:
             await self.product_repo.update(product, product_in)
             await self.session.commit()
+        except IntegrityError as exc:
+            await self.session.rollback()
+            err_msg = str(exc).lower()
+            if "slug" in err_msg:
+                raise DuplicateProductSlugError("A product with this slug already exists.") from exc
+            raise ProductServiceError("Data integrity error during product update.") from exc
         except Exception:
             await self.session.rollback()
             raise
@@ -138,6 +155,9 @@ class ProductService:
         try:
             await self.product_repo.delete(product)
             await self.session.commit()
+        except IntegrityError as exc:
+            await self.session.rollback()
+            raise ProductServiceError("Cannot delete product with existing order history; deactivate it instead.") from exc
         except Exception:
             await self.session.rollback()
             raise
@@ -155,6 +175,12 @@ class ProductService:
         try:
             variant = await self.variant_repo.create(product_id, variant_in)
             await self.session.commit()
+        except IntegrityError as exc:
+            await self.session.rollback()
+            err_msg = str(exc).lower()
+            if "sku" in err_msg:
+                raise DuplicateProductVariantSkuError("A product variant with this SKU already exists.") from exc
+            raise ProductServiceError("Data integrity error during variant creation.") from exc
         except Exception:
             await self.session.rollback()
             raise
@@ -178,6 +204,12 @@ class ProductService:
         try:
             await self.variant_repo.update(variant, variant_in)
             await self.session.commit()
+        except IntegrityError as exc:
+            await self.session.rollback()
+            err_msg = str(exc).lower()
+            if "sku" in err_msg:
+                raise DuplicateProductVariantSkuError("A product variant with this SKU already exists.") from exc
+            raise ProductServiceError("Data integrity error during variant update.") from exc
         except Exception:
             await self.session.rollback()
             raise
@@ -202,6 +234,12 @@ class ProductService:
         try:
             image = await self.image_repo.create(product_id, image_in)
             await self.session.commit()
+        except IntegrityError as exc:
+            await self.session.rollback()
+            err_msg = str(exc).lower()
+            if "is_primary" in err_msg or "one_primary_per_product" in err_msg:
+                raise ProductServiceError("Only one product image can be primary.") from exc
+            raise ProductServiceError("Data integrity error during image creation.") from exc
         except Exception:
             await self.session.rollback()
             raise
@@ -220,6 +258,12 @@ class ProductService:
         try:
             await self.image_repo.update(image, image_in)
             await self.session.commit()
+        except IntegrityError as exc:
+            await self.session.rollback()
+            err_msg = str(exc).lower()
+            if "is_primary" in err_msg or "one_primary_per_product" in err_msg:
+                raise ProductServiceError("Only one product image can be primary.") from exc
+            raise ProductServiceError("Data integrity error during image update.") from exc
         except Exception:
             await self.session.rollback()
             raise
@@ -242,34 +286,39 @@ class ProductService:
     async def _validate_new_variants(
         self, variants: list[ProductVariantCreate]
     ) -> None:
+        if not variants:
+            return
+
         seen_skus: set[str] = set()
+        skus_to_check: list[str] = []
         for variant in variants:
-            if variant.sku in seen_skus or await self.variant_repo.get_by_sku(variant.sku):
+            if variant.sku in seen_skus:
                 raise DuplicateProductVariantSkuError(
                     "A product variant with this SKU already exists."
                 )
             seen_skus.add(variant.sku)
+            skus_to_check.append(variant.sku)
+
+        existing_variants = await self.variant_repo.get_by_skus(skus_to_check)
+        if existing_variants:
+            raise DuplicateProductVariantSkuError(
+                "A product variant with this SKU already exists."
+            )
 
     async def _get_product_variant(
         self, product_id: UUID, variant_id: UUID
     ) -> ProductVariant:
-        await self.get_product(product_id)
-        variant = await self.variant_repo.get_by_id(variant_id)
+        variant = await self.variant_repo.get_by_id_and_product(variant_id, product_id)
         if variant is None:
+            if await self.variant_repo.get_by_id(variant_id):
+                raise ProductOwnershipError("Product variant does not belong to product.")
             raise ProductVariantNotFoundError("Product variant not found.")
-
-        if variant.product_id != product_id:
-            raise ProductOwnershipError("Product variant does not belong to product.")
-
         return variant
 
     async def _get_product_image(self, product_id: UUID, image_id: int) -> ProductImage:
-        await self.get_product(product_id)
-        image = await self.image_repo.get_by_id(image_id)
+        image = await self.image_repo.get_by_id_and_product(image_id, product_id)
         if image is None:
+            if await self.image_repo.get_by_id(image_id):
+                raise ProductOwnershipError("Product image does not belong to product.")
             raise ProductImageNotFoundError("Product image not found.")
-
-        if image.product_id != product_id:
-            raise ProductOwnershipError("Product image does not belong to product.")
-
         return image

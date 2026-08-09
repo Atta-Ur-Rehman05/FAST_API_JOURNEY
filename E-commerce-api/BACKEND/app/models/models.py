@@ -224,6 +224,13 @@ class ProductImage(Base):
     # Relationships
     product = relationship("Product", back_populates="images")
 
+    __table_args__ = (
+        Index(
+            "uq_product_images_one_primary_per_product", "product_id", unique=True,
+            postgresql_where=text("is_primary"), sqlite_where=text("is_primary"),
+        ),
+    )
+
 
 # ============================
 # Reviews Module
