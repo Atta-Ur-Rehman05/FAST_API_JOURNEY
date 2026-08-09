@@ -1,4 +1,4 @@
-"""Shared UTC timestamp helpers."""
+# this file contain the shared UTC timestamp helpers
 
 from datetime import UTC, datetime
 
