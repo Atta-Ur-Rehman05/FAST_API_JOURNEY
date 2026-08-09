@@ -1,3 +1,4 @@
+# this file contain the category service logic
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,36 +8,37 @@ from app.repositories.category import CategoryRepository
 from app.schemas.category import CategoryCreate, CategoryTreeResponse, CategoryUpdate
 
 
-class CategoryServiceError(Exception):
+class CategoryServiceError(Exception):  # base class for all category service errors
     def __init__(self, detail: str):
         self.detail = detail
         super().__init__(detail)
 
 
-class CategoryNotFoundError(CategoryServiceError):
+class CategoryNotFoundError(CategoryServiceError):  # raised when a category is not found
     pass
 
 
-class ParentCategoryNotFoundError(CategoryServiceError):
+class ParentCategoryNotFoundError(CategoryServiceError):  # raised when a parent category is not found
     pass
 
 
-class DuplicateCategorySlugError(CategoryServiceError):
+class DuplicateCategorySlugError(CategoryServiceError):  # raised when a category with the same slug already exists
     pass
 
 
-class InvalidCategoryParentError(CategoryServiceError):
+class InvalidCategoryParentError(CategoryServiceError):  # raised when a category cannot be its own parent or a descendant
     pass
 
 
-class CategoryDeleteRestrictedError(CategoryServiceError):
+class CategoryDeleteRestrictedError(CategoryServiceError):  # raised when a category cannot be deleted because it has child categories or products
     pass
 
 
 class CategoryService:
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession):  # initialize the category service with the session
         self.category_repo = CategoryRepository(session)
 
+    # list all categories
     async def list_categories(
         self,
         *,
@@ -54,13 +56,16 @@ class CategoryService:
             search=search,
         )
 
+    # get category tree
     async def get_category_tree(self) -> list[CategoryTreeResponse]:
         categories = await self.category_repo.list_all()
         return self._build_category_tree(categories)
 
+    # count categories
     async def count_categories(self, **filters) -> int:
         return await self.category_repo.count(**filters)
 
+    # create category
     async def create_category(self, category_in: CategoryCreate) -> Category:
         existing_category = await self.category_repo.get_by_slug(category_in.slug)
         if existing_category:
@@ -69,12 +74,14 @@ class CategoryService:
         await self._validate_parent(category_in.parent_id)
         return await self.category_repo.create(category_in)
 
+    # get category by id
     async def get_category(self, category_id: int) -> Category:
         category = await self.category_repo.get_by_id(category_id)
         if category is None:
             raise CategoryNotFoundError("Category not found.")
         return category
 
+    # update category
     async def update_category(
         self, category_id: int, category_in: CategoryUpdate
     ) -> Category:
@@ -90,6 +97,7 @@ class CategoryService:
         await self._validate_parent(category_in.parent_id, category_id=category_id)
         return await self.category_repo.update(category, category_in)
 
+    # delete category
     async def delete_category(self, category_id: int) -> None:
         category = await self.get_category(category_id)
 
@@ -105,6 +113,7 @@ class CategoryService:
 
         await self.category_repo.delete(category)
 
+    # validate parent
     async def _validate_parent(
         self,
         parent_id: Optional[int],
@@ -128,10 +137,11 @@ class CategoryService:
                 "A category cannot be moved under one of its descendants."
             )
 
+    # build category tree    , this algorithm is O(n)
     def _build_category_tree(
         self, categories: list[Category]
     ) -> list[CategoryTreeResponse]:
-        category_map = {
+        category_map = {                                # create a map of categories
             category.id: CategoryTreeResponse(
                 id=category.id,
                 name=category.name,
@@ -141,13 +151,13 @@ class CategoryService:
             )
             for category in categories
         }
-        roots = []
+        roots = []   # list of root categories
 
         for category in categories:
-            node = category_map[category.id]
+            node = category_map[category.id]  # get the node from the map
             if category.parent_id and category.parent_id in category_map:
-                category_map[category.parent_id].children.append(node)
+                category_map[category.parent_id].children.append(node)  # append the node to its parent
             else:
-                roots.append(node)
+                roots.append(node)  # append the node to the roots list
 
         return roots

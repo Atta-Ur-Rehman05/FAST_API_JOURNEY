@@ -1,3 +1,5 @@
+# this file contain the cart service logic
+
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,42 +9,42 @@ from app.repositories.cart import CartProductVariantRepository, CartRepository
 from app.schemas.cart import CartItemCreate, CartItemUpdate
 
 
-class CartServiceError(Exception):
-    def __init__(self, detail: str):
+class CartServiceError(Exception):     # base class for all cart service errors
+    def __init__(self, detail: str):  # initialize the cart service error with the detail
         self.detail = detail
         super().__init__(detail)
 
 
-class CartNotFoundError(CartServiceError):
+class CartNotFoundError(CartServiceError):    # raised when a cart is not found
     pass
 
 
-class CartItemNotFoundError(CartServiceError):
+class CartItemNotFoundError(CartServiceError):  # raised when a cart item is not found
     pass
 
 
-class CartItemOwnershipError(CartServiceError):
+class CartItemOwnershipError(CartServiceError):  # raised when a cart item does not belong to the user
     pass
 
 
-class ProductVariantNotFoundError(CartServiceError):
+class ProductVariantNotFoundError(CartServiceError):  # raised when a product variant is not found
     pass
 
 
-class ProductUnavailableError(CartServiceError):
+class ProductUnavailableError(CartServiceError):  # raised when a product is not available
     pass
 
 
-class InsufficientStockError(CartServiceError):
+class InsufficientStockError(CartServiceError):  # raised when a product is out of stock
     pass
 
 
 class CartService:
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession):  # initialize the cart service with the session
         self.cart_repo = CartRepository(session)
         self.variant_repo = CartProductVariantRepository(session)
 
-    async def get_or_create_cart(self, user_id: UUID) -> Cart:
+    async def get_or_create_cart(self, user_id: UUID) -> Cart:  # get or create a cart for the user 
         cart = await self.cart_repo.get_by_user_id(user_id)
         if cart:
             return cart
