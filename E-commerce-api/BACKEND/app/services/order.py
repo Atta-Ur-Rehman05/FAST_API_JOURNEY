@@ -122,6 +122,13 @@ class OrderService:
         self._validate_order_owner(order, user_id)
         return order
 
+    async def get_user_order_for_update(self, user_id: UUID, order_id: UUID) -> Order:
+        order = await self.order_repo.get_by_id_for_update(order_id)
+        if order is None:
+            raise OrderNotFoundError("Order not found.")
+        self._validate_order_owner(order, user_id)
+        return order
+
     async def update_order(self, order_id: UUID, order_in: OrderUpdate) -> Order:     # update order
         order = await self.get_order(order_id)
         self._validate_draft(order)
@@ -144,7 +151,10 @@ class OrderService:
         )
 
     async def transition_status(self, order_id: UUID, new_status: OrderStatus) -> Order:     # transition order status
-        order = await self.get_order(order_id)
+        order = await self.order_repo.get_by_id_for_update(order_id)
+        if order is None:
+            raise OrderNotFoundError("Order not found.")
+
         current_status = order.order_status
         allowed = {
             OrderStatus.draft: {OrderStatus.pending, OrderStatus.cancelled},
@@ -193,7 +203,7 @@ class OrderService:
                     # Validate stock and reserved quantities before mutating
                     if variant.stock_quantity < item.quantity:
                         raise InsufficientStockError(
-                            f"Cannot deliver order: stock quantity for variant {variant.id} is insufficient."
+                            f"Cannot deliver order: stock quantity for variant {variant.id} is lower than order item quantity."
                         )
                     if variant.reserved_quantity < item.quantity:
                         variant.reserved_quantity = item.quantity
@@ -211,7 +221,7 @@ class OrderService:
     async def add_item(         # add item to order
         self, user_id: UUID, order_id: UUID, item_in: OrderItemCreate
     ) -> OrderItem:
-        order = await self.get_user_order(user_id, order_id)
+        order = await self.get_user_order_for_update(user_id, order_id)
         self._validate_draft(order)
         variant = await self._get_available_variant(item_in.variant_id)
 
@@ -244,7 +254,7 @@ class OrderService:
     async def update_item(        # update item in order
         self, user_id: UUID, order_id: UUID, item_id: int, item_in: OrderItemUpdate
     ) -> OrderItem:
-        order = await self.get_user_order(user_id, order_id)
+        order = await self.get_user_order_for_update(user_id, order_id)
         self._validate_draft(order)
         item = await self._get_order_item(order, item_id)
         variant = await self._get_available_variant(item.variant_id)
@@ -260,7 +270,7 @@ class OrderService:
             raise
 
     async def delete_item(self, user_id: UUID, order_id: UUID, item_id: int) -> None:
-        order = await self.get_user_order(user_id, order_id)
+        order = await self.get_user_order_for_update(user_id, order_id)
         self._validate_draft(order)
         item = await self._get_order_item(order, item_id)
         try:

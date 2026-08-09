@@ -22,6 +22,15 @@ class OrderRepository:
         )
         return result.scalars().first()
 
+    async def get_by_id_for_update(self, order_id: UUID) -> Optional[Order]:
+        result = await self.session.execute(
+            select(Order)
+            .where(Order.id == order_id)
+            .with_for_update()
+            .options(selectinload(Order.items).selectinload(OrderItem.variant).selectinload(ProductVariant.product), selectinload(Order.payment), selectinload(Order.shipping_address), selectinload(Order.billing_address))
+        )
+        return result.scalars().first()
+
     async def list(
         self,
         *,
