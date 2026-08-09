@@ -1,3 +1,5 @@
+# this file is for checkout management logic
+
 from decimal import Decimal
 import hashlib
 import json

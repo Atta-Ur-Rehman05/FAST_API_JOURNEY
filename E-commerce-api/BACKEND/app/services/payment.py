@@ -1,5 +1,7 @@
 """Payment state-machine rules shared by provider-facing routes."""
 
+# this file contain the payment state-machine rules
+
 from app.models.models import Payment, PaymentStatus
 
 
