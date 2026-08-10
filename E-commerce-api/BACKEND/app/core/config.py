@@ -1,7 +1,10 @@
+# this file contain the shared configuration for the application
+# this mean that this file will be used by all the other modules in the application
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 
-class Settings(BaseSettings):
+class Settings(BaseSettings):  # configuration schema for the application
     DATABASE_URL: str
     SECRET_KEY: str
     ALGORITHM: str = "HS256"

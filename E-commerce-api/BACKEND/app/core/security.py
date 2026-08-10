@@ -1,3 +1,6 @@
+# this file contain the shared security utilities for the application
+# this mean that this file will be used by all the other modules in the application
+
 from datetime import UTC, datetime, timedelta
 from typing import Any, Union
 from uuid import uuid4
