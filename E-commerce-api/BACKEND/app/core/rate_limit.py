@@ -1,4 +1,8 @@
 """In-memory limiter for sensitive endpoints; replace with Redis when scaled."""
+
+# this file contain the shared rate limit utilities for the application
+# this mean that this file will be used by all the other modules in the application
+
 from collections import defaultdict, deque
 from threading import Lock
 from time import monotonic
