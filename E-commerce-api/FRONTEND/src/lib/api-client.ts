@@ -21,13 +21,44 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor: Redirect to login on 401 Unauthorized
+let refreshPromise: Promise<string | null> | null = null;
+
+export const refreshAccessToken = async (): Promise<string | null> => {
+  const refreshToken = localStorage.getItem('refresh_token');
+  if (!refreshToken) return null;
+  try {
+    const res = await axios.post(`${API_BASE_URL}/auth/refresh`, { refresh_token: refreshToken });
+    localStorage.setItem('access_token', res.data.access_token);
+    if (res.data.refresh_token) {
+      localStorage.setItem('refresh_token', res.data.refresh_token);
+    }
+    return res.data.access_token as string;
+  } catch (err) {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    return null;
+  }
+};
+
+// Response interceptor: try a silent refresh once on 401, then fall back to login redirect
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
+  async (error) => {
+    const originalRequest = error.config || {};
+    const isAuthEndpoint = (originalRequest.url || '').includes('/auth/');
+
+    if (error.response?.status === 401 && !isAuthEndpoint && !originalRequest.__retriedWithRefresh) {
+      originalRequest.__retriedWithRefresh = true;
+      if (!refreshPromise) {
+        refreshPromise = refreshAccessToken().finally(() => { refreshPromise = null; });
+      }
+      const newToken = await refreshPromise;
+      if (newToken) {
+        originalRequest.headers = { ...(originalRequest.headers || {}), Authorization: `Bearer ${newToken}` };
+        return apiClient(originalRequest);
+      }
       localStorage.removeItem('access_token');
-      // Redirect to login if not already on login/register page
+      localStorage.removeItem('refresh_token');
       if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
         window.location.href = '/login';
       }
