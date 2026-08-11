@@ -43,6 +43,7 @@ export interface Category {
   slug: string;
   parent_id?: number | null;
   subcategories?: Category[];
+  children?: Category[];
 }
 
 export interface ProductImage {
