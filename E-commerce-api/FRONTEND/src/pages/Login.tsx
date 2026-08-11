@@ -87,11 +87,18 @@ export const Login: React.FC = () => {
           </button>
         </form>
 
-        <div className="pt-2 border-t border-gray-200 text-center text-xs text-[#757575]">
-          Don't have an account yet?{' '}
-          <Link to="/register" className="text-[#F85606] font-bold hover:underline">
-            Create account
-          </Link>
+        <div className="pt-2 border-t border-gray-200 text-center text-xs text-[#757575] space-y-1">
+          <div>
+            Don't have an account yet?{' '}
+            <Link to="/register" className="text-[#F85606] font-bold hover:underline">
+              Create account
+            </Link>
+          </div>
+          <div>
+            <Link to="/forgot-password" className="text-[#F85606] font-bold hover:underline">
+              Forgot your password?
+            </Link>
+          </div>
         </div>
       </div>
     </div>
