@@ -54,6 +54,12 @@ def _raise_product_http_error(error: ProductServiceError) -> None:
     ):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error.detail)
 
+    # The service raises a plain ProductServiceError when the database refuses
+    # deletion because the product still has order or cart history.  Treat it
+    # as a conflict so the client sees a clear explanation instead of a 500.
+    if isinstance(error, ProductServiceError):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=error.detail)
+
     raise HTTPException(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         detail="Unexpected product service error.",

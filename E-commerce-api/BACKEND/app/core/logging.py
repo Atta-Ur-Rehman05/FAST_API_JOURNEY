@@ -11,6 +11,8 @@ class JsonFormatter(logging.Formatter):  # this is the base class for all the se
         for key in ("request_id", "method", "path", "status_code", "duration_ms"):
             if hasattr(record, key):
                 payload[key] = getattr(record, key)
+        if record.exc_info:
+            payload["exception"] = self.formatException(record.exc_info)
         return json.dumps(payload, default=str)
 
 def configure_logging() -> None:    # this is the configure_logging method
