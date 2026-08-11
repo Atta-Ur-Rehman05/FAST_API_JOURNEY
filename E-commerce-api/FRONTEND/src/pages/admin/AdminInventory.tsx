@@ -11,6 +11,27 @@ export const AdminInventory: React.FC = () => {
   const [search, setSearch] = useState('');
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
   const [adjustments, setAdjustments] = useState<Record<string, number>>({});
+  const [lookupQuery, setLookupQuery] = useState('');
+  const [lookupResult, setLookupResult] = useState<InventoryItem | null>(null);
+  const [lookupError, setLookupError] = useState('');
+
+  const lookupInventory = async () => {
+    const query = lookupQuery.trim();
+    if (!query) return;
+    setLookupError('');
+    setLookupResult(null);
+    try {
+      let res;
+      if (query.includes('-')) {
+        res = await apiClient.get<InventoryItem>(`/inventory/${query}`);
+      } else {
+        res = await apiClient.get<InventoryItem>(`/inventory/sku/${encodeURIComponent(query)}`);
+      }
+      setLookupResult(res.data);
+    } catch (err: any) {
+      setLookupError(err.response?.data?.detail || 'No inventory record found for that SKU or variant ID.');
+    }
+  };
 
   const fetchInventory = async () => {
     try {
@@ -75,6 +96,43 @@ export const AdminInventory: React.FC = () => {
           <option value="all">All stock</option><option value="low">Low stock only</option><option value="out">Out of stock only</option>
         </select>
       </div>
+
+      <div className="flex flex-col sm:flex-row gap-2">
+        <input
+          value={lookupQuery}
+          onChange={(e) => setLookupQuery(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') lookupInventory(); }}
+          placeholder="Lookup by SKU or variant ID (UUID)"
+          className="flex-1 p-2.5 border border-gray-300 rounded-xs text-xs font-mono text-[#212121] focus:outline-none focus:border-[#F85606]"
+        />
+        <button onClick={lookupInventory} className="btn-primary text-xs font-bold py-2 px-4">Lookup</button>
+      </div>
+
+      {lookupError && <p role="alert" className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xs p-3">{lookupError}</p>}
+
+      {lookupResult && (
+        <div className="ui-surface p-4 rounded-sm border border-[#F85606]/40 shadow-xs flex flex-wrap items-center gap-4 text-xs">
+          <div>
+            <p className="text-[10px] uppercase font-bold text-[#757575]">Product</p>
+            <p className="font-bold text-[#212121]">{lookupResult.product_name || 'Unnamed product'}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase font-bold text-[#757575]">SKU</p>
+            <p className="font-mono font-bold text-[#F85606]">{lookupResult.sku}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase font-bold text-[#757575]">Physical / Reserved / Available</p>
+            <p className="font-mono text-[#212121]">{lookupResult.stock_quantity} / {lookupResult.reserved_quantity} / {lookupResult.available_quantity}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase font-bold text-[#757575]">Status</p>
+            <p className={`font-bold ${lookupResult.is_out_of_stock ? 'text-rose-700' : lookupResult.is_low_stock ? 'text-amber-700' : 'text-emerald-700'}`}>
+              {lookupResult.is_out_of_stock ? 'OUT OF STOCK' : lookupResult.is_low_stock ? 'LOW STOCK' : 'IN STOCK'}
+            </p>
+          </div>
+          <button onClick={() => { setLookupResult(null); setLookupQuery(''); }} className="ml-auto text-[#757575] text-xs hover:text-rose-600">Clear</button>
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center text-[#757575] text-xs py-12">Loading inventory matrix...</div>
