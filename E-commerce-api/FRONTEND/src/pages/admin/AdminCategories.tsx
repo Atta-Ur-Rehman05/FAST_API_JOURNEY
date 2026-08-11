@@ -15,9 +15,13 @@ export const AdminCategories: React.FC = () => {
     parent_id: '' as number | '',
   });
 
+  const [search, setSearch] = useState('');
+
   const fetchCategories = async () => {
     try {
-      const res = await apiClient.get<PaginatedResponse<Category>>('/categories/');
+      const res = await apiClient.get<PaginatedResponse<Category>>('/categories/', {
+        params: { search: search || undefined },
+      });
       setCategories(res.data.items);
     } catch (err) {
       console.error('Error loading categories:', err);
@@ -28,7 +32,7 @@ export const AdminCategories: React.FC = () => {
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [search]);
 
   const handleSaveCategory = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +76,13 @@ export const AdminCategories: React.FC = () => {
           <span>Add New Category</span>
         </button>
       </div>
+
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search categories by name or slug"
+        className="w-full sm:w-80 p-2.5 border border-gray-300 rounded-xs text-xs text-[#212121] focus:outline-none focus:border-[#F85606]"
+      />
 
       {loading ? (
         <div className="text-center text-[#757575] text-xs py-12">Loading categories...</div>
