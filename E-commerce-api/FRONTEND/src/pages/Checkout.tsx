@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, CreditCard, Truck, ShieldCheck, ArrowRight } from 'lucide-react';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
@@ -84,6 +84,9 @@ export const Checkout: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [orderResult, setOrderResult] = useState<CheckoutResponse | null>(null);
   const [stripeCheckout, setStripeCheckout] = useState<CheckoutResponse | null>(null);
+  // One idempotency key per checkout session; retries after failures reuse it so
+  // the backend can dedupe, and a fresh key is minted after a successful order.
+  const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
 
   useEffect(() => {
     const initCheckout = async () => {
@@ -117,12 +120,17 @@ export const Checkout: React.FC = () => {
     }
     setSubmitting(true);
     try {
-      const res = await apiClient.post<CheckoutResponse>('/checkout/', {
-        shipping_address_id: selectedShippingId,
-        billing_address_id: selectedBillingId,
-        payment_method: paymentMethod,
-      });
+      const res = await apiClient.post<CheckoutResponse>(
+        '/checkout/',
+        {
+          shipping_address_id: selectedShippingId,
+          billing_address_id: selectedBillingId,
+          payment_method: paymentMethod,
+        },
+        { headers: { 'Idempotency-Key': idempotencyKeyRef.current } }
+      );
       await fetchCart();
+      idempotencyKeyRef.current = crypto.randomUUID();
       if (paymentMethod === 'stripe') {
         if (!res.data.stripe_client_secret) {
           throw new Error('Stripe checkout did not return a client secret.');
