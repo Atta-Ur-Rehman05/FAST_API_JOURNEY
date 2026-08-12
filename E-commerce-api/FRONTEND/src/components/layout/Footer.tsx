@@ -8,7 +8,7 @@ const assurances = [
   { icon: Truck, title: 'Free Express Shipping', text: 'On all orders over Rs. 5,000' },
   { icon: ShieldCheck, title: 'Secure Stripe Payments', text: '256-Bit SSL Encrypted' },
   { icon: RefreshCcw, title: '30-Day Money Back', text: 'Hassle-free return policy' },
-  { icon: CreditCard, title: 'Flexible Checkout', text: 'Cards, Apple Pay, PayPal' },
+  { icon: CreditCard, title: 'Flexible Checkout', text: 'Secure card checkout' },
 ];
 
 export const Footer: React.FC = () => {
@@ -57,7 +57,7 @@ export const Footer: React.FC = () => {
 
         <div><h3 className="text-sm font-black text-zinc-100">CATALOG</h3><div className="mt-4 space-y-3 text-sm">{categories.length ? categories.map((category) => <Link key={category.id} to={`/products?category_id=${category.id}`} className="block hover:text-white">{category.name}</Link>) : <Link to="/products" className="block hover:text-white">Browse products</Link>}</div></div>
         <div><h3 className="text-sm font-black text-zinc-100">CUSTOMER CARE</h3><div className="mt-4 space-y-3 text-sm"><Link to="/account/orders" className="block hover:text-white">Track Order</Link><Link to="/account/addresses" className="block hover:text-white">Shipping Info</Link><a href="mailto:support@zetamall.example" className="block hover:text-white">Returns &amp; Refunds</a><a href="mailto:support@zetamall.example" className="block hover:text-white">FAQ &amp; Support</a><a href="mailto:support@zetamall.example" className="block hover:text-white">Contact Us</a></div></div>
-        <div><h3 className="text-sm font-black text-zinc-100">DEVELOPER &amp; STACK</h3><div className="mt-4 space-y-3 text-sm"><p>Backend: FastAPI REST</p><p>Frontend: React 19 + Vite</p><p>State: Zustand &amp; React Query</p><p>Styling: Tailwind CSS v4</p><p>Auth: JWT Interceptors</p></div></div>
+        <div><h3 className="text-sm font-black text-zinc-100">SHOP WITH CONFIDENCE</h3><div className="mt-4 space-y-3 text-sm"><p>Secure checkout</p><p>Live inventory status</p><p>Order tracking</p><p>30-day returns</p></div></div>
       </div>
 
       <div className="mx-auto flex max-w-7xl flex-col gap-3 border-t border-zinc-800 px-5 py-7 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-8"><span>© 2026 ZetaMall Inc. All rights reserved.</span><span>Built with precision for modern e-commerce.</span></div>

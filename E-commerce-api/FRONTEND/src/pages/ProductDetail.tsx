@@ -87,13 +87,14 @@ export const ProductDetail: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="max-w-7xl mx-auto px-4 py-16 text-center text-zinc-400 font-medium">Loading product details...</div>;
+    return <div className="mx-auto max-w-7xl px-4 py-20 text-center font-mono text-xs uppercase tracking-[.16em] text-zinc-500">Loading product record...</div>;
   }
 
   if (!product) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-16 text-center space-y-4 ui-surface rounded-sm my-8">
-        <h2 className="text-xl font-bold text-zinc-100">Product Not Found</h2>
+      <div className="ui-surface mx-auto my-12 max-w-7xl space-y-4 rounded-2xl px-4 py-16 text-center">
+        <p className="font-mono text-[10px] font-bold tracking-[.16em] text-zinc-500">RECORD UNAVAILABLE</p>
+        <h2 className="text-xl font-black text-zinc-100">Product not found</h2>
         <button onClick={() => navigate('/products')} className="btn-primary text-xs">
           Return to Storefront
         </button>
@@ -107,54 +108,54 @@ export const ProductDetail: React.FC = () => {
   const inStock = selectedVariant ? selectedVariant.available_quantity > 0 : false;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
       
       {/* Back Button */}
       <button
         onClick={() => navigate('/products')}
-        className="flex items-center space-x-2 text-zinc-400 hover:text-zinc-100 text-xs font-semibold transition-colors"
+        className="ui-icon-button flex w-fit items-center gap-2 px-2 py-1 text-xs font-bold"
       >
         <ArrowLeft className="w-4 h-4" />
-        <span>Back to Storefront</span>
+        <span>Back to catalog</span>
       </button>
 
-      {/* Main Details Showcase (White Surface Container) */}
-      <div className="ui-surface p-6 sm:p-8 rounded-sm grid grid-cols-1 lg:grid-cols-2 gap-8 shadow-xs">
+      <div className="ui-surface grid grid-cols-1 gap-5 rounded-2xl p-4 sm:p-6 lg:grid-cols-[1.05fr_.95fr] lg:gap-8 lg:p-8">
         
         {/* Product Image Gallery */}
-        <div className="space-y-4">
-          <div className="w-full h-80 sm:h-96 bg-zinc-900 rounded-sm overflow-hidden flex items-center justify-center border border-zinc-700 relative">
+        <div className="min-w-0">
+          <div className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
             {product.images?.[0]?.image_url ? (
-              <img src={product.images[0].image_url} alt={product.name} className="w-full h-full object-cover" />
+              <img src={product.images[0].image_url} alt={product.name} className="h-full w-full object-cover" />
             ) : (
-              <div className="text-zinc-400 font-mono text-xs">NO IMAGE PREVIEW</div>
+              <div className="font-mono text-[10px] font-bold tracking-[.16em] text-zinc-500">NO IMAGE / PREVIEW</div>
             )}
           </div>
         </div>
 
         {/* Product Meta & Actions */}
-        <div className="space-y-6">
+        <div className="flex min-w-0 flex-col justify-center space-y-6 py-2">
           <div>
-            <span className="inline-block px-2.5 py-0.5 rounded-xs bg-zinc-900 text-zinc-200 border border-zinc-700 text-[11px] font-bold uppercase tracking-wider">
-              {product.category?.name || 'General Catalog'}
+            <span className="inline-flex items-center rounded-full border border-zinc-800 bg-zinc-900 px-2.5 py-1 font-mono text-[10px] font-bold tracking-[.16em] text-zinc-400">
+              SPEC // {product.category?.name || 'GENERAL CATALOG'}
             </span>
-            <h1 className="text-xl sm:text-2xl font-bold text-zinc-100 mt-2">{product.name}</h1>
-            <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
+            <h1 className="mt-4 text-3xl font-black tracking-tight text-zinc-50 sm:text-4xl">{product.name}</h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-400">
               {product.description || 'No detailed product description available for this item.'}
             </p>
           </div>
 
           {/* Pricing Card */}
-          <div className="p-4 rounded-sm bg-zinc-900/60 border border-zinc-700 space-y-1">
-            <div className="flex items-baseline space-x-3">
-              <span className="text-3xl font-black text-zinc-100">
+          <div className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="font-mono text-[10px] font-bold tracking-[.14em] text-zinc-500">CURRENT PRICE</span>
+              <span className="font-mono text-2xl font-black text-zinc-100 sm:text-3xl">
                 Rs. {totalPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
               </span>
             </div>
 
-            <div className="pt-2 flex items-center">
-              <span className={`px-2 py-0.5 rounded-xs text-[11px] font-bold uppercase border ${
-                inStock ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'
+            <div className="flex items-center border-t border-zinc-800 pt-3">
+              <span className={`ui-status px-2 py-1 font-mono text-[10px] font-bold tracking-[.12em] ${
+                inStock ? 'border-emerald-800/50 bg-emerald-950/60 text-emerald-400' : 'border-rose-800/50 bg-rose-950/60 text-rose-300'
               }`}>
                 {inStock ? `${selectedVariant?.available_quantity} ITEMS IN STOCK` : 'OUT OF STOCK'}
               </span>
@@ -164,20 +165,21 @@ export const ProductDetail: React.FC = () => {
           {/* Variant Selector */}
           {product.variants?.length > 0 && (
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-zinc-100 uppercase tracking-wider">Available Variants</label>
+              <label className="block font-mono text-[10px] font-bold uppercase tracking-[.16em] text-zinc-500">Available variants</label>
               <div className="grid grid-cols-2 gap-2">
                 {product.variants.map((variant) => (
                   <button
                     key={variant.id}
                     onClick={() => setSelectedVariant(variant)}
-                    className={`p-2.5 rounded-sm text-left border text-xs transition-all ${
+                    aria-pressed={selectedVariant?.id === variant.id}
+                    className={`rounded-lg border p-3 text-left text-xs transition-colors ${
                       selectedVariant?.id === variant.id
-                        ? 'bg-zinc-800 border-zinc-700 text-zinc-100 font-bold'
-                        : 'bg-zinc-900 border-zinc-700 text-zinc-100 hover:border-zinc-500'
+                        ? 'border-zinc-100 bg-zinc-100 text-zinc-950 font-bold'
+                        : 'border-zinc-800 bg-zinc-900 text-zinc-200 hover:border-zinc-600'
                     }`}
                   >
                     <div className="font-mono font-semibold">SKU: {variant.sku}</div>
-                    <div className="text-[11px] text-zinc-400 mt-0.5">
+                    <div className={`mt-1 text-[11px] ${selectedVariant?.id === variant.id ? 'text-zinc-700' : 'text-zinc-500'}`}>
                       Price modifier: +Rs. {Number(variant.price_modifier).toFixed(2)}
                     </div>
                   </button>
@@ -187,11 +189,11 @@ export const ProductDetail: React.FC = () => {
           )}
 
           {/* Action CTAs */}
-          <div className="flex items-center gap-3 pt-2">
+          <div className="flex flex-col gap-3 border-t border-zinc-800 pt-5 sm:flex-row">
             <button
               onClick={() => selectedVariant && addItem(selectedVariant.id, 1)}
               disabled={!inStock || !selectedVariant}
-              className="flex-1 py-3 px-4 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 border border-zinc-700 font-bold text-sm rounded-xs flex items-center justify-center space-x-2 transition-colors disabled:opacity-40"
+              className="btn-accent flex-1 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ShoppingCart className="w-4 h-4" />
               <span>Add to Cart</span>
@@ -205,7 +207,7 @@ export const ProductDetail: React.FC = () => {
                 }
               }}
               disabled={!inStock || !selectedVariant}
-              className="btn-primary flex-1 py-3 px-4 text-sm rounded-xs flex items-center justify-center space-x-2 shadow-xs disabled:opacity-40"
+              className="btn-primary flex-1 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Zap className="w-4 h-4 fill-white" />
               <span>Buy Now</span>
@@ -216,16 +218,16 @@ export const ProductDetail: React.FC = () => {
       </div>
 
       {/* Customer Reviews Section */}
-      <div className="ui-surface p-6 rounded-sm space-y-6 shadow-xs">
-        <h3 className="text-lg font-bold text-zinc-100 flex items-center space-x-2 border-b border-zinc-700 pb-3">
+      <div className="ui-surface space-y-6 rounded-2xl p-5 sm:p-6">
+        <h3 className="flex items-center gap-2 border-b border-zinc-800 pb-4 text-lg font-black text-zinc-100">
           <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
           <span>Ratings & Reviews ({reviews.length})</span>
         </h3>
 
         {/* Submit Review Form */}
         {user ? (
-          <form onSubmit={handleReviewSubmit} className="p-4 rounded-sm bg-zinc-900/50 border border-zinc-700 space-y-3">
-            <h4 className="text-xs font-bold text-zinc-100 uppercase tracking-wider">{editingReviewId ? 'Edit Your Review' : 'Leave a Review'}</h4>
+          <form onSubmit={handleReviewSubmit} className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+            <h4 className="font-mono text-[10px] font-bold uppercase tracking-[.16em] text-zinc-500">{editingReviewId ? 'Edit your review' : 'Leave a review'}</h4>
             
             <div className="flex items-center space-x-1">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -233,7 +235,9 @@ export const ProductDetail: React.FC = () => {
                   key={star}
                   type="button"
                   onClick={() => setRating(star)}
-                  className="p-0.5"
+                  className="ui-icon-button p-0.5"
+                  aria-label={`Rate ${star} out of 5`}
+                  aria-pressed={star <= rating}
                 >
                   <Star className={`w-5 h-5 ${star <= rating ? 'text-amber-500 fill-amber-500' : 'text-zinc-300'}`} />
                 </button>
@@ -246,12 +250,12 @@ export const ProductDetail: React.FC = () => {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Share your experience with this product..."
-              className="w-full p-3 bg-zinc-900 border border-zinc-700 rounded-xs text-xs text-zinc-100 placeholder-gray-400 focus:outline-none focus:border-zinc-700"
+              className="ui-input min-h-24 p-3 text-xs"
             />
 
             <div className="flex gap-2">
               <button type={editingReviewId ? 'button' : 'submit'} onClick={editingReviewId ? saveReviewEdit : undefined} disabled={submittingReview} className="btn-primary text-xs py-2 px-4">{editingReviewId ? 'Save Review' : submittingReview ? 'Submitting...' : 'Submit Review'}</button>
-              {editingReviewId && <button type="button" onClick={() => { setEditingReviewId(null); setComment(''); setRating(5); }} className="px-3 py-2 border border-zinc-700 text-xs font-semibold text-zinc-400 rounded-xs">Cancel</button>}
+              {editingReviewId && <button type="button" onClick={() => { setEditingReviewId(null); setComment(''); setRating(5); }} className="btn-accent px-3 py-2 text-xs">Cancel</button>}
             </div>
           </form>
         ) : (
@@ -264,7 +268,7 @@ export const ProductDetail: React.FC = () => {
             <p className="text-zinc-400 text-xs">No reviews submitted yet.</p>
           ) : (
             reviews.map((rev) => (
-              <div key={rev.id} className="p-3 rounded-xs border border-zinc-700 space-y-1 bg-zinc-900">
+              <div key={rev.id} className="space-y-2 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-1">
                     {[1, 2, 3, 4, 5].map((s) => (
