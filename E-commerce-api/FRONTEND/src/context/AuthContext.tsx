@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import type { User } from '../types/api';
-import { apiClient } from '../lib/api-client';
+import { apiClient, refreshAccessToken, setAccessToken } from '../lib/api-client';
 
 interface AuthContextType {
   user: User | null;
@@ -19,7 +19,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const fetchCurrentUser = async () => {
-    const token = localStorage.getItem('access_token');
+    const token = await refreshAccessToken();
     if (!token) {
       setIsLoading(false);
       return;
@@ -28,8 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await apiClient.get<User>('/users/me');
       setUser(response.data);
     } catch {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
+      setAccessToken(null);
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -40,13 +39,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchCurrentUser();
   }, []);
 
-  const storeTokens = (data: { access_token: string; refresh_token?: string }) => {
-    localStorage.setItem('access_token', data.access_token);
-    if (data.refresh_token) {
-      localStorage.setItem('refresh_token', data.refresh_token);
-    }
-  };
-
   const login = async (email: string, pass: string) => {
     const formData = new URLSearchParams();
     formData.append('username', email);
@@ -56,8 +48,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
-    storeTokens(response.data);
-    await fetchCurrentUser();
+    setAccessToken(response.data.access_token);
+    const currentUser = await apiClient.get<User>('/users/me');
+    setUser(currentUser.data);
+    setIsLoading(false);
   };
 
   const register = async (data: { email: string; password: string; first_name: string; last_name: string }) => {
@@ -66,16 +60,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    const refreshToken = localStorage.getItem('refresh_token');
-    if (refreshToken) {
-      try {
-        await apiClient.post('/auth/logout', { refresh_token: refreshToken });
-      } catch {
-        // Logout remains idempotent client-side even if the server call fails.
-      }
+    try {
+      await apiClient.post('/auth/logout');
+    } catch {
+      // Logout remains idempotent client-side even if the server call fails.
     }
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+    setAccessToken(null);
     setUser(null);
   };
 

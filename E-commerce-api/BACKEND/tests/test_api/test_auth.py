@@ -53,7 +53,11 @@ async def test_login_user(client: AsyncClient):
     assert response.status_code == 200
     data = response.json()
     assert "access_token" in data
+    assert "refresh_token" not in data
     assert data["token_type"] == "bearer"
+    cookie = response.headers["set-cookie"]
+    assert "HttpOnly" in cookie
+    assert "SameSite=lax" in cookie
 
 @pytest.mark.asyncio
 async def test_login_wrong_password(client: AsyncClient):
@@ -72,7 +76,29 @@ async def test_login_wrong_password(client: AsyncClient):
         "password": "wrongpassword"
     }
     response = await client.post("/api/v1/auth/login", data=login_data)
-    assert response.status_code == 400
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Invalid email or password"
+
+@pytest.mark.asyncio
+async def test_refresh_uses_http_only_cookie_and_logout_clears_it(client: AsyncClient):
+    user_data = {
+        "email": "cookieuser@example.com",
+        "first_name": "Cookie",
+        "last_name": "User",
+        "role": "customer",
+        "password": "strongpassword",
+    }
+    assert (await client.post("/api/v1/auth/register", json=user_data)).status_code == 201
+    assert (await client.post("/api/v1/auth/login", data={"username": user_data["email"], "password": user_data["password"]})).status_code == 200
+
+    refreshed = await client.post("/api/v1/auth/refresh", json={})
+    assert refreshed.status_code == 200
+    assert "access_token" in refreshed.json()
+    assert "refresh_token" not in refreshed.json()
+
+    logged_out = await client.post("/api/v1/auth/logout", json={})
+    assert logged_out.status_code == 204
+    assert "Max-Age=0" in logged_out.headers["set-cookie"]
 
 @pytest.mark.asyncio
 async def test_read_users_me(client: AsyncClient, auth_headers_customer: dict):
@@ -90,5 +116,4 @@ async def test_health_exposes_request_id_and_security_headers(client: AsyncClien
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert response.headers["X-Frame-Options"] == "DENY"
     assert response.headers["Content-Security-Policy"] == "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
-
 

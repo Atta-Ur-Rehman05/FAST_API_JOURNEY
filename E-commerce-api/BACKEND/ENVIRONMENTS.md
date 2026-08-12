@@ -28,6 +28,12 @@ production configuration with a short/default secret, a non-PostgreSQL URL,
 wildcard or HTTP CORS origins, SQL statement logging, or development reset-token
 exposure.
 
+Production also requires `REDIS_URL`, a secure refresh-token cookie, an explicit
+`lax` or `strict` cookie policy, and a password length of at least 12. Redis is
+used to lock an email address or client IP for 15 minutes after five failed
+login attempts. Do not enable the distributed limiter until the Redis service is
+available; production startup will reject an incomplete configuration.
+
 Before deploying, run `alembic upgrade head` against the target environment's
 database and verify `/health` and `/readiness`. Never point staging or local
 development at the production database.

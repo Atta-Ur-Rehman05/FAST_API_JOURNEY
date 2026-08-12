@@ -13,7 +13,9 @@ class Settings(BaseSettings):  # configuration schema for the application
     PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 30
     PASSWORD_MIN_LENGTH: int = 8
     LOGIN_RATE_LIMIT_ATTEMPTS: int = 5
-    LOGIN_RATE_LIMIT_WINDOW_SECONDS: int = 60
+    LOGIN_RATE_LIMIT_WINDOW_SECONDS: int = 900
+    LOGIN_RATE_LIMIT_ENABLED: bool = True
+    REDIS_URL: str | None = None
     SENTRY_DSN: str | None = None
     ENVIRONMENT: str = "development"
     EXPOSE_RESET_TOKEN_IN_DEVELOPMENT: bool = False
@@ -27,6 +29,10 @@ class Settings(BaseSettings):  # configuration schema for the application
     STRIPE_SECRET_KEY: str | None = None
     STRIPE_WEBHOOK_SECRET: str | None = None
     STRIPE_CURRENCY: str = "usd"
+    REFRESH_COOKIE_NAME: str = "refresh_token"
+    REFRESH_COOKIE_SECURE: bool = False
+    REFRESH_COOKIE_SAMESITE: str = "lax"
+    REFRESH_COOKIE_DOMAIN: str | None = None
 
     @model_validator(mode="after")
     def validate_production_settings(self) -> "Settings":
@@ -51,6 +57,14 @@ class Settings(BaseSettings):  # configuration schema for the application
             raise ValueError("SQL_ECHO must be false in production")
         if self.EXPOSE_RESET_TOKEN_IN_DEVELOPMENT:
             raise ValueError("EXPOSE_RESET_TOKEN_IN_DEVELOPMENT must be false in production")
+        if not self.LOGIN_RATE_LIMIT_ENABLED or not self.REDIS_URL:
+            raise ValueError("LOGIN_RATE_LIMIT_ENABLED=true and REDIS_URL are required in production")
+        if not self.REFRESH_COOKIE_SECURE:
+            raise ValueError("REFRESH_COOKIE_SECURE must be true in production")
+        if self.REFRESH_COOKIE_SAMESITE.lower() not in {"lax", "strict"}:
+            raise ValueError("REFRESH_COOKIE_SAMESITE must be lax or strict in production")
+        if self.PASSWORD_MIN_LENGTH < 12:
+            raise ValueError("PASSWORD_MIN_LENGTH must be at least 12 in production")
         return self
 
     # Using SettingsConfigDict for pydantic v2 support

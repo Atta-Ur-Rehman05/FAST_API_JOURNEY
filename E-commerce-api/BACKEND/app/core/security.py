@@ -9,9 +9,15 @@ from jose import jwt
 import bcrypt
 from app.core.config import settings
 
+# Used when an email is unknown so failed logins take comparable time and do
+# not become an account-enumeration oracle.
+DUMMY_PASSWORD_HASH = bcrypt.hashpw(b"not-a-real-password", bcrypt.gensalt()).decode("utf-8")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+    try:
+        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+    except ValueError:
+        return False
 
 def get_password_hash(password: str) -> str:
     salt = bcrypt.gensalt()
@@ -22,6 +28,13 @@ def validate_password_policy(password: str) -> str:
         raise ValueError(f"Password must be at least {settings.PASSWORD_MIN_LENGTH} characters long")
     if len(password) > 128:
         raise ValueError("Password must not exceed 128 characters")
+    if settings.ENVIRONMENT == "production":
+        if not any(char.islower() for char in password):
+            raise ValueError("Password must contain a lowercase letter")
+        if not any(char.isupper() for char in password):
+            raise ValueError("Password must contain an uppercase letter")
+        if not any(char.isdigit() for char in password):
+            raise ValueError("Password must contain a number")
     return password
 
 def hash_token(token: str) -> str:
