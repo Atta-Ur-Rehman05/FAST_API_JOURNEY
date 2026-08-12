@@ -60,8 +60,8 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ onSuccess }) => {
   return (
     <form onSubmit={handleSubmit} className="ui-surface max-w-xl mx-auto p-6 rounded-sm space-y-5 shadow-xs">
       <div>
-        <h1 className="text-xl font-bold text-[#212121]">Complete Stripe payment</h1>
-        <p className="text-xs text-[#757575] mt-1">Your order will be confirmed once Stripe approves the payment.</p>
+        <h1 className="text-xl font-bold text-zinc-100">Complete Stripe payment</h1>
+        <p className="text-xs text-zinc-400 mt-1">Your order will be confirmed once Stripe approves the payment.</p>
       </div>
       <PaymentElement />
       {error && <p role="alert" className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xs p-3">{error}</p>}
@@ -147,7 +147,7 @@ export const Checkout: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="max-w-7xl mx-auto px-4 py-16 text-center text-[#757575] font-medium">Loading checkout session...</div>;
+    return <div className="max-w-7xl mx-auto px-4 py-16 text-center text-zinc-400 font-medium">Loading checkout session...</div>;
   }
 
   if (orderResult) {
@@ -157,14 +157,14 @@ export const Checkout: React.FC = () => {
           <CheckCircle2 className="w-8 h-8" />
         </div>
         <div className="space-y-1">
-          <h1 className="text-2xl font-black text-[#212121]">Order Placed Successfully!</h1>
-          <p className="text-xs text-[#757575]">Thank you for your purchase. We are processing your package for delivery.</p>
+          <h1 className="text-2xl font-black text-zinc-100">Order Placed Successfully!</h1>
+          <p className="text-xs text-zinc-400">Thank you for your purchase. We are processing your package for delivery.</p>
         </div>
 
         <div className="ui-surface p-6 rounded-sm text-left space-y-2 font-mono text-xs shadow-xs">
-          <p className="text-[#757575]">Order ID: <span className="text-[#F85606] font-bold">{orderResult.order.id}</span></p>
-          <p className="text-[#757575]">Total Amount: <span className="text-[#212121] font-bold">Rs. {Number(orderResult.order.total_amount).toFixed(2)}</span></p>
-          <p className="text-[#757575]">Payment Status: <span className="text-emerald-700 capitalize font-bold">{orderResult.payment.payment_status}</span></p>
+          <p className="text-zinc-400">Order ID: <span className="text-zinc-100 font-bold">{orderResult.order.id}</span></p>
+          <p className="text-zinc-400">Total Amount: <span className="text-zinc-100 font-bold">Rs. {Number(orderResult.order.total_amount).toFixed(2)}</span></p>
+          <p className="text-zinc-400">Payment Status: <span className="text-emerald-700 capitalize font-bold">{orderResult.payment.payment_status}</span></p>
         </div>
 
         <div className="flex justify-center">
@@ -196,8 +196,8 @@ export const Checkout: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-[#212121]">Checkout & Order Summary</h1>
-        <p className="text-xs text-[#757575] mt-0.5">Select delivery address and payment option to place order</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-zinc-100">Checkout & Order Summary</h1>
+        <p className="text-xs text-zinc-400 mt-0.5">Select delivery address and payment option to place order</p>
       </div>
 
       <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -207,13 +207,13 @@ export const Checkout: React.FC = () => {
           
           {/* Shipping Address Selection */}
           <div className="ui-surface p-6 rounded-sm space-y-4 shadow-xs">
-            <h2 className="text-sm font-bold text-[#212121] uppercase tracking-wider flex items-center space-x-2 border-b border-gray-200 pb-3">
-              <Truck className="w-4 h-4 text-[#F85606]" />
+            <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider flex items-center space-x-2 border-b border-zinc-700 pb-3">
+              <Truck className="w-4 h-4 text-zinc-100" />
               <span>Select Shipping Location</span>
             </h2>
 
             {addresses.length === 0 ? (
-              <div className="p-4 rounded-xs bg-[#EFF0F5] text-[#757575] text-xs space-y-2">
+              <div className="p-4 rounded-xs bg-zinc-900 text-zinc-400 text-xs space-y-2">
                 <p>No saved addresses found in your account.</p>
                 <button type="button" onClick={() => navigate('/account/addresses')} className="btn-accent text-xs">
                   + Add Address
@@ -227,19 +227,19 @@ export const Checkout: React.FC = () => {
                     onClick={() => setSelectedShippingId(addr.id)}
                     className={`p-3 rounded-xs border cursor-pointer transition-all ${
                       selectedShippingId === addr.id
-                        ? 'bg-[#FFE8DE] border-[#F85606] text-[#212121]'
-                        : 'bg-white border-gray-200 text-[#757575] hover:border-gray-400'
+                        ? 'bg-zinc-800 border-zinc-700 text-zinc-100'
+                        : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-500'
                     }`}
                   >
                     <div className="flex justify-between items-start">
-                      <p className="font-bold text-xs text-[#212121]">{addr.full_name}</p>
-                      <span className="text-[10px] font-bold text-[#0f766e] bg-[#E7FFFD] px-1.5 py-0.5 rounded-xs border border-[#b2f5f0]">
+                      <p className="font-bold text-xs text-zinc-100">{addr.full_name}</p>
+                      <span className="text-[10px] font-bold text-zinc-200 bg-zinc-900 px-1.5 py-0.5 rounded-xs border border-zinc-700">
                         {addr.address_type}
                       </span>
                     </div>
-                    <p className="text-xs text-[#212121] mt-1">{addr.address_line_1}</p>
-                    <p className="text-[11px] text-[#757575]">{addr.city}, {addr.state} {addr.postal_code}</p>
-                    <p className="text-[10px] text-[#757575] mt-1">Ph: {addr.phone}</p>
+                    <p className="text-xs text-zinc-100 mt-1">{addr.address_line_1}</p>
+                    <p className="text-[11px] text-zinc-400">{addr.city}, {addr.state} {addr.postal_code}</p>
+                    <p className="text-[10px] text-zinc-400 mt-1">Ph: {addr.phone}</p>
                   </div>
                 ))}
               </div>
@@ -248,8 +248,8 @@ export const Checkout: React.FC = () => {
 
           {/* Payment Method Selection */}
           <div className="ui-surface p-6 rounded-sm space-y-4 shadow-xs">
-            <h2 className="text-sm font-bold text-[#212121] uppercase tracking-wider flex items-center space-x-2 border-b border-gray-200 pb-3">
-              <CreditCard className="w-4 h-4 text-[#F85606]" />
+            <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider flex items-center space-x-2 border-b border-zinc-700 pb-3">
+              <CreditCard className="w-4 h-4 text-zinc-100" />
               <span>Select Payment Method</span>
             </h2>
 
@@ -266,8 +266,8 @@ export const Checkout: React.FC = () => {
                   onClick={() => setPaymentMethod(pm.id as PaymentMethod)}
                   className={`p-3 rounded-xs border text-xs font-bold transition-all text-left ${
                     paymentMethod === pm.id
-                      ? 'bg-[#FFE8DE] border-[#F85606] text-[#F85606]'
-                      : 'bg-white border-gray-200 text-[#757575] hover:border-gray-300'
+                      ? 'bg-zinc-800 border-zinc-700 text-zinc-100'
+                      : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:border-zinc-700'
                   }`}
                 >
                   {pm.label}
@@ -280,34 +280,34 @@ export const Checkout: React.FC = () => {
 
         {/* Right Column: Order Summary */}
         <div className="ui-surface p-6 rounded-sm space-y-4 h-fit shadow-xs">
-          <h2 className="text-sm font-bold text-[#212121] uppercase tracking-wider border-b border-gray-200 pb-3">
+          <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-wider border-b border-zinc-700 pb-3">
             Order Summary
           </h2>
 
           <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
             {cart?.items?.map((item) => (
-              <div key={item.id} className="flex justify-between items-center text-xs text-[#212121] pb-2 border-b border-gray-100">
+              <div key={item.id} className="flex justify-between items-center text-xs text-zinc-100 pb-2 border-b border-zinc-800">
                 <span className="truncate pr-2 font-mono text-[11px]">
                   SKU: {item.variant?.sku || item.variant_id.slice(0, 6)} (x{item.quantity})
                 </span>
-                <span className="font-bold text-[#F85606]">
+                <span className="font-bold text-zinc-100">
                   Rs. {(Number(item.unit_price) * item.quantity).toFixed(2)}
                 </span>
               </div>
             ))}
           </div>
 
-          <div className="pt-2 border-t border-gray-200 space-y-1.5 text-xs">
-            <div className="flex justify-between text-[#757575]">
+          <div className="pt-2 border-t border-zinc-700 space-y-1.5 text-xs">
+            <div className="flex justify-between text-zinc-400">
               <span>Subtotal</span>
-              <span className="font-semibold text-[#212121]">
+              <span className="font-semibold text-zinc-100">
                 Rs. {(cart?.items?.reduce((sum, item) => sum + Number(item.unit_price) * item.quantity, 0) || 0).toFixed(2)}
               </span>
             </div>
 
-            <div className="flex justify-between text-[#212121] font-black text-base pt-2 border-t border-gray-200">
+            <div className="flex justify-between text-zinc-100 font-black text-base pt-2 border-t border-zinc-700">
               <span>Total Amount</span>
-              <span className="text-[#F85606]">
+              <span className="text-zinc-100">
                 Rs. {(cart?.items?.reduce((sum, item) => sum + Number(item.unit_price) * item.quantity, 0) || 0).toFixed(2)}
               </span>
             </div>
@@ -324,8 +324,8 @@ export const Checkout: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex items-center justify-center space-x-1 text-[11px] text-[#0f766e] bg-[#E7FFFD] p-2 rounded-xs border border-[#b2f5f0]">
-            <ShieldCheck className="w-4 h-4 text-[#F85606]" />
+          <div className="flex items-center justify-center space-x-1 text-[11px] text-zinc-200 bg-zinc-900 p-2 rounded-xs border border-zinc-700">
+            <ShieldCheck className="w-4 h-4 text-zinc-100" />
             <span>Safe & Secure Checkout Guaranteed</span>
           </div>
         </div>

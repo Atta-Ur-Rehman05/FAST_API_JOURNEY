@@ -33,11 +33,11 @@ export const Register: React.FC = () => {
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md ui-surface rounded-sm p-6 sm:p-8 space-y-6 shadow-xs">
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-full bg-[#FFE8DE] text-[#F85606] mx-auto flex items-center justify-center border border-[#F85606]/30">
+          <div className="w-12 h-12 rounded-full bg-zinc-800 text-zinc-100 mx-auto flex items-center justify-center border border-zinc-700">
             <UserPlus className="w-6 h-6" />
           </div>
-          <h1 className="text-xl font-bold text-[#212121]">Create ZetaMall Account</h1>
-          <p className="text-xs text-[#757575]">Join ZetaMall Store for instant deals and vouchers</p>
+          <h1 className="text-xl font-bold text-zinc-100">Create ZetaMall Account</h1>
+          <p className="text-xs text-zinc-400">Join ZetaMall Store for instant deals and vouchers</p>
         </div>
 
         {error && (
@@ -50,58 +50,58 @@ export const Register: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-[#212121] uppercase tracking-wider mb-1">First Name</label>
+              <label className="block text-xs font-bold text-zinc-100 uppercase tracking-wider mb-1">First Name</label>
               <div className="relative">
-                <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
                 <input
                   type="text"
                   required
                   value={formData.first_name}
                   onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                   placeholder="John"
-                  className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xs text-xs text-[#212121] placeholder-gray-400 focus:outline-none focus:border-[#F85606]"
+                  className="w-full pl-9 pr-3 py-2 border border-zinc-700 rounded-xs text-xs text-zinc-100 placeholder-gray-400 focus:outline-none focus:border-zinc-700"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-bold text-[#212121] uppercase tracking-wider mb-1">Last Name</label>
+              <label className="block text-xs font-bold text-zinc-100 uppercase tracking-wider mb-1">Last Name</label>
               <input
                 type="text"
                 required
                 value={formData.last_name}
                 onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                 placeholder="Doe"
-                className="w-full px-3 py-2 border border-gray-300 rounded-xs text-xs text-[#212121] placeholder-gray-400 focus:outline-none focus:border-[#F85606]"
+                className="w-full px-3 py-2 border border-zinc-700 rounded-xs text-xs text-zinc-100 placeholder-gray-400 focus:outline-none focus:border-zinc-700"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#212121] uppercase tracking-wider mb-1">Email Address</label>
+            <label className="block text-xs font-bold text-zinc-100 uppercase tracking-wider mb-1">Email Address</label>
             <div className="relative">
-              <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
               <input
                 type="email"
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="name@example.com"
-                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xs text-xs text-[#212121] placeholder-gray-400 focus:outline-none focus:border-[#F85606]"
+                className="w-full pl-9 pr-3 py-2 border border-zinc-700 rounded-xs text-xs text-zinc-100 placeholder-gray-400 focus:outline-none focus:border-zinc-700"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#212121] uppercase tracking-wider mb-1">Password</label>
+            <label className="block text-xs font-bold text-zinc-100 uppercase tracking-wider mb-1">Password</label>
             <div className="relative">
-              <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
               <input
                 type="password"
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="••••••••"
-                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-xs text-xs text-[#212121] placeholder-gray-400 focus:outline-none focus:border-[#F85606]"
+                className="w-full pl-9 pr-3 py-2 border border-zinc-700 rounded-xs text-xs text-zinc-100 placeholder-gray-400 focus:outline-none focus:border-zinc-700"
               />
             </div>
           </div>
@@ -115,9 +115,9 @@ export const Register: React.FC = () => {
           </button>
         </form>
 
-        <div className="pt-2 border-t border-gray-200 text-center text-xs text-[#757575]">
+        <div className="pt-2 border-t border-zinc-700 text-center text-xs text-zinc-400">
           Already have an account?{' '}
-          <Link to="/login" className="text-[#F85606] font-bold hover:underline">
+          <Link to="/login" className="text-zinc-100 font-bold hover:underline">
             Sign In
           </Link>
         </div>

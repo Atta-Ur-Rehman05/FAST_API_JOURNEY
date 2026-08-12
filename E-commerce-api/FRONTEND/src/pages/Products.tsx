@@ -158,8 +158,8 @@ export const Products: React.FC = () => {
             </div>
           ) : products.length === 0 ? (
             <div className="ui-surface p-12 rounded-sm text-center space-y-3">
-              <p className="text-base font-bold text-[#212121]">No matching products found</p>
-              <p className="text-xs text-[#757575]">Try resetting your category or search keywords.</p>
+              <p className="text-base font-bold text-zinc-100">No matching products found</p>
+              <p className="text-xs text-zinc-400">Try resetting your category or search keywords.</p>
               <button
                 onClick={() => { setSelectedCategory(null); setSearchTerm(''); setPage(0); }}
                 className="btn-primary text-xs"

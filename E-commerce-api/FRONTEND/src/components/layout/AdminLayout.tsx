@@ -14,8 +14,8 @@ export const AdminLayout: React.FC = () => {
         <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 mx-auto flex items-center justify-center border border-rose-200">
           <ShieldAlert className="w-6 h-6" />
         </div>
-        <h2 className="text-xl font-bold text-[#212121]">Access Denied</h2>
-        <p className="text-sm text-[#757575]">You must be an administrator to access the Admin Hub.</p>
+        <h2 className="text-xl font-bold text-zinc-100">Access Denied</h2>
+        <p className="text-sm text-zinc-400">You must be an administrator to access the Admin Hub.</p>
         <button onClick={() => navigate('/products')} className="btn-primary w-full text-sm">
           Return to Storefront
         </button>

@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+@theme {
+  --color-canvas: #09090b;
+  --color-surface: #18181b;
+  --color-surface-raised: #27272a;
+  --color-border: #3f3f46;
+  --color-foreground: #f4f4f5;
+  --color-muted: #a1a1aa;
+}
+
 @layer base {
   * { border-color: #27272a; }
   html { background: #09090b; }
@@ -19,7 +28,8 @@
   input::placeholder, textarea::placeholder { color: #71717a; }
 }
 
-/* Industrial Dark Minimalist shared primitives */
+/* Shared, named interface primitives. Route components should compose these
+   instead of carrying their own palette. */
 .ui-surface, .ui-card {
   background: #18181b;
   border: 1px solid #27272a;
@@ -53,30 +63,22 @@
   font-weight: 700;
 }
 .btn-accent:hover:not(:disabled) { background: #27272a; }
-/* Compatibility layer for the existing route components while they share the new canvas. */
-#root .bg-white, #root .bg-gray-50, #root .bg-gray-100, #root .bg-\[\#EFF0F5\] { background-color: #18181b !important; }
-#root .bg-gray-200 { background-color: #27272a !important; }
-#root .border-gray-100, #root .border-gray-200, #root .border-gray-300 { border-color: #27272a !important; }
-#root .text-gray-400, #root .text-gray-500, #root .text-gray-600, #root .text-gray-700 { color: #a1a1aa !important; }
-#root .hover\:bg-gray-50:hover, #root .hover\:bg-gray-100:hover { background-color: #27272a !important; }
-#root .hover\:text-\[\#F85606\]:hover { color: #fafafa !important; }
-/* Legacy semantic colors are mapped here until every route is converted to tokens. */
-#root .text-\[\#212121\] { color: #f4f4f5 !important; }
-#root .text-\[\#757575\] { color: #a1a1aa !important; }
-#root .text-\[\#F85606\] { color: #e4e4e7 !important; }
-#root .bg-\[\#EFF0F5\]\/50, #root .bg-\[\#EFF0F5\]\/60 { background-color: rgba(39, 39, 42, .55) !important; }
-#root .bg-\[\#FFE8DE\] { background-color: #27272a !important; }
-#root input, #root select, #root textarea {
-  background-color: #09090b !important;
-  color: #f4f4f5 !important;
-  border-color: #27272a !important;
+.ui-input {
+  width: 100%;
+  border: 1px solid #3f3f46;
   border-radius: .5rem;
-}
-#root input::placeholder, #root textarea::placeholder { color: #52525b !important; opacity: 1; }
-#root input:focus, #root select:focus, #root textarea:focus {
-  border-color: #52525b !important;
+  background: #09090b;
+  color: #f4f4f5;
   outline: none;
-  box-shadow: 0 0 0 1px #52525b;
+}
+.ui-input::placeholder { color: #71717a; }
+.ui-input:focus { border-color: #a1a1aa; box-shadow: 0 0 0 1px #a1a1aa; }
+.ui-icon-button { border-radius: .375rem; color: #a1a1aa; transition: color .18s ease, background-color .18s ease; }
+.ui-icon-button:hover { background: #27272a; color: #fafafa; }
+.ui-status { display: inline-flex; align-items: center; gap: .25rem; border: 1px solid #3f3f46; border-radius: 9999px; background: #18181b; color: #d4d4d8; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid #f4f4f5;
+  outline-offset: 2px;
 }
 #root option { background: #18181b; color: #f4f4f5; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }

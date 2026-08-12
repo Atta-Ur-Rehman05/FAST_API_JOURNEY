@@ -87,13 +87,13 @@ export const ProductDetail: React.FC = () => {
   };
 
   if (loading) {
-    return <div className="max-w-7xl mx-auto px-4 py-16 text-center text-[#757575] font-medium">Loading product details...</div>;
+    return <div className="max-w-7xl mx-auto px-4 py-16 text-center text-zinc-400 font-medium">Loading product details...</div>;
   }
 
   if (!product) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-16 text-center space-y-4 ui-surface rounded-sm my-8">
-        <h2 className="text-xl font-bold text-[#212121]">Product Not Found</h2>
+        <h2 className="text-xl font-bold text-zinc-100">Product Not Found</h2>
         <button onClick={() => navigate('/products')} className="btn-primary text-xs">
           Return to Storefront
         </button>
@@ -112,7 +112,7 @@ export const ProductDetail: React.FC = () => {
       {/* Back Button */}
       <button
         onClick={() => navigate('/products')}
-        className="flex items-center space-x-2 text-[#757575] hover:text-[#F85606] text-xs font-semibold transition-colors"
+        className="flex items-center space-x-2 text-zinc-400 hover:text-zinc-100 text-xs font-semibold transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         <span>Back to Storefront</span>
@@ -123,11 +123,11 @@ export const ProductDetail: React.FC = () => {
         
         {/* Product Image Gallery */}
         <div className="space-y-4">
-          <div className="w-full h-80 sm:h-96 bg-white rounded-sm overflow-hidden flex items-center justify-center border border-gray-200 relative">
+          <div className="w-full h-80 sm:h-96 bg-zinc-900 rounded-sm overflow-hidden flex items-center justify-center border border-zinc-700 relative">
             {product.images?.[0]?.image_url ? (
               <img src={product.images[0].image_url} alt={product.name} className="w-full h-full object-cover" />
             ) : (
-              <div className="text-gray-400 font-mono text-xs">NO IMAGE PREVIEW</div>
+              <div className="text-zinc-400 font-mono text-xs">NO IMAGE PREVIEW</div>
             )}
           </div>
         </div>
@@ -135,19 +135,19 @@ export const ProductDetail: React.FC = () => {
         {/* Product Meta & Actions */}
         <div className="space-y-6">
           <div>
-            <span className="inline-block px-2.5 py-0.5 rounded-xs bg-[#E7FFFD] text-[#0f766e] border border-[#b2f5f0] text-[11px] font-bold uppercase tracking-wider">
+            <span className="inline-block px-2.5 py-0.5 rounded-xs bg-zinc-900 text-zinc-200 border border-zinc-700 text-[11px] font-bold uppercase tracking-wider">
               {product.category?.name || 'General Catalog'}
             </span>
-            <h1 className="text-xl sm:text-2xl font-bold text-[#212121] mt-2">{product.name}</h1>
-            <p className="text-xs text-[#757575] mt-2 leading-relaxed">
+            <h1 className="text-xl sm:text-2xl font-bold text-zinc-100 mt-2">{product.name}</h1>
+            <p className="text-xs text-zinc-400 mt-2 leading-relaxed">
               {product.description || 'No detailed product description available for this item.'}
             </p>
           </div>
 
           {/* Pricing Card */}
-          <div className="p-4 rounded-sm bg-[#EFF0F5]/60 border border-gray-200 space-y-1">
+          <div className="p-4 rounded-sm bg-zinc-900/60 border border-zinc-700 space-y-1">
             <div className="flex items-baseline space-x-3">
-              <span className="text-3xl font-black text-[#F85606]">
+              <span className="text-3xl font-black text-zinc-100">
                 Rs. {totalPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
               </span>
             </div>
@@ -164,7 +164,7 @@ export const ProductDetail: React.FC = () => {
           {/* Variant Selector */}
           {product.variants?.length > 0 && (
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-[#212121] uppercase tracking-wider">Available Variants</label>
+              <label className="block text-xs font-bold text-zinc-100 uppercase tracking-wider">Available Variants</label>
               <div className="grid grid-cols-2 gap-2">
                 {product.variants.map((variant) => (
                   <button
@@ -172,12 +172,12 @@ export const ProductDetail: React.FC = () => {
                     onClick={() => setSelectedVariant(variant)}
                     className={`p-2.5 rounded-sm text-left border text-xs transition-all ${
                       selectedVariant?.id === variant.id
-                        ? 'bg-[#FFE8DE] border-[#F85606] text-[#F85606] font-bold'
-                        : 'bg-white border-gray-200 text-[#212121] hover:border-gray-400'
+                        ? 'bg-zinc-800 border-zinc-700 text-zinc-100 font-bold'
+                        : 'bg-zinc-900 border-zinc-700 text-zinc-100 hover:border-zinc-500'
                     }`}
                   >
                     <div className="font-mono font-semibold">SKU: {variant.sku}</div>
-                    <div className="text-[11px] text-[#757575] mt-0.5">
+                    <div className="text-[11px] text-zinc-400 mt-0.5">
                       Price modifier: +Rs. {Number(variant.price_modifier).toFixed(2)}
                     </div>
                   </button>
@@ -191,7 +191,7 @@ export const ProductDetail: React.FC = () => {
             <button
               onClick={() => selectedVariant && addItem(selectedVariant.id, 1)}
               disabled={!inStock || !selectedVariant}
-              className="flex-1 py-3 px-4 bg-[#E7FFFD] text-[#0f766e] hover:bg-[#d0fbf9] border border-[#b2f5f0] font-bold text-sm rounded-xs flex items-center justify-center space-x-2 transition-colors disabled:opacity-40"
+              className="flex-1 py-3 px-4 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 border border-zinc-700 font-bold text-sm rounded-xs flex items-center justify-center space-x-2 transition-colors disabled:opacity-40"
             >
               <ShoppingCart className="w-4 h-4" />
               <span>Add to Cart</span>
@@ -205,7 +205,7 @@ export const ProductDetail: React.FC = () => {
                 }
               }}
               disabled={!inStock || !selectedVariant}
-              className="flex-1 py-3 px-4 bg-[#F85606] hover:bg-[#D04400] text-white font-bold text-sm rounded-xs flex items-center justify-center space-x-2 shadow-xs transition-colors disabled:opacity-40"
+              className="btn-primary flex-1 py-3 px-4 text-sm rounded-xs flex items-center justify-center space-x-2 shadow-xs disabled:opacity-40"
             >
               <Zap className="w-4 h-4 fill-white" />
               <span>Buy Now</span>
@@ -217,15 +217,15 @@ export const ProductDetail: React.FC = () => {
 
       {/* Customer Reviews Section */}
       <div className="ui-surface p-6 rounded-sm space-y-6 shadow-xs">
-        <h3 className="text-lg font-bold text-[#212121] flex items-center space-x-2 border-b border-gray-200 pb-3">
+        <h3 className="text-lg font-bold text-zinc-100 flex items-center space-x-2 border-b border-zinc-700 pb-3">
           <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
           <span>Ratings & Reviews ({reviews.length})</span>
         </h3>
 
         {/* Submit Review Form */}
         {user ? (
-          <form onSubmit={handleReviewSubmit} className="p-4 rounded-sm bg-[#EFF0F5]/50 border border-gray-200 space-y-3">
-            <h4 className="text-xs font-bold text-[#212121] uppercase tracking-wider">{editingReviewId ? 'Edit Your Review' : 'Leave a Review'}</h4>
+          <form onSubmit={handleReviewSubmit} className="p-4 rounded-sm bg-zinc-900/50 border border-zinc-700 space-y-3">
+            <h4 className="text-xs font-bold text-zinc-100 uppercase tracking-wider">{editingReviewId ? 'Edit Your Review' : 'Leave a Review'}</h4>
             
             <div className="flex items-center space-x-1">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -235,7 +235,7 @@ export const ProductDetail: React.FC = () => {
                   onClick={() => setRating(star)}
                   className="p-0.5"
                 >
-                  <Star className={`w-5 h-5 ${star <= rating ? 'text-amber-500 fill-amber-500' : 'text-gray-300'}`} />
+                  <Star className={`w-5 h-5 ${star <= rating ? 'text-amber-500 fill-amber-500' : 'text-zinc-300'}`} />
                 </button>
               ))}
             </div>
@@ -246,42 +246,42 @@ export const ProductDetail: React.FC = () => {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Share your experience with this product..."
-              className="w-full p-3 bg-white border border-gray-300 rounded-xs text-xs text-[#212121] placeholder-gray-400 focus:outline-none focus:border-[#F85606]"
+              className="w-full p-3 bg-zinc-900 border border-zinc-700 rounded-xs text-xs text-zinc-100 placeholder-gray-400 focus:outline-none focus:border-zinc-700"
             />
 
             <div className="flex gap-2">
               <button type={editingReviewId ? 'button' : 'submit'} onClick={editingReviewId ? saveReviewEdit : undefined} disabled={submittingReview} className="btn-primary text-xs py-2 px-4">{editingReviewId ? 'Save Review' : submittingReview ? 'Submitting...' : 'Submit Review'}</button>
-              {editingReviewId && <button type="button" onClick={() => { setEditingReviewId(null); setComment(''); setRating(5); }} className="px-3 py-2 border border-gray-300 text-xs font-semibold text-[#757575] rounded-xs">Cancel</button>}
+              {editingReviewId && <button type="button" onClick={() => { setEditingReviewId(null); setComment(''); setRating(5); }} className="px-3 py-2 border border-zinc-700 text-xs font-semibold text-zinc-400 rounded-xs">Cancel</button>}
             </div>
           </form>
         ) : (
-          <p className="text-xs text-[#757575] italic">Please sign in to post a review.</p>
+          <p className="text-xs text-zinc-400 italic">Please sign in to post a review.</p>
         )}
 
         {/* Reviews List */}
         <div className="space-y-3">
           {reviews.length === 0 ? (
-            <p className="text-[#757575] text-xs">No reviews submitted yet.</p>
+            <p className="text-zinc-400 text-xs">No reviews submitted yet.</p>
           ) : (
             reviews.map((rev) => (
-              <div key={rev.id} className="p-3 rounded-xs border border-gray-200 space-y-1 bg-white">
+              <div key={rev.id} className="p-3 rounded-xs border border-zinc-700 space-y-1 bg-zinc-900">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-1">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Star
                         key={s}
-                        className={`w-3.5 h-3.5 ${s <= rev.rating ? 'text-amber-500 fill-amber-500' : 'text-gray-300'}`}
+                        className={`w-3.5 h-3.5 ${s <= rev.rating ? 'text-amber-500 fill-amber-500' : 'text-zinc-300'}`}
                       />
                     ))}
                   </div>
                   {(user?.id === rev.user_id || user?.role === 'admin') && (
                     <div className="flex gap-2">
-                      {user?.id === rev.user_id && <button onClick={() => startReviewEdit(rev)} className="text-gray-400 hover:text-[#F85606]" aria-label="Edit review"><Pencil className="w-3.5 h-3.5" /></button>}
-                      <button onClick={() => deleteReview(rev.id)} className="text-gray-400 hover:text-rose-600" aria-label="Delete review"><Trash2 className="w-3.5 h-3.5" /></button>
+                      {user?.id === rev.user_id && <button onClick={() => startReviewEdit(rev)} className="text-zinc-400 hover:text-zinc-100" aria-label="Edit review"><Pencil className="w-3.5 h-3.5" /></button>}
+                      <button onClick={() => deleteReview(rev.id)} className="text-zinc-400 hover:text-rose-600" aria-label="Delete review"><Trash2 className="w-3.5 h-3.5" /></button>
                     </div>
                   )}
                 </div>
-                <p className="text-xs text-[#212121] mt-1">{rev.comment}</p>
+                <p className="text-xs text-zinc-100 mt-1">{rev.comment}</p>
               </div>
             ))
           )}

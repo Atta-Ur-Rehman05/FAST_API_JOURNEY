@@ -29,11 +29,11 @@ export const Login: React.FC = () => {
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md ui-surface rounded-sm p-6 sm:p-8 space-y-6 shadow-xs">
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-full bg-[#FFE8DE] text-[#F85606] mx-auto flex items-center justify-center border border-[#F85606]/30">
+          <div className="w-12 h-12 rounded-full bg-zinc-800 text-zinc-100 mx-auto flex items-center justify-center border border-zinc-700">
             <LogIn className="w-6 h-6" />
           </div>
-          <h1 className="text-xl font-bold text-[#212121]">Welcome Back</h1>
-          <p className="text-xs text-[#757575]">Sign in to your account to start shopping</p>
+          <h1 className="text-xl font-bold text-zinc-100">Welcome Back</h1>
+          <p className="text-xs text-zinc-400">Sign in to your account to start shopping</p>
         </div>
 
         {error && (
@@ -45,35 +45,35 @@ export const Login: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-[#212121] uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-zinc-100 uppercase tracking-wider mb-1.5">
               Email Address
             </label>
             <div className="relative">
-              <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
-                className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-300 rounded-xs text-xs text-[#212121] placeholder-gray-400 focus:outline-none focus:border-[#F85606]"
+                className="w-full pl-9 pr-3 py-2.5 bg-zinc-900 border border-zinc-700 rounded-xs text-xs text-zinc-100 placeholder-gray-400 focus:outline-none focus:border-zinc-700"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#212121] uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-zinc-100 uppercase tracking-wider mb-1.5">
               Password
             </label>
             <div className="relative">
-              <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-300 rounded-xs text-xs text-[#212121] placeholder-gray-400 focus:outline-none focus:border-[#F85606]"
+                className="w-full pl-9 pr-3 py-2.5 bg-zinc-900 border border-zinc-700 rounded-xs text-xs text-zinc-100 placeholder-gray-400 focus:outline-none focus:border-zinc-700"
               />
             </div>
           </div>
@@ -87,15 +87,15 @@ export const Login: React.FC = () => {
           </button>
         </form>
 
-        <div className="pt-2 border-t border-gray-200 text-center text-xs text-[#757575] space-y-1">
+        <div className="pt-2 border-t border-zinc-700 text-center text-xs text-zinc-400 space-y-1">
           <div>
             Don't have an account yet?{' '}
-            <Link to="/register" className="text-[#F85606] font-bold hover:underline">
+            <Link to="/register" className="text-zinc-100 font-bold hover:underline">
               Create account
             </Link>
           </div>
           <div>
-            <Link to="/forgot-password" className="text-[#F85606] font-bold hover:underline">
+            <Link to="/forgot-password" className="text-zinc-100 font-bold hover:underline">
               Forgot your password?
             </Link>
           </div>

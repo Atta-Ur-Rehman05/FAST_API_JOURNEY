@@ -36,11 +36,11 @@ export const ResetPassword: React.FC = () => {
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md ui-surface rounded-sm p-6 sm:p-8 space-y-6 shadow-xs">
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-full bg-[#FFE8DE] text-[#F85606] mx-auto flex items-center justify-center border border-[#F85606]/30">
+          <div className="w-12 h-12 rounded-full bg-zinc-800 text-zinc-100 mx-auto flex items-center justify-center border border-zinc-700">
             <Lock className="w-6 h-6" />
           </div>
-          <h1 className="text-xl font-bold text-[#212121]">Set New Password</h1>
-          <p className="text-xs text-[#757575]">Paste your reset token and choose a new password.</p>
+          <h1 className="text-xl font-bold text-zinc-100">Set New Password</h1>
+          <p className="text-xs text-zinc-400">Paste your reset token and choose a new password.</p>
         </div>
 
         {error && (
@@ -58,36 +58,36 @@ export const ResetPassword: React.FC = () => {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-[#212121] uppercase tracking-wider mb-1.5">Reset Token</label>
+              <label className="block text-xs font-bold text-zinc-100 uppercase tracking-wider mb-1.5">Reset Token</label>
               <input
                 type="text"
                 required
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 placeholder="Token from your email"
-                className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-xs text-xs font-mono text-[#212121] placeholder-gray-400 focus:outline-none focus:border-[#F85606]"
+                className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-700 rounded-xs text-xs font-mono text-zinc-100 placeholder-gray-400 focus:outline-none focus:border-zinc-700"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-[#212121] uppercase tracking-wider mb-1.5">New Password</label>
+              <label className="block text-xs font-bold text-zinc-100 uppercase tracking-wider mb-1.5">New Password</label>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-xs text-xs text-[#212121] placeholder-gray-400 focus:outline-none focus:border-[#F85606]"
+                className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-700 rounded-xs text-xs text-zinc-100 placeholder-gray-400 focus:outline-none focus:border-zinc-700"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-[#212121] uppercase tracking-wider mb-1.5">Confirm New Password</label>
+              <label className="block text-xs font-bold text-zinc-100 uppercase tracking-wider mb-1.5">Confirm New Password</label>
               <input
                 type="password"
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-xs text-xs text-[#212121] placeholder-gray-400 focus:outline-none focus:border-[#F85606]"
+                className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-700 rounded-xs text-xs text-zinc-100 placeholder-gray-400 focus:outline-none focus:border-zinc-700"
               />
             </div>
             <button type="submit" disabled={loading} className="btn-primary w-full py-3 text-xs font-bold shadow-xs disabled:opacity-50">
@@ -96,8 +96,8 @@ export const ResetPassword: React.FC = () => {
           </form>
         )}
 
-        <div className="pt-2 border-t border-gray-200 text-center text-xs text-[#757575]">
-          <Link to="/login" className="text-[#F85606] font-bold hover:underline">Back to Sign In</Link>
+        <div className="pt-2 border-t border-zinc-700 text-center text-xs text-zinc-400">
+          <Link to="/login" className="text-zinc-100 font-bold hover:underline">Back to Sign In</Link>
         </div>
       </div>
     </div>

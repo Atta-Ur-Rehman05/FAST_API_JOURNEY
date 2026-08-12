@@ -81,7 +81,7 @@ export const CartDrawer: React.FC = () => {
 
                   <button
                     onClick={() => removeItem(item.id)}
-                    className="p-1.5 text-gray-400 hover:text-rose-600 transition-colors"
+                    className="p-1.5 text-zinc-400 hover:text-rose-600 transition-colors"
                     title="Remove item"
                   >
                     <Trash2 className="w-4 h-4" />

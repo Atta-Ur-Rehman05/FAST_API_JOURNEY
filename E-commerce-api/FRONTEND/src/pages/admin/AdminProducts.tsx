@@ -190,12 +190,12 @@ export const AdminProducts: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="text-center text-[#757575] text-xs py-12">Loading products...</div>
+        <div className="text-center text-zinc-400 text-xs py-12">Loading products...</div>
       ) : (
-        <div className="ui-surface rounded-sm overflow-hidden shadow-xs border border-gray-200">
+        <div className="ui-surface rounded-sm overflow-hidden shadow-xs border border-zinc-700">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-[#212121]">
-              <thead className="bg-[#EFF0F5] text-[#757575] uppercase text-[11px] font-bold border-b border-gray-200">
+            <table className="w-full text-left text-xs text-zinc-100">
+              <thead className="bg-zinc-900 text-zinc-400 uppercase text-[11px] font-bold border-b border-zinc-700">
                 <tr>
                   <th className="px-4 py-3">Product Name</th>
                   <th className="px-4 py-3">Category</th>
@@ -206,21 +206,21 @@ export const AdminProducts: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {products.map((p) => (
-                  <tr key={p.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-bold text-[#212121]">
+                  <tr key={p.id} className="hover:bg-zinc-900 transition-colors">
+                    <td className="px-4 py-3 font-bold text-zinc-100">
                       {p.name}
-                      <span className="block text-[11px] font-mono text-[#757575] font-normal">Slug: {p.slug}</span>
+                      <span className="block text-[11px] font-mono text-zinc-400 font-normal">Slug: {p.slug}</span>
                     </td>
-                    <td className="px-4 py-3 text-[#757575]">{p.category?.name || `ID: ${p.category_id}`}</td>
-                    <td className="px-4 py-3 font-mono font-bold text-[#F85606]">
+                    <td className="px-4 py-3 text-zinc-400">{p.category?.name || `ID: ${p.category_id}`}</td>
+                    <td className="px-4 py-3 font-mono font-bold text-zinc-100">
                       Rs. {Number(p.base_price).toFixed(2)}
                     </td>
-                    <td className="px-4 py-3 font-mono text-[#0284C7] font-semibold">{p.variants?.length || 0} Variant(s)</td>
+                    <td className="px-4 py-3 font-mono text-zinc-100 font-semibold">{p.variants?.length || 0} Variant(s)</td>
                     <td className="px-4 py-3">
-                      <button onClick={() => startEditProduct(p)} className="p-1.5 text-gray-400 hover:text-[#F85606] transition-colors" title="Edit product"><Pencil className="w-4 h-4" /></button>
+                      <button onClick={() => startEditProduct(p)} className="p-1.5 text-zinc-400 hover:text-zinc-100 transition-colors" title="Edit product"><Pencil className="w-4 h-4" /></button>
                       <button
                         onClick={() => handleDeleteProduct(p.id)}
-                        className="p-1.5 text-gray-400 hover:text-rose-600 transition-colors"
+                        className="p-1.5 text-zinc-400 hover:text-rose-600 transition-colors"
                         title="Delete Product"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -306,7 +306,7 @@ export const AdminProducts: React.FC = () => {
                     <input type="number" step="0.01" placeholder="Price modifier" value={variant.price_modifier} onChange={(e) => updateVariant(index, { price_modifier: Number(e.target.value) || 0 })} className="w-full p-2 border text-xs font-mono" />
                     <input type="number" min="0" placeholder="Stock quantity" value={variant.stock_quantity} onChange={(e) => updateVariant(index, { stock_quantity: Math.max(0, Number(e.target.value) || 0) })} className="w-full p-2 border text-xs font-mono" />
                     <input type="text" placeholder={'Attributes JSON, e.g. {"color":"Blue"}'} value={variant.attributes} onChange={(e) => updateVariant(index, { attributes: e.target.value })} className="sm:col-span-3 w-full p-2 border text-xs font-mono" />
-                    <button type="button" onClick={() => removeVariant(index)} className="absolute right-2 top-2 text-gray-400 hover:text-rose-600" aria-label="Remove variant"><X className="w-4 h-4" /></button>
+                    <button type="button" onClick={() => removeVariant(index)} className="absolute right-2 top-2 text-zinc-400 hover:text-rose-600" aria-label="Remove variant"><X className="w-4 h-4" /></button>
                   </div>
                 ))}
               </section>
@@ -326,7 +326,7 @@ export const AdminProducts: React.FC = () => {
                   <div key={index} className="relative flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-950/50 p-3 pr-9">
                     <input type="url" required placeholder="https://example.com/product-image.jpg" value={image.image_url} onChange={(e) => updateImage(index, { image_url: e.target.value })} className="min-w-0 flex-1 p-2 border text-xs" />
                     <label className="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-semibold text-zinc-300"><input type="radio" name="primary-image" checked={image.is_primary} onChange={() => updateImage(index, { is_primary: true })} /> Primary</label>
-                    <button type="button" onClick={() => removeImage(index)} className="absolute right-2 top-3 text-gray-400 hover:text-rose-600" aria-label="Remove image"><X className="w-4 h-4" /></button>
+                    <button type="button" onClick={() => removeImage(index)} className="absolute right-2 top-3 text-zinc-400 hover:text-rose-600" aria-label="Remove image"><X className="w-4 h-4" /></button>
                   </div>
                 ))}
               </section>
