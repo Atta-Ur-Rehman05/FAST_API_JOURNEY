@@ -126,25 +126,47 @@ export const Products: React.FC = () => {
 
   return (
     <div className="min-h-full bg-zinc-950">
-      <section className="border-b border-zinc-800 bg-zinc-950 px-4 py-12">
-        <div className="mx-auto max-w-7xl">
-          <div className="max-w-3xl">
+      <section className="border-b border-zinc-800 bg-zinc-950 px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-center lg:gap-16">
+          <div className="max-w-2xl">
             <span className="inline-flex items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[10px] font-bold tracking-[.16em] text-zinc-400">
-              <Sparkles className="h-3 w-3" />NEW SEASON COLLECTION 2026
+              <Sparkles className="h-3 w-3" /> NEW SEASON COLLECTION 2026
             </span>
-            <h1 className="mt-4 text-4xl font-black tracking-tight text-zinc-50 sm:text-5xl">
-              Elevate Your <span className="text-zinc-500">Digital Experience.</span>
+            <h1 className="mt-5 max-w-xl text-4xl font-black leading-[1.08] tracking-tight text-zinc-50 sm:text-5xl">
+              Elevate Your<br /><span className="text-zinc-500">Digital Experience</span>
             </h1>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-400">
-              Discover the latest trends and styles in our new season collection. From statement pieces to everyday essentials, we have something for every wardrobe.
+            <p className="mt-5 max-w-xl text-sm leading-6 text-zinc-400">
+              Discover studio-grade wireless audio, precision Retina workstations, and luxury crafted leather accessories.
             </p>
             <button
               onClick={() => { setSelectedCategory(null); setSearchTerm(''); setPage(0); }}
-              className="btn-primary mt-5 text-xs"
+              className="btn-primary mt-7 text-sm"
             >
-              Explore all stock <ChevronRight className="ml-1 h-4 w-4" />
+              Explore Store Catalog <ChevronRight className="ml-1 h-4 w-4" />
             </button>
           </div>
+
+          <article className="mx-auto w-full max-w-sm rounded-[1.35rem] border border-zinc-800 bg-zinc-900/70 p-3 shadow-2xl shadow-black/30 ring-1 ring-zinc-800/70 lg:mx-0">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-amber-300">
+              <img
+                src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&q=85"
+                alt="Black noise-cancelling headphones"
+                className="h-full w-full object-cover"
+              />
+              <span className="absolute left-3 top-3 rounded-full bg-zinc-50 px-2.5 py-1 text-[10px] font-black text-zinc-950">SPECIAL OFFER</span>
+            </div>
+            <div className="px-1 pb-2 pt-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-zinc-100">★ 4.9 (128)</span>
+                <span className="font-mono text-zinc-500">In Stock</span>
+              </div>
+              <h2 className="mt-1.5 text-base font-black text-zinc-50">Aura Studio Noise-Canceling</h2>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-lg font-black text-zinc-50">$349.99</span>
+                <span className="text-xs text-zinc-500 line-through">$399.99</span>
+              </div>
+            </div>
+          </article>
         </div>
       </section>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
