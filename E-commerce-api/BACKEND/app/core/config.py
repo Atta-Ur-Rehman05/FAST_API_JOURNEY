@@ -2,7 +2,7 @@
 # this mean that this file will be used by all the other modules in the application
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field
+from pydantic import Field, model_validator
 
 class Settings(BaseSettings):  # configuration schema for the application
     DATABASE_URL: str
@@ -27,6 +27,31 @@ class Settings(BaseSettings):  # configuration schema for the application
     STRIPE_SECRET_KEY: str | None = None
     STRIPE_WEBHOOK_SECRET: str | None = None
     STRIPE_CURRENCY: str = "usd"
+
+    @model_validator(mode="after")
+    def validate_production_settings(self) -> "Settings":
+        """Fail fast when a deployment has unsafe production configuration."""
+        if self.ENVIRONMENT != "production":
+            return self
+
+        unsafe_secret_values = {
+            "replace-with-a-long-random-secret",
+            "change-me",
+            "secret",
+        }
+        if len(self.SECRET_KEY) < 32 or self.SECRET_KEY.lower() in unsafe_secret_values:
+            raise ValueError("SECRET_KEY must be a unique random value of at least 32 characters in production")
+        if not self.DATABASE_URL.startswith("postgresql+asyncpg://"):
+            raise ValueError("DATABASE_URL must use the PostgreSQL asyncpg driver in production")
+        if not self.CORS_ORIGINS:
+            raise ValueError("CORS_ORIGINS must contain the HTTPS frontend origin in production")
+        if any(origin == "*" or not origin.startswith("https://") for origin in self.CORS_ORIGINS):
+            raise ValueError("CORS_ORIGINS must contain explicit HTTPS origins in production")
+        if self.SQL_ECHO:
+            raise ValueError("SQL_ECHO must be false in production")
+        if self.EXPOSE_RESET_TOKEN_IN_DEVELOPMENT:
+            raise ValueError("EXPOSE_RESET_TOKEN_IN_DEVELOPMENT must be false in production")
+        return self
 
     # Using SettingsConfigDict for pydantic v2 support
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
