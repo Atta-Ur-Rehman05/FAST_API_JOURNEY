@@ -14,6 +14,9 @@ export const Products: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
+  const [savedProductIds, setSavedProductIds] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('saved_product_ids') || '[]'); } catch { return []; }
+  });
 
   const [searchParams] = useSearchParams();
   const searchUrlTerm = searchParams.get('search') || '';
@@ -21,6 +24,14 @@ export const Products: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState(searchUrlTerm);
 
   const { addItem } = useCartStore();
+
+  const toggleSavedProduct = (productId: string) => {
+    setSavedProductIds((current) => {
+      const next = current.includes(productId) ? current.filter((id) => id !== productId) : [...current, productId];
+      localStorage.setItem('saved_product_ids', JSON.stringify(next));
+      return next;
+    });
+  };
 
   useEffect(() => {
     setSearchTerm(searchUrlTerm);
@@ -174,6 +185,7 @@ export const Products: React.FC = () => {
                   const primaryVariant = product.variants?.[0];
                   const displayPrice = Number(product.base_price) + (primaryVariant ? Number(primaryVariant.price_modifier) : 0);
                   const hasStock = primaryVariant ? primaryVariant.available_quantity > 0 : false;
+                  const isSaved = savedProductIds.includes(product.id);
 
                   return (
                     <div key={product.id} className="ui-card p-3 flex flex-col justify-between group relative"
@@ -191,7 +203,7 @@ export const Products: React.FC = () => {
                             <div className="text-zinc-500 font-mono text-[10px]">NO IMAGE</div>
                           )}
                           {/* Stock Tag */}
-                          <button className="absolute right-2 top-2 rounded-full bg-zinc-950/80 p-2 text-zinc-300 backdrop-blur-sm hover:text-white" aria-label="Save product"><Heart className="h-3.5 w-3.5" /></button><span className={`absolute bottom-2 left-2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase border ${
+                          <button onClick={() => toggleSavedProduct(product.id)} className={`absolute right-2 top-2 rounded-full bg-zinc-950/80 p-2 backdrop-blur-sm transition-colors ${isSaved ? 'text-rose-300' : 'text-zinc-300 hover:text-white'}`} aria-label={isSaved ? `Remove ${product.name} from saved products` : `Save ${product.name}`} aria-pressed={isSaved}><Heart className={`h-3.5 w-3.5 ${isSaved ? 'fill-current' : ''}`} /></button><span className={`absolute bottom-2 left-2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase border ${
                             hasStock ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800/50' : 'bg-rose-950/80 text-rose-300 border-rose-800/50'
                           }`}>
                             {hasStock ? 'In Stock' : 'Out of Stock'}
@@ -216,7 +228,7 @@ export const Products: React.FC = () => {
                           <Link
                             to={`/products/${product.id}`}
                             className="p-1.5 rounded-md border border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors flex items-center justify-center"
-                            title="View Details"
+                            aria-label={`View details for ${product.name}`}
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </Link>

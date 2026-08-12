@@ -13,12 +13,21 @@ const assurances = [
 
 export const Footer: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterMessage, setNewsletterMessage] = useState('');
 
   useEffect(() => {
     apiClient.get<PaginatedResponse<Category>>('/categories/', { params: { limit: 5, root_only: true } })
       .then((response) => setCategories(response.data.items))
       .catch((error) => console.error('Unable to load footer categories:', error));
   }, []);
+
+  const handleNewsletterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!newsletterEmail.trim()) return;
+    setNewsletterMessage(`Thanks — updates will be sent to ${newsletterEmail.trim()}.`);
+    setNewsletterEmail('');
+  };
 
   return (
     <footer className="mt-auto border-t border-zinc-800 bg-zinc-950 text-zinc-400">
@@ -38,10 +47,12 @@ export const Footer: React.FC = () => {
           <Link to="/products" className="inline-flex items-center gap-2 text-xl font-black tracking-tight text-zinc-50"><span className="grid h-10 w-10 place-items-center rounded-xl bg-zinc-100 text-zinc-950">Z</span>ZETAMALL</Link>
           <p className="mt-5 max-w-sm text-sm leading-6">ZetaMall — next-generation modern digital marketplace. Crafted for high performance, minimalism, and precision.</p>
           <p className="mt-7 text-xs font-bold tracking-[.12em] text-zinc-300">SUBSCRIBE TO NEWSLETTER</p>
-          <form className="mt-3 flex max-w-md gap-2" onSubmit={(event) => event.preventDefault()}>
-            <input type="email" aria-label="Email address" placeholder="Enter your email" className="min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm outline-none focus:border-zinc-500" />
+          <form className="mt-3 flex max-w-md gap-2" onSubmit={handleNewsletterSubmit} noValidate>
+            <label className="sr-only" htmlFor="newsletter-email">Email address</label>
+            <input id="newsletter-email" type="email" required value={newsletterEmail} onChange={(event) => { setNewsletterEmail(event.target.value); setNewsletterMessage(''); }} aria-describedby="newsletter-message" placeholder="Enter your email" className="ui-input min-w-0 flex-1 rounded-xl px-4 py-3 text-sm" />
             <button type="submit" className="btn-primary gap-1.5 px-4 text-sm">Join <Send className="h-4 w-4" /></button>
           </form>
+          <p id="newsletter-message" aria-live="polite" className="mt-2 min-h-5 text-xs text-zinc-300">{newsletterMessage}</p>
         </div>
 
         <div><h3 className="text-sm font-black text-zinc-100">CATALOG</h3><div className="mt-4 space-y-3 text-sm">{categories.length ? categories.map((category) => <Link key={category.id} to={`/products?category_id=${category.id}`} className="block hover:text-white">{category.name}</Link>) : <Link to="/products" className="block hover:text-white">Browse products</Link>}</div></div>
