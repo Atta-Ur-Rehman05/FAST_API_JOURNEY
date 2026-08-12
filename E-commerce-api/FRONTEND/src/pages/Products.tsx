@@ -7,6 +7,10 @@ import { useCartStore } from '../store/cartStore';
 import { ProductVisual } from '../components/product/ProductVisual';
 
 const PAGE_SIZE = 24;
+const MIN_PRICE = 0;
+const MAX_PRICE = 2000;
+
+type SortOption = 'featured' | 'price-low' | 'price-high' | 'newest';
 
 export const Products: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -15,6 +19,9 @@ export const Products: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [page, setPage] = useState(0);
   const [total, setTotal] = useState(0);
+  const [sortBy, setSortBy] = useState<SortOption>('featured');
+  const [maxPrice, setMaxPrice] = useState(MAX_PRICE);
+  const [inStockOnly, setInStockOnly] = useState(false);
   const [savedProductIds, setSavedProductIds] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('saved_product_ids') || '[]'); } catch { return []; }
   });
@@ -82,6 +89,23 @@ export const Products: React.FC = () => {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+  const getProductPrice = (product: Product) => {
+    const primaryVariant = product.variants?.[0];
+    return Number(product.base_price) + (primaryVariant ? Number(primaryVariant.price_modifier) : 0);
+  };
+
+  const visibleProducts = products
+    .filter((product) => {
+      const hasStock = product.variants?.some((variant) => variant.available_quantity > 0) ?? false;
+      return getProductPrice(product) <= maxPrice && (!inStockOnly || hasStock);
+    })
+    .sort((first, second) => {
+      if (sortBy === 'price-low') return getProductPrice(first) - getProductPrice(second);
+      if (sortBy === 'price-high') return getProductPrice(second) - getProductPrice(first);
+      if (sortBy === 'newest') return new Date(second.created_at ?? 0).getTime() - new Date(first.created_at ?? 0).getTime();
+      return 0;
+    });
+
   const renderCategoryButton = (cat: Category, depth: number = 0): React.ReactNode => (
     <React.Fragment key={cat.id}>
       <button
@@ -103,9 +127,24 @@ export const Products: React.FC = () => {
   return (
     <div className="min-h-full bg-zinc-950">
       <section className="border-b border-zinc-800 bg-zinc-950 px-4 py-12">
-        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 lg:flex-row lg:items-center">
-          <div className="max-w-2xl"><span className="inline-flex items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[10px] font-bold tracking-[.16em] text-zinc-400"><Sparkles className="h-3 w-3" /> FIELD SELECTED</span><h1 className="mt-4 text-4xl font-black tracking-tight text-zinc-50 sm:text-5xl">Built for the everyday <span className="text-zinc-500">rig.</span></h1><p className="mt-3 max-w-xl text-sm leading-6 text-zinc-400">A focused catalog of dependable objects, with direct pricing and live inventory.</p><button onClick={() => { setSelectedCategory(null); setSearchTerm(''); setPage(0); }} className="btn-primary mt-5 text-xs">Explore all stock <ChevronRight className="ml-1 h-4 w-4" /></button></div>
-          <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 p-3 ring-1 ring-zinc-800/80"><div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-800"><img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=85" alt="Selected everyday tools on a workspace" className="h-full w-full object-cover opacity-85" /><div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/10 to-transparent" /><div className="absolute inset-x-4 bottom-4"><span className="font-mono text-[10px] font-bold tracking-[.16em] text-zinc-400">ZETA // 01</span><div className="mt-1 text-lg font-black leading-tight text-zinc-100">TOOLS FOR THE DAILY SYSTEM.</div></div></div><div className="mt-3 flex items-center justify-between px-1 text-xs"><span className="font-bold text-zinc-200">CURATED CATALOG</span><span className="font-mono text-zinc-500">{total} UNITS</span></div></div>
+        <div className="mx-auto max-w-7xl">
+          <div className="max-w-3xl">
+            <span className="inline-flex items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[10px] font-bold tracking-[.16em] text-zinc-400">
+              <Sparkles className="h-3 w-3" />NEW SEASON COLLECTION 2026
+            </span>
+            <h1 className="mt-4 text-4xl font-black tracking-tight text-zinc-50 sm:text-5xl">
+              Elevate Your <span className="text-zinc-500">Digital Experience.</span>
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-400">
+              Discover the latest trends and styles in our new season collection. From statement pieces to everyday essentials, we have something for every wardrobe.
+            </p>
+            <button
+              onClick={() => { setSelectedCategory(null); setSearchTerm(''); setPage(0); }}
+              className="btn-primary mt-5 text-xs"
+            >
+              Explore all stock <ChevronRight className="ml-1 h-4 w-4" />
+            </button>
+          </div>
         </div>
       </section>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -154,6 +193,52 @@ export const Products: React.FC = () => {
 
             {categoryTree.map((cat) => renderCategoryButton(cat))}
           </div>
+
+          <div className="space-y-3 border-t border-zinc-800 pt-4">
+            <label htmlFor="product-sort" className="block text-xs font-bold uppercase tracking-[.14em] text-zinc-400">Sort by</label>
+            <select
+              id="product-sort"
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value as SortOption)}
+              className="w-full rounded-md border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-bold text-zinc-100 outline-none transition-colors focus:border-zinc-500"
+            >
+              <option value="featured">Featured first</option>
+              <option value="price-low">Price: low to high</option>
+              <option value="price-high">Price: high to low</option>
+              <option value="newest">Newest first</option>
+            </select>
+          </div>
+
+          <div className="space-y-3 border-t border-zinc-800 pt-4">
+            <div className="flex items-center justify-between">
+              <label htmlFor="price-range" className="text-xs font-bold uppercase tracking-[.14em] text-zinc-400">Price range</label>
+              <span className="font-mono text-xs font-bold text-zinc-100">Rs. {maxPrice.toLocaleString()}</span>
+            </div>
+            <input
+              id="price-range"
+              type="range"
+              min={MIN_PRICE}
+              max={MAX_PRICE}
+              step="50"
+              value={maxPrice}
+              onChange={(event) => setMaxPrice(Number(event.target.value))}
+              className="h-1.5 w-full cursor-pointer accent-zinc-100"
+            />
+            <div className="flex justify-between font-mono text-[10px] text-zinc-500">
+              <span>Rs. {MIN_PRICE}</span>
+              <span>Rs. {MAX_PRICE.toLocaleString()}+</span>
+            </div>
+          </div>
+
+          <label className="flex cursor-pointer items-center gap-2 border-t border-zinc-800 pt-4 text-xs font-bold text-zinc-200">
+            <input
+              type="checkbox"
+              checked={inStockOnly}
+              onChange={(event) => setInStockOnly(event.target.checked)}
+              className="h-4 w-4 rounded border-zinc-700 accent-zinc-100"
+            />
+            In-stock items only
+          </label>
         </aside>
 
         {/* Product Grid Area */}
@@ -168,7 +253,7 @@ export const Products: React.FC = () => {
                 </div>
               ))}
             </div>
-          ) : products.length === 0 ? (
+          ) : visibleProducts.length === 0 ? (
             <div className="ui-surface p-12 rounded-sm text-center space-y-3">
               <p className="text-base font-bold text-zinc-100">No matching products found</p>
               <p className="text-xs text-zinc-400">Try resetting your category or search keywords.</p>
@@ -182,7 +267,7 @@ export const Products: React.FC = () => {
           ) : (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                {products.map((product) => {
+                {visibleProducts.map((product) => {
                   const primaryVariant = product.variants?.[0];
                   const displayPrice = Number(product.base_price) + (primaryVariant ? Number(primaryVariant.price_modifier) : 0);
                   const hasStock = primaryVariant ? primaryVariant.available_quantity > 0 : false;
