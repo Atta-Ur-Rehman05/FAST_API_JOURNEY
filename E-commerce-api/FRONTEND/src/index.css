@@ -1,78 +1,85 @@
 @import "tailwindcss";
 
 @layer base {
+  * { border-color: #27272a; }
+  html { background: #09090b; }
   body {
-    background-color: #EFF0F5;
-    color: #212121;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     min-height: 100vh;
+    background: #09090b;
+    color: #fafafa;
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
+  button, input, select, textarea { font: inherit; }
+  input, select, textarea {
+    background: #18181b;
+    color: #fafafa;
+    border-color: #27272a;
+  }
+  input::placeholder, textarea::placeholder { color: #71717a; }
 }
 
-/* ZetaMall UI Tokens & Surface Utilities */
-.ui-surface {
-  background-color: #FFFFFF;
-  border: 1px solid #E5E7EB;
-  border-radius: 4px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+/* Industrial Dark Minimalist shared primitives */
+.ui-surface, .ui-card {
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 0.75rem;
+  box-shadow: none;
 }
-
-.ui-card {
-  background-color: #FFFFFF;
-  border: 1px solid #E5E7EB;
-  border-radius: 4px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.ui-card:hover {
-  border-color: #F85606;
-  box-shadow: 0 2px 8px 0 rgba(248, 86, 6, 0.12);
-}
-
+.ui-card { transition: border-color .18s ease, background-color .18s ease; }
+.ui-card:hover { border-color: #52525b; background: #1c1c1f; box-shadow: none; }
 .btn-primary {
-  background-color: #F85606;
-  color: #FFFFFF;
-  font-weight: 600;
-  border-radius: 2px;
-  padding: 8px 16px;
-  transition: background-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4f4f5;
+  color: #09090b;
+  border: 1px solid #f4f4f5;
+  border-radius: .5rem;
+  padding: .5rem 1rem;
+  font-weight: 800;
+  transition: background-color .18s ease, border-color .18s ease;
 }
-
-.btn-primary:hover:not(:disabled) {
-  background-color: #D04400;
-}
-
+.btn-primary:hover:not(:disabled) { background: #e4e4e7; border-color: #e4e4e7; }
 .btn-accent {
-  background-color: #E7FFFD;
-  color: #0f766e;
-  border: 1px solid #b2f5f0;
-  font-weight: 600;
-  border-radius: 2px;
-  padding: 8px 16px;
-  transition: background-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(24, 24, 27, .7);
+  color: #e4e4e7;
+  border: 1px solid #27272a;
+  border-radius: .5rem;
+  padding: .5rem 1rem;
+  font-weight: 700;
 }
-
-.btn-accent:hover:not(:disabled) {
-  background-color: #d0fbf9;
+.btn-accent:hover:not(:disabled) { background: #27272a; }
+/* Compatibility layer for the existing route components while they share the new canvas. */
+#root .bg-white, #root .bg-gray-50, #root .bg-gray-100, #root .bg-\[\#EFF0F5\] { background-color: #18181b !important; }
+#root .bg-gray-200 { background-color: #27272a !important; }
+#root .border-gray-100, #root .border-gray-200, #root .border-gray-300 { border-color: #27272a !important; }
+#root .text-gray-400, #root .text-gray-500, #root .text-gray-600, #root .text-gray-700 { color: #a1a1aa !important; }
+#root .hover\:bg-gray-50:hover, #root .hover\:bg-gray-100:hover { background-color: #27272a !important; }
+#root .hover\:text-\[\#F85606\]:hover { color: #fafafa !important; }
+/* Legacy semantic colors are mapped here until every route is converted to tokens. */
+#root .text-\[\#212121\] { color: #f4f4f5 !important; }
+#root .text-\[\#757575\] { color: #a1a1aa !important; }
+#root .text-\[\#F85606\] { color: #e4e4e7 !important; }
+#root .bg-\[\#EFF0F5\]\/50, #root .bg-\[\#EFF0F5\]\/60 { background-color: rgba(39, 39, 42, .55) !important; }
+#root .bg-\[\#FFE8DE\] { background-color: #27272a !important; }
+#root input, #root select, #root textarea {
+  background-color: #09090b !important;
+  color: #f4f4f5 !important;
+  border-color: #27272a !important;
+  border-radius: .5rem;
 }
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+#root input::placeholder, #root textarea::placeholder { color: #52525b !important; opacity: 1; }
+#root input:focus, #root select:focus, #root textarea:focus {
+  border-color: #52525b !important;
+  outline: none;
+  box-shadow: 0 0 0 1px #52525b;
 }
-
-::-webkit-scrollbar-track {
-  background: #EFF0F5;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
-}
-
+#root option { background: #18181b; color: #f4f4f5; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #09090b; }
+::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #52525b; }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Filter, ShoppingCart, Tag, Eye, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Filter, ShoppingCart, Tag, Eye, ChevronRight, ChevronLeft, Heart, Sparkles } from 'lucide-react';
 import type { Product, Category, PaginatedResponse } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { useCartStore } from '../store/cartStore';
@@ -74,8 +74,8 @@ export const Products: React.FC = () => {
         onClick={() => { setSelectedCategory(cat.id); setPage(0); }}
         className={`w-full text-left px-3 py-2 rounded-xs text-xs transition-colors flex items-center justify-between ${
           selectedCategory === cat.id
-            ? 'bg-[#F85606] text-white font-bold'
-            : 'text-gray-700 hover:bg-[#EFF0F5] hover:text-[#F85606]'
+            ? 'bg-zinc-100 text-zinc-950 font-bold'
+            : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'
         }`}
         style={{ paddingLeft: `${depth * 14 + 12}px` }}
       >
@@ -87,22 +87,29 @@ export const Products: React.FC = () => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div className="min-h-full bg-zinc-950">
+      <section className="border-b border-zinc-800 bg-zinc-950 px-4 py-12">
+        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 lg:flex-row lg:items-center">
+          <div className="max-w-2xl"><span className="inline-flex items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[10px] font-bold tracking-[.16em] text-zinc-400"><Sparkles className="h-3 w-3" /> FIELD SELECTED</span><h1 className="mt-4 text-4xl font-black tracking-tight text-zinc-50 sm:text-5xl">Built for the everyday <span className="text-zinc-500">rig.</span></h1><p className="mt-3 max-w-xl text-sm leading-6 text-zinc-400">A focused catalog of dependable objects, with direct pricing and live inventory.</p><button onClick={() => { setSelectedCategory(null); setSearchTerm(''); setPage(0); }} className="btn-primary mt-5 text-xs">Explore all stock <ChevronRight className="ml-1 h-4 w-4" /></button></div>
+          <div className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-900 p-4 ring-1 ring-zinc-800/80"><div className="aspect-[4/3] rounded-xl border border-zinc-800 bg-zinc-800 p-4"><span className="font-mono text-[10px] text-zinc-500">ZETA // 01</span><div className="mt-14 text-xl font-black text-zinc-200">TOOLS FOR THE DAILY SYSTEM.</div></div><div className="mt-3 flex items-center justify-between text-xs"><span className="font-bold text-zinc-200">CURATED CATALOG</span><span className="font-mono text-zinc-500">{total} UNITS</span></div></div>
+        </div>
+      </section>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
       {/* Page Header */}
-      <div className="ui-surface p-4 rounded-sm flex items-center justify-between border-l-4 border-l-[#F85606]">
+      <div className="ui-surface p-4 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <h1 className="text-lg font-bold text-[#F85606] uppercase tracking-wide flex items-center gap-1.5">
-            <Tag className="w-5 h-5 fill-[#F85606]" />
+          <h2 className="text-lg font-black text-zinc-100 uppercase tracking-tight flex items-center gap-1.5">
+            <Tag className="w-5 h-5" />
             Product Catalog
-          </h1>
-          <span className="text-xs text-[#757575] border-l border-gray-300 pl-3 hidden sm:inline">
+          </h2>
+          <span className="text-xs font-mono text-zinc-500 border-l border-zinc-800 pl-3 hidden sm:inline">
             {total} item{total === 1 ? '' : 's'}
           </span>
         </div>
         <button
           onClick={() => { setSelectedCategory(null); setSearchTerm(''); setPage(0); }}
-          className="text-xs font-bold text-[#F85606] hover:text-[#D04400] border border-[#F85606] hover:bg-[#FFE8DE] px-3 py-1.5 rounded-xs transition-colors flex items-center gap-1"
+          className="text-xs font-bold text-zinc-300 hover:text-white border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 px-3 py-1.5 rounded-md transition-colors flex items-center gap-1"
         >
           <span>SHOP ALL PRODUCTS</span>
           <ChevronRight className="w-3.5 h-3.5" />
@@ -113,10 +120,10 @@ export const Products: React.FC = () => {
       <div className="flex flex-col lg:flex-row gap-6">
 
         {/* Sidebar Categories */}
-        <aside className="w-full lg:w-60 ui-surface p-4 rounded-sm h-fit space-y-4 shadow-xs">
-          <div className="flex items-center space-x-2 border-b border-gray-200 pb-3">
-            <Filter className="w-4 h-4 text-[#F85606]" />
-            <h3 className="text-sm font-bold text-[#212121] uppercase tracking-wider">Categories</h3>
+        <aside className="w-full lg:w-60 ui-surface p-4 h-fit space-y-4">
+          <div className="flex items-center space-x-2 border-b border-zinc-800 pb-3">
+            <Filter className="w-4 h-4 text-zinc-400" />
+            <h3 className="text-sm font-bold text-zinc-100 uppercase tracking-wider">Collections</h3>
           </div>
 
           <div className="space-y-1">
@@ -124,8 +131,8 @@ export const Products: React.FC = () => {
               onClick={() => { setSelectedCategory(null); setPage(0); }}
               className={`w-full text-left px-3 py-2 rounded-xs text-xs font-semibold transition-colors ${
                 selectedCategory === null
-                  ? 'bg-[#F85606] text-white font-bold'
-                  : 'text-gray-700 hover:bg-[#EFF0F5] hover:text-[#F85606]'
+                  ? 'bg-zinc-100 text-zinc-950 font-bold'
+                  : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'
               }`}
             >
               All Categories
@@ -140,10 +147,10 @@ export const Products: React.FC = () => {
           {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-                <div key={n} className="h-72 ui-surface rounded-sm animate-pulse bg-gray-100 p-4 space-y-3">
-                  <div className="h-40 bg-gray-200 rounded-xs" />
-                  <div className="h-4 bg-gray-200 rounded-xs w-3/4" />
-                  <div className="h-4 bg-gray-200 rounded-xs w-1/2" />
+                <div key={n} className="h-72 ui-surface animate-pulse p-4 space-y-3">
+                  <div className="h-40 bg-zinc-800 rounded-xl" />
+                  <div className="h-4 bg-zinc-800 rounded w-3/4" />
+                  <div className="h-4 bg-zinc-800 rounded w-1/2" />
                 </div>
               ))}
             </div>
@@ -167,13 +174,11 @@ export const Products: React.FC = () => {
                   const hasStock = primaryVariant ? primaryVariant.available_quantity > 0 : false;
 
                   return (
-                    <div
-                      key={product.id}
-                      className="ui-card rounded-sm p-3 flex flex-col justify-between group bg-white hover:border-[#F85606] transition-all relative"
+                    <div key={product.id} className="ui-card p-3 flex flex-col justify-between group relative"
                     >
                       <div>
                         {/* Product Image Container */}
-                        <div className="w-full h-44 bg-white rounded-xs mb-2 overflow-hidden relative border border-gray-100 flex items-center justify-center group-hover:opacity-95">
+                        <div className="w-full aspect-[4/5] bg-zinc-800 rounded-xl mb-3 overflow-hidden relative border border-zinc-800 flex items-center justify-center">
                           {product.images?.[0]?.image_url ? (
                             <img
                               src={product.images[0].image_url}
@@ -181,26 +186,26 @@ export const Products: React.FC = () => {
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                             />
                           ) : (
-                            <div className="text-gray-400 font-mono text-[10px]">NO IMAGE</div>
+                            <div className="text-zinc-500 font-mono text-[10px]">NO IMAGE</div>
                           )}
                           {/* Stock Tag */}
-                          <span className={`absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-xs text-[10px] font-bold uppercase border ${
-                            hasStock ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'
+                          <button className="absolute right-2 top-2 rounded-full bg-zinc-950/80 p-2 text-zinc-300 backdrop-blur-sm hover:text-white" aria-label="Save product"><Heart className="h-3.5 w-3.5" /></button><span className={`absolute bottom-2 left-2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase border ${
+                            hasStock ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800/50' : 'bg-rose-950/80 text-rose-300 border-rose-800/50'
                           }`}>
                             {hasStock ? 'In Stock' : 'Out of Stock'}
                           </span>
                         </div>
 
                         {/* Title & Description */}
-                        <h4 className="text-xs sm:text-sm font-medium text-[#212121] group-hover:text-[#F85606] transition-colors line-clamp-2 leading-snug">
+                        <h4 className="text-xs sm:text-sm font-bold text-zinc-100 transition-colors line-clamp-2 leading-snug">
                           {product.name}
                         </h4>
                       </div>
 
                       {/* Pricing & Actions */}
-                      <div className="mt-3 pt-2 border-t border-gray-100 space-y-2">
+                      <div className="mt-3 pt-2 border-t border-zinc-800 space-y-2">
                         <div>
-                          <div className="text-base sm:text-lg font-extrabold text-[#F85606] leading-none">
+                          <div className="font-mono text-base sm:text-lg font-black text-zinc-100 leading-none">
                             Rs. {displayPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                           </div>
                         </div>
@@ -208,7 +213,7 @@ export const Products: React.FC = () => {
                         <div className="flex gap-1.5 pt-1">
                           <Link
                             to={`/products/${product.id}`}
-                            className="p-1.5 rounded-xs border border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-[#F85606] transition-colors flex items-center justify-center"
+                            className="p-1.5 rounded-md border border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors flex items-center justify-center"
                             title="View Details"
                           >
                             <Eye className="w-3.5 h-3.5" />
@@ -218,7 +223,7 @@ export const Products: React.FC = () => {
                             <button
                               onClick={() => addItem(primaryVariant.id, 1)}
                               disabled={!hasStock}
-                              className="flex-1 py-1.5 px-2 bg-[#F85606] hover:bg-[#D04400] text-white text-xs font-semibold rounded-xs flex items-center justify-center gap-1 shadow-xs transition-colors disabled:opacity-50"
+                              className="flex-1 py-1.5 px-2 bg-zinc-100 hover:bg-zinc-200 text-zinc-950 text-xs font-bold rounded-md flex items-center justify-center gap-1 transition-colors disabled:opacity-50"
                             >
                               <ShoppingCart className="w-3.5 h-3.5" />
                               <span>Add</span>
@@ -238,18 +243,18 @@ export const Products: React.FC = () => {
                   <button
                     onClick={() => setPage((p) => Math.max(0, p - 1))}
                     disabled={page === 0}
-                    className="p-2 border border-gray-300 rounded-xs text-[#757575] hover:border-[#F85606] hover:text-[#F85606] disabled:opacity-40"
+                    className="p-2 border border-zinc-800 rounded-md text-zinc-400 hover:border-zinc-600 hover:text-white disabled:opacity-40"
                     title="Previous page"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <span className="text-xs font-semibold text-[#757575]">
+                  <span className="text-xs font-mono text-zinc-500">
                     Page {page + 1} of {totalPages}
                   </span>
                   <button
                     onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                     disabled={page >= totalPages - 1}
-                    className="p-2 border border-gray-300 rounded-xs text-[#757575] hover:border-[#F85606] hover:text-[#F85606] disabled:opacity-40"
+                    className="p-2 border border-zinc-800 rounded-md text-zinc-400 hover:border-zinc-600 hover:text-white disabled:opacity-40"
                     title="Next page"
                   >
                     <ChevronRight className="w-4 h-4" />
@@ -261,6 +266,7 @@ export const Products: React.FC = () => {
         </main>
       </div>
 
+      </div>
     </div>
   );
 };

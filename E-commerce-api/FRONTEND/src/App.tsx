@@ -29,7 +29,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrowserRouter>
-          <div className="min-h-screen flex flex-col bg-slate-900 text-slate-100 font-sans">
+          <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-50 font-sans">
             <Navbar />
             <CartDrawer />
 

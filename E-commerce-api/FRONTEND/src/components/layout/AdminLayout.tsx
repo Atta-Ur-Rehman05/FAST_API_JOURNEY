@@ -32,21 +32,21 @@ export const AdminLayout: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#EFF0F5]">
+    <div className="min-h-screen flex flex-col md:flex-row bg-zinc-950 text-zinc-100">
       
       {/* Admin Sidebar */}
-      <aside className="w-full md:w-64 bg-white border-r border-gray-200 p-4 flex flex-col justify-between shadow-xs">
+      <aside className="w-full md:w-64 bg-zinc-950 border-r border-zinc-800 p-4 flex flex-col justify-between">
         <div className="space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+          <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
             <div>
-              <h2 className="text-sm font-bold text-[#212121] uppercase tracking-wider">Admin Hub</h2>
-              <span className="inline-block px-2 py-0.5 mt-1 text-[10px] font-bold uppercase rounded-xs bg-[#E7FFFD] text-[#0f766e] border border-[#b2f5f0]">
+              <h2 className="text-sm font-black text-zinc-100 uppercase tracking-wider">Admin Control</h2>
+              <span className="inline-block px-2 py-0.5 mt-1 text-[10px] font-bold uppercase rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/50">
                 {user?.role} Portal
               </span>
             </div>
             <button
               onClick={() => navigate('/products')}
-              className="p-1.5 text-gray-500 hover:text-[#F85606] transition-colors rounded-sm"
+              className="p-1.5 text-zinc-500 hover:text-white transition-colors rounded-md"
               title="Back to Storefront"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -63,8 +63,8 @@ export const AdminLayout: React.FC = () => {
                   to={item.path}
                   className={`flex items-center space-x-3 px-3 py-2.5 rounded-sm text-sm font-medium transition-colors ${
                     isActive
-                      ? 'bg-[#F85606] text-white font-semibold shadow-xs'
-                      : 'text-gray-700 hover:bg-[#EFF0F5] hover:text-[#F85606]'
+                      ? 'bg-zinc-100 text-zinc-950 font-bold'
+                      : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -75,7 +75,7 @@ export const AdminLayout: React.FC = () => {
           </nav>
         </div>
 
-        <div className="pt-4 border-t border-gray-200 text-[11px] text-gray-500 font-mono">
+        <div className="pt-4 border-t border-zinc-800 text-[11px] text-zinc-500 font-mono">
           FastAPI Engine Connected
         </div>
       </aside>
