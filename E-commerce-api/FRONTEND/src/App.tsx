@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 
 import { Navbar } from './components/layout/Navbar';
+import { Footer } from './components/layout/Footer';
 import { CartDrawer } from './components/cart/CartDrawer';
 
 import { Login } from './pages/Login';
@@ -64,6 +65,7 @@ export function App() {
                 <Route path="*" element={<Navigate to="/products" replace />} />
               </Routes>
             </div>
+            <Footer />
           </div>
         </BrowserRouter>
       </AuthProvider>

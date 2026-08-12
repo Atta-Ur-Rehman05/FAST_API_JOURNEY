@@ -17,14 +17,16 @@ export const Products: React.FC = () => {
 
   const [searchParams] = useSearchParams();
   const searchUrlTerm = searchParams.get('search') || '';
+  const categoryUrlId = Number(searchParams.get('category_id'));
   const [searchTerm, setSearchTerm] = useState(searchUrlTerm);
 
   const { addItem } = useCartStore();
 
   useEffect(() => {
     setSearchTerm(searchUrlTerm);
+    setSelectedCategory(Number.isInteger(categoryUrlId) && categoryUrlId > 0 ? categoryUrlId : null);
     setPage(0);
-  }, [searchUrlTerm]);
+  }, [searchUrlTerm, categoryUrlId]);
 
   // Fetch category tree from the backend (supports nested subcategories)
   useEffect(() => {
