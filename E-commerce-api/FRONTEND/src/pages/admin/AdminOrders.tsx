@@ -46,7 +46,7 @@ export const AdminOrders: React.FC = () => {
     try {
       await apiClient.patch(`/orders/${orderId}/status`, { order_status: newStatus });
       fetchOrders();
-    } catch (err) {
+    } catch {
       alert('Failed to update order status.');
     } finally {
       setUpdatingId(null);

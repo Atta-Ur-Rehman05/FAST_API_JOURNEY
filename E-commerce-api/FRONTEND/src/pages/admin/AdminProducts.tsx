@@ -168,7 +168,7 @@ export const AdminProducts: React.FC = () => {
     try {
       await apiClient.delete(`/products/${id}`);
       fetchData();
-    } catch (err) {
+    } catch {
       alert('Failed to delete product.');
     }
   };

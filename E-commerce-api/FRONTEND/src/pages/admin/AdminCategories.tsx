@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import type { Category, PaginatedResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
@@ -17,7 +17,7 @@ export const AdminCategories: React.FC = () => {
 
   const [search, setSearch] = useState('');
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const res = await apiClient.get<PaginatedResponse<Category>>('/categories/', {
         params: { search: search || undefined },
@@ -28,11 +28,11 @@ export const AdminCategories: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search]);
 
   useEffect(() => {
     fetchCategories();
-  }, [search]);
+  }, [fetchCategories]);
 
   const handleSaveCategory = async (e: React.FormEvent) => {
     e.preventDefault();

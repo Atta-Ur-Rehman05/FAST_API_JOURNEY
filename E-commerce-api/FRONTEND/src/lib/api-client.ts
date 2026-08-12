@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '/api/v1' : '');
+
+if (!API_BASE_URL) {
+  throw new Error('VITE_API_BASE_URL must be configured for this environment.');
+}
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -33,7 +37,7 @@ export const refreshAccessToken = async (): Promise<string | null> => {
       localStorage.setItem('refresh_token', res.data.refresh_token);
     }
     return res.data.access_token as string;
-  } catch (err) {
+  } catch {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     return null;

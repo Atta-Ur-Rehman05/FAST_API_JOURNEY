@@ -74,7 +74,8 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({ onSuccess }) => {
 
 export const Checkout: React.FC = () => {
   const navigate = useNavigate();
-  const { cart, fetchCart } = useCartStore();
+  const cart = useCartStore((state) => state.cart);
+  const fetchCart = useCartStore((state) => state.fetchCart);
   
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedShippingId, setSelectedShippingId] = useState<string>('');
@@ -106,7 +107,7 @@ export const Checkout: React.FC = () => {
       }
     };
     initCheckout();
-  }, []);
+  }, [fetchCart]);
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();

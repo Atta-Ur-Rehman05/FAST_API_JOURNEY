@@ -29,7 +29,7 @@ export const useCartStore = create<CartState>((set, get) => ({
     try {
       const res = await apiClient.get<Cart>('/cart/me');
       set({ cart: res.data, isLoading: false });
-    } catch (err) {
+    } catch {
       set({ cart: null, isLoading: false });
     }
   },

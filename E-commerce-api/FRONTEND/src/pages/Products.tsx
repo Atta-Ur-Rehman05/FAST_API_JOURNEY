@@ -4,6 +4,7 @@ import { Filter, ShoppingCart, Tag, Eye, ChevronRight, ChevronLeft, Heart, Spark
 import type { Product, Category, PaginatedResponse } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { useCartStore } from '../store/cartStore';
+import { ProductVisual } from '../components/product/ProductVisual';
 
 const PAGE_SIZE = 24;
 
@@ -104,7 +105,7 @@ export const Products: React.FC = () => {
       <section className="border-b border-zinc-800 bg-zinc-950 px-4 py-12">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 lg:flex-row lg:items-center">
           <div className="max-w-2xl"><span className="inline-flex items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[10px] font-bold tracking-[.16em] text-zinc-400"><Sparkles className="h-3 w-3" /> FIELD SELECTED</span><h1 className="mt-4 text-4xl font-black tracking-tight text-zinc-50 sm:text-5xl">Built for the everyday <span className="text-zinc-500">rig.</span></h1><p className="mt-3 max-w-xl text-sm leading-6 text-zinc-400">A focused catalog of dependable objects, with direct pricing and live inventory.</p><button onClick={() => { setSelectedCategory(null); setSearchTerm(''); setPage(0); }} className="btn-primary mt-5 text-xs">Explore all stock <ChevronRight className="ml-1 h-4 w-4" /></button></div>
-          <div className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-900 p-4 ring-1 ring-zinc-800/80"><div className="aspect-[4/3] rounded-xl border border-zinc-800 bg-zinc-800 p-4"><span className="font-mono text-[10px] text-zinc-500">ZETA // 01</span><div className="mt-14 text-xl font-black text-zinc-200">TOOLS FOR THE DAILY SYSTEM.</div></div><div className="mt-3 flex items-center justify-between text-xs"><span className="font-bold text-zinc-200">CURATED CATALOG</span><span className="font-mono text-zinc-500">{total} UNITS</span></div></div>
+          <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 p-3 ring-1 ring-zinc-800/80"><div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-800"><img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=85" alt="Selected everyday tools on a workspace" className="h-full w-full object-cover opacity-85" /><div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/10 to-transparent" /><div className="absolute inset-x-4 bottom-4"><span className="font-mono text-[10px] font-bold tracking-[.16em] text-zinc-400">ZETA // 01</span><div className="mt-1 text-lg font-black leading-tight text-zinc-100">TOOLS FOR THE DAILY SYSTEM.</div></div></div><div className="mt-3 flex items-center justify-between px-1 text-xs"><span className="font-bold text-zinc-200">CURATED CATALOG</span><span className="font-mono text-zinc-500">{total} UNITS</span></div></div>
         </div>
       </section>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -193,15 +194,7 @@ export const Products: React.FC = () => {
                       <div>
                         {/* Product Image Container */}
                         <div className="w-full aspect-[4/5] bg-zinc-800 rounded-xl mb-3 overflow-hidden relative border border-zinc-800 flex items-center justify-center">
-                          {product.images?.[0]?.image_url ? (
-                            <img
-                              src={product.images[0].image_url}
-                              alt={product.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                            />
-                          ) : (
-                            <div className="text-zinc-500 font-mono text-[10px]">NO IMAGE</div>
-                          )}
+                          <ProductVisual product={product} className="transition-transform duration-300 group-hover:scale-105" />
                           {/* Stock Tag */}
                           <button onClick={() => toggleSavedProduct(product.id)} className={`absolute right-2 top-2 rounded-full bg-zinc-950/80 p-2 backdrop-blur-sm transition-colors ${isSaved ? 'text-rose-300' : 'text-zinc-300 hover:text-white'}`} aria-label={isSaved ? `Remove ${product.name} from saved products` : `Save ${product.name}`} aria-pressed={isSaved}><Heart className={`h-3.5 w-3.5 ${isSaved ? 'fill-current' : ''}`} /></button><span className={`absolute bottom-2 left-2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase border ${
                             hasStock ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800/50' : 'bg-rose-950/80 text-rose-300 border-rose-800/50'

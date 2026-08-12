@@ -4,7 +4,8 @@ import { Pencil, Star, ShoppingCart, ArrowLeft, Trash2, Zap } from 'lucide-react
 import type { Product, ProductVariant, Review, PaginatedResponse } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { useCartStore } from '../store/cartStore';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
+import { ProductVisual } from '../components/product/ProductVisual';
 
 export const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -124,11 +125,7 @@ export const ProductDetail: React.FC = () => {
         {/* Product Image Gallery */}
         <div className="min-w-0">
           <div className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
-            {product.images?.[0]?.image_url ? (
-              <img src={product.images[0].image_url} alt={product.name} className="h-full w-full object-cover" />
-            ) : (
-              <div className="font-mono text-[10px] font-bold tracking-[.16em] text-zinc-500">NO IMAGE / PREVIEW</div>
-            )}
+            <ProductVisual product={product} priority />
           </div>
         </div>
 

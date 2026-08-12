@@ -72,7 +72,7 @@ export const Addresses: React.FC = () => {
     try {
       await apiClient.delete(`/addresses/${id}`);
       fetchAddresses();
-    } catch (err) {
+    } catch {
       alert('Failed to delete address.');
     }
   };
@@ -81,7 +81,7 @@ export const Addresses: React.FC = () => {
     try {
       await apiClient.patch(`/addresses/${id}/default-shipping`);
       fetchAddresses();
-    } catch (err) {
+    } catch {
       alert('Failed to update default shipping address.');
     }
   };
@@ -90,7 +90,7 @@ export const Addresses: React.FC = () => {
     try {
       await apiClient.patch(`/addresses/${id}/default-billing`);
       fetchAddresses();
-    } catch (err) {
+    } catch {
       alert('Failed to update default billing address.');
     }
   };

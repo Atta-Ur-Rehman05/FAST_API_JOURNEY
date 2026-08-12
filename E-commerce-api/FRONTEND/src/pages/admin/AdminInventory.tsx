@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Minus, Plus, Save } from 'lucide-react';
 import type { InventoryItem, PaginatedResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
@@ -33,7 +33,7 @@ export const AdminInventory: React.FC = () => {
     }
   };
 
-  const fetchInventory = async () => {
+  const fetchInventory = useCallback(async () => {
     try {
       const res = await apiClient.get<PaginatedResponse<InventoryItem>>('/inventory/', { params: {
         search: search || undefined,
@@ -51,11 +51,11 @@ export const AdminInventory: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, stockFilter]);
 
   useEffect(() => {
     fetchInventory();
-  }, [search, stockFilter]);
+  }, [fetchInventory]);
 
   const handleUpdateStock = async (variantId: string) => {
     setUpdatingId(variantId);
@@ -65,7 +65,7 @@ export const AdminInventory: React.FC = () => {
         reason: 'Admin manual update',
       });
       fetchInventory();
-    } catch (err) {
+    } catch {
       alert('Failed to update stock quantity.');
     } finally {
       setUpdatingId(null);
