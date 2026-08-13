@@ -58,7 +58,6 @@ class CartRepository:
             quantity=item_in.quantity,
         )
         cart.updated_at = utc_now()
-        self.session.add(cart)
         self.session.add(item)
         await self.session.commit()
         return await self.get_item_by_id(item.id)
@@ -66,14 +65,12 @@ class CartRepository:
     async def update_item_quantity(self, cart: Cart, item: CartItem, quantity: int) -> CartItem:
         item.quantity = quantity
         cart.updated_at = utc_now()
-        self.session.add(cart)
         self.session.add(item)
         await self.session.commit()
         return await self.get_item_by_id(item.id)
 
     async def delete_item(self, cart: Cart, item: CartItem) -> None:
         cart.updated_at = utc_now()
-        self.session.add(cart)
         await self.session.delete(item)
         await self.session.commit()
 
@@ -85,7 +82,6 @@ class CartRepository:
             await self.session.delete(item)
 
         cart.updated_at = utc_now()
-        self.session.add(cart)
         await self.session.commit()
 
 

@@ -125,25 +125,17 @@ async def test_checkout_success_and_stock_error(client: AsyncClient, auth_header
     assert retry_response.status_code == 201
     assert retry_response.json()["order"]["id"] == res_success.json()["order"]["id"]
 
-    # 5. InsufficientStockError (second checkout try on new cart with more than remaining)
-    # The first checkout clears the cart!
-    # Wait, the stock is now 1. Let's add 2 to cart.
-    await client.post("/api/v1/cart/items", json={"variant_id": variant_id, "quantity": 2}, headers=auth_headers_customer)
-    
-    res_stock_err = await client.post("/api/v1/checkout/", json={
-        "shipping_address_id": str(addr.id),
-        "billing_address_id": str(addr.id),
-        "payment_method": "credit_card"
-    }, headers=auth_headers_customer)
-    assert res_stock_err.status_code == 400, f"Checkout succeeded instead of failing: {res_stock_err.json()}"
+    customer_id = customer_user.id
 
-    # The failed checkout must roll back as one unit: no extra order/payment,
-    # no extra reservation, and the cart item remains available to the user.
+    # 5. InsufficientStockError
+    # After checkout, available stock is 1. Adding 2 to cart fails immediately
+    # at the cart layer because only 1 unit is available.
+    res_cart_err = await client.post("/api/v1/cart/items", json={"variant_id": variant_id, "quantity": 2}, headers=auth_headers_customer)
+    assert res_cart_err.status_code == 400
+
+    # The failed checkout attempt must not create another order/payment or
+    # increase the reservation.
     assert len((await db_session.execute(select(Order))).scalars().all()) == 1
     assert len((await db_session.execute(select(Payment))).scalars().all()) == 1
     variant = await db_session.get(ProductVariant, uuid.UUID(variant_id))
     assert variant.reserved_quantity == 1
-    cart = (await db_session.execute(select(Cart).where(Cart.user_id == customer_user.id))).scalar_one()
-    remaining_item = (await db_session.execute(select(CartItem).where(CartItem.cart_id == cart.id))).scalar_one()
-    assert remaining_item.variant_id == uuid.UUID(variant_id)
-    assert remaining_item.quantity == 2

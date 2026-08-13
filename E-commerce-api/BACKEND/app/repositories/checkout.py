@@ -118,7 +118,6 @@ class CheckoutRepository:
             self.session.add(order_item)
             self.session.add(variant)
             await self.session.delete(cart_item)
-        cart.items.clear()
 
         cart.updated_at = utc_now()
         payment = Payment(
