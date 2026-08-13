@@ -16,6 +16,7 @@ from app.services.stripe import (
     construct_webhook_event,
     create_refund,
 )
+from app.core.metrics import PAYMENT_FAILURES
 
 router = APIRouter()
 
@@ -65,6 +66,7 @@ async def stripe_webhook(
             transition_payment_status(payment, PaymentStatus.completed)
         elif event_type in {"payment_intent.payment_failed", "payment_intent.canceled"}:
             transition_payment_status(payment, PaymentStatus.failed)
+            PAYMENT_FAILURES.labels(reason=event_type).inc()
             order_service = OrderService(session)
             order = await order_service.get_order(payment.order_id)
             if order.order_status in (OrderStatus.pending, OrderStatus.processing):
@@ -117,6 +119,7 @@ async def refund_stripe_payment(
     except StripeNotConfiguredError as error:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error))
     except StripeGatewayError as error:
+        PAYMENT_FAILURES.labels(reason="refund_gateway_error").inc()
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error))
 
     # Stripe may return a pending refund. Its signed webhook remains the

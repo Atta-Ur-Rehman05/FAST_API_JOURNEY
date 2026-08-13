@@ -12,10 +12,11 @@ from sqlalchemy import select, update
 from app.api.dependencies import SessionDep
 from app.core.config import settings
 from app.core.rate_limit import login_rate_limiter
-from app.core.time import utc_now
 from app.core.security import (create_access_token, create_refresh_token,
                                DUMMY_PASSWORD_HASH, get_password_hash, hash_token,
                                verify_password)
+from app.core.time import utc_now
+from app.core.metrics import LOGIN_FAILURES
 from app.models.models import PasswordResetToken, RefreshToken
 from app.repositories.user import UserRepository
 from app.schemas.token import RefreshTokenRequest, Token
@@ -85,6 +86,7 @@ async def login_access_token(request: Request, response: Response, session: Sess
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Login is temporarily unavailable") from exc
         if retry_after is not None:
             raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too many login attempts. Please try again later.", headers={"Retry-After": str(retry_after)})
+        LOGIN_FAILURES.labels(reason="invalid_credentials").inc()
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password", headers={"WWW-Authenticate": "Bearer"})
     try:
         await login_rate_limiter.reset(form_data.username, client_ip)

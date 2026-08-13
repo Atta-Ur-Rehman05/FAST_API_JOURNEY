@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.models import Address, Cart, Payment, ProductVariant
 from app.repositories.checkout import CheckoutRepository
 from app.schemas.checkout import CheckoutCreate
+from app.core.metrics import CHECKOUT_RESULTS, STOCK_CONFLICTS
 
 
 class CheckoutServiceError(Exception):
@@ -120,13 +121,10 @@ class CheckoutService:
                 checkout_request=checkout_request,
             )
             await self.checkout_repo.session.commit()
-            # Reload relationships explicitly; FastAPI response serialization
-            # must not trigger lazy loading from an async session.
+            CHECKOUT_RESULTS.labels(result="success").inc()
             return await self.checkout_repo.get_checkout_result(order.id)
         except CheckoutServiceError:
-            # A request record may already have been flushed before a later
-            # validation fails.  The service owns the entire unit of work, so
-            # it must clear it rather than leaving a partial checkout pending.
+            CHECKOUT_RESULTS.labels(result="failure").inc()
             await self.checkout_repo.session.rollback()
             raise
         except Exception:
@@ -168,6 +166,7 @@ class CheckoutService:
 
     def _validate_stock(self, variant: ProductVariant, quantity: int) -> None:
         if quantity > variant.stock_quantity - variant.reserved_quantity:
+            STOCK_CONFLICTS.inc()
             raise InsufficientStockError("Requested quantity exceeds available stock.")
 
     async def set_payment_transaction_id(

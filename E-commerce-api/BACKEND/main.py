@@ -12,6 +12,8 @@ from app.db.db import engine
 from app.api.routes import api_router
 from app.core.config import settings
 from app.core.logging import configure_logging
+from app.core.metrics import REQUEST_DURATION, REDIS_UP, POSTGRES_UP
+from app.core.rate_limit import login_rate_limiter
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -48,6 +50,11 @@ async def observability_and_security_middleware(request: Request, call_next):
             pass
         response = JSONResponse(status_code=500, content={"detail": "Internal server error", "request_id": request_id})
     duration_ms = round((time.perf_counter() - started) * 1000, 2)
+    endpoint = _sanitize_endpoint(request.url.path)
+    try:
+        REQUEST_DURATION.labels(method=request.method, endpoint=endpoint, status_code=response.status_code).observe(duration_ms / 1000)
+    except Exception:
+        pass
     response.headers["X-Request-ID"] = request_id
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
@@ -84,13 +91,37 @@ async def health():
     """Liveness probe: process is responding without checking dependencies."""
     return {"status": "ok"}
 
+
+def _sanitize_endpoint(path: str) -> str:
+    return re.sub(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", "{id}", path, flags=re.IGNORECASE)
+
+
 @app.get("/readiness", tags=["operations"])
 async def readiness():
     """Readiness probe: only ready to receive traffic when the database responds."""
+    db_ready = False
     try:
         async with engine.connect() as connection:
             await connection.execute(text("SELECT 1"))
+        db_ready = True
     except Exception:
-        logger.exception("readiness_check_failed")
-        return JSONResponse(status_code=503, content={"status": "not_ready"})
-    return {"status": "ready"}
+        logger.exception("readiness_postgres_check_failed")
+    POSTGRES_UP.set(1 if db_ready else 0)
+
+    redis_ready = False
+    if settings.REDIS_URL:
+        try:
+            redis_ready = await login_rate_limiter.ping()
+        except Exception:
+            logger.exception("readiness_redis_check_failed")
+    REDIS_UP.set(1 if redis_ready else 0)
+
+    if db_ready and (not settings.REDIS_URL or redis_ready):
+        return {"status": "ready"}
+    return JSONResponse(status_code=503, content={"status": "not_ready"})
+
+
+@app.get("/metrics", tags=["operations"])
+async def metrics():
+    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+    return JSONResponse(content=generate_latest().decode("utf-8"), media_type=CONTENT_TYPE_LATEST)
