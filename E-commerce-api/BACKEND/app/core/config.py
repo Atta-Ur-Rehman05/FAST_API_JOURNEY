@@ -35,6 +35,8 @@ class Settings(BaseSettings):  # configuration schema for the application
     REFRESH_COOKIE_DOMAIN: str | None = None
     BACKEND_URL: str = "http://localhost:8000"
     FRONTEND_URL: str = "http://localhost:5173"
+    ISSUER: str = "ecommerce-api"
+    AUDIENCE: str = "ecommerce-client"
 
     @model_validator(mode="after")
     def validate_production_settings(self) -> "Settings":

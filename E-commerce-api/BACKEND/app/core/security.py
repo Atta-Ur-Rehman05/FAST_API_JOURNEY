@@ -46,12 +46,12 @@ def create_access_token(subject: Union[str, Any], expires_delta: timedelta = Non
     else:
         expire = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
-    to_encode = {"exp": expire, "sub": str(subject), "type": "access", "jti": str(uuid4())}
+    to_encode = {"exp": expire, "sub": str(subject), "type": "access", "jti": str(uuid4()), "iss": settings.ISSUER, "aud": settings.AUDIENCE}
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 def create_refresh_token(subject: Union[str, Any]) -> tuple[str, str, datetime]:
     expires_at = datetime.now(UTC) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     token_id = str(uuid4())
-    token = jwt.encode({"exp": expires_at, "sub": str(subject), "type": "refresh", "jti": token_id}, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    token = jwt.encode({"exp": expires_at, "sub": str(subject), "type": "refresh", "jti": token_id, "iss": settings.ISSUER, "aud": settings.AUDIENCE}, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return token, token_id, expires_at

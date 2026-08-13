@@ -3,17 +3,23 @@ import logging
 import re
 import time
 import uuid
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from typing import Annotated
+from app.models.models import User
 from sqlalchemy import text
 from app.db.db import create_tables
 from app.db.db import engine
 from app.api.routes import api_router
+from app.api.dependencies import get_current_admin_user
 from app.core.config import settings
 from app.core.logging import configure_logging
 from app.core.metrics import REQUEST_DURATION, REDIS_UP, POSTGRES_UP
 from app.core.rate_limit import login_rate_limiter
+from fastapi import Depends
+from app.api.dependencies import get_current_admin_user
+from fastapi import Depends
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -122,6 +128,6 @@ async def readiness():
 
 
 @app.get("/metrics", tags=["operations"])
-async def metrics():
+async def metrics(_: Annotated[User, Depends(get_current_admin_user)]):
     from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
     return JSONResponse(content=generate_latest().decode("utf-8"), media_type=CONTENT_TYPE_LATEST)

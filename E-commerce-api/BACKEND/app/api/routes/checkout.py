@@ -1,6 +1,7 @@
 from typing import Annotated
+import logging
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
 from app.api.dependencies import SessionDep, get_current_active_user
 from app.models.models import User
@@ -25,6 +26,7 @@ from app.services.stripe import (
 )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def _raise_checkout_http_error(error: CheckoutServiceError) -> None:
@@ -86,6 +88,8 @@ async def checkout(
     except CheckoutServiceError as error:
         _raise_checkout_http_error(error)
     except StripeNotConfiguredError as error:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error))
+        logger.warning("stripe_not_configured", exc_info=error)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Payment processing is currently unavailable.")
     except StripeGatewayError as error:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error))
+        logger.warning("stripe_gateway_error", exc_info=error)
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Unable to process the payment request.")

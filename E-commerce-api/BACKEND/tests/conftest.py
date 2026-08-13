@@ -67,7 +67,8 @@ async def customer_user(db_session):
         password_hash="fakehash",
         first_name="Cust",
         last_name="Omer",
-        role=RoleType.customer
+        role=RoleType.customer,
+        is_active=True,
     )
     db_session.add(user)
     await db_session.commit()
@@ -86,7 +87,8 @@ async def admin_user(db_session):
         password_hash="fakehash",
         first_name="Ad",
         last_name="Min",
-        role=RoleType.admin
+        role=RoleType.admin,
+        is_active=True,
     )
     db_session.add(user)
     await db_session.commit()

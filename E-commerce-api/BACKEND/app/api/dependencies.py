@@ -23,7 +23,8 @@ async def get_current_user(session: SessionDep, token: TokenDep) -> User:
     )
     try:
         payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM],
+            issuer=settings.ISSUER, audience=settings.AUDIENCE,
         )
         # Refresh tokens are only valid at the refresh endpoint.  They must
         # never be accepted as bearer credentials for application routes.
@@ -51,7 +52,11 @@ async def get_current_user(session: SessionDep, token: TokenDep) -> User:
 async def get_current_active_user(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> User:
-    # Assuming all users in db are active for now, you can add an `is_active` field to your DB model if needed
+    if not current_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive user account.",
+        )
     return current_user
 
 async def get_current_admin_user(

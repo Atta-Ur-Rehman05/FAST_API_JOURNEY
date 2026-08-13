@@ -19,12 +19,12 @@ def test_password_hashing_and_verification():
 def test_create_access_token_default_and_custom_delta():
     user_id = str(uuid4())
     token_default = create_access_token(subject=user_id)
-    decoded_default = jwt.decode(token_default, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    decoded_default = jwt.decode(token_default, settings.SECRET_KEY, algorithms=[settings.ALGORITHM], issuer=settings.ISSUER, audience=settings.AUDIENCE)
     assert decoded_default["sub"] == user_id
 
     custom_delta = timedelta(hours=2)
     token_custom = create_access_token(subject=user_id, expires_delta=custom_delta)
-    decoded_custom = jwt.decode(token_custom, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    decoded_custom = jwt.decode(token_custom, settings.SECRET_KEY, algorithms=[settings.ALGORITHM], issuer=settings.ISSUER, audience=settings.AUDIENCE)
     assert decoded_custom["sub"] == user_id
 
 @pytest.mark.asyncio

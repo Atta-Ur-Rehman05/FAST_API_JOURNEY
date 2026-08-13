@@ -103,7 +103,7 @@ async def refresh_access_token(request: Request, response: Response, session: Se
     if not raw_refresh_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token", headers={"WWW-Authenticate": "Bearer"})
     try:
-        claims = jwt.decode(raw_refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        claims = jwt.decode(raw_refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM], issuer=settings.ISSUER, audience=settings.AUDIENCE)
         if claims.get("type") != "refresh" or not claims.get("jti") or not claims.get("sub"):
             raise JWTError("Invalid refresh token")
         user_id = UUID(claims["sub"])

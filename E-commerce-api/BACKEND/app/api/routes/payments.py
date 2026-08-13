@@ -34,9 +34,11 @@ async def stripe_webhook(
     try:
         event = construct_webhook_event(await request.body(), stripe_signature)
     except StripeNotConfiguredError as error:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error))
+        logger.warning("stripe_not_configured", exc_info=error)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Payment processing is currently unavailable.")
     except StripeGatewayError as error:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
+        logger.warning("stripe_gateway_error", exc_info=error)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unable to process the payment request.")
 
     event_id = event["id"]
     already_processed = await session.scalar(
@@ -117,10 +119,12 @@ async def refund_stripe_payment(
             payment_intent_id=payment.transaction_id, payment_id=payment.id
         )
     except StripeNotConfiguredError as error:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error))
+        logger.warning("stripe_not_configured", exc_info=error)
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Payment processing is currently unavailable.")
     except StripeGatewayError as error:
         PAYMENT_FAILURES.labels(reason="refund_gateway_error").inc()
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error))
+        logger.warning("stripe_refund_gateway_error", exc_info=error)
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Unable to process the refund.")
 
     # Stripe may return a pending refund. Its signed webhook remains the
     # source of truth in that case; a synchronous success can be recorded now.
