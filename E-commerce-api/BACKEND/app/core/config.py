@@ -33,6 +33,8 @@ class Settings(BaseSettings):  # configuration schema for the application
     REFRESH_COOKIE_SECURE: bool = False
     REFRESH_COOKIE_SAMESITE: str = "lax"
     REFRESH_COOKIE_DOMAIN: str | None = None
+    BACKEND_URL: str = "http://localhost:8000"
+    FRONTEND_URL: str = "http://localhost:5173"
 
     @model_validator(mode="after")
     def validate_production_settings(self) -> "Settings":
@@ -65,6 +67,10 @@ class Settings(BaseSettings):  # configuration schema for the application
             raise ValueError("REFRESH_COOKIE_SAMESITE must be lax or strict in production")
         if self.PASSWORD_MIN_LENGTH < 12:
             raise ValueError("PASSWORD_MIN_LENGTH must be at least 12 in production")
+        if not self.BACKEND_URL.startswith("https://"):
+            raise ValueError("BACKEND_URL must use HTTPS in production")
+        if not self.FRONTEND_URL.startswith("https://"):
+            raise ValueError("FRONTEND_URL must use HTTPS in production")
         return self
 
     # Using SettingsConfigDict for pydantic v2 support
