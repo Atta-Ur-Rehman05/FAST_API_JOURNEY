@@ -31,6 +31,7 @@ class OrderStatus(enum.Enum):
     shipped = "shipped"
     delivered = "delivered"
     cancelled = "cancelled"
+    failed = "failed"
 
 class PaymentMethod(enum.Enum):
     credit_card = "credit_card"

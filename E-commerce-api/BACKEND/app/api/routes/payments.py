@@ -6,8 +6,9 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from app.api.dependencies import SessionDep, get_current_admin_user
-from app.models.models import Payment, PaymentMethod, PaymentStatus, StripeWebhookEvent, User
+from app.models.models import Order, OrderStatus, Payment, PaymentMethod, PaymentStatus, StripeWebhookEvent, User
 from app.schemas.payment import PaymentResponse
+from app.services.order import OrderService, InvalidOrderTransitionError, OrderNotFoundError
 from app.services.payment import transition_payment_status
 from app.services.stripe import (
     StripeGatewayError,
@@ -64,6 +65,13 @@ async def stripe_webhook(
             transition_payment_status(payment, PaymentStatus.completed)
         elif event_type in {"payment_intent.payment_failed", "payment_intent.canceled"}:
             transition_payment_status(payment, PaymentStatus.failed)
+            order_service = OrderService(session)
+            order = await order_service.get_order(payment.order_id)
+            if order.order_status in (OrderStatus.pending, OrderStatus.processing):
+                try:
+                    await order_service.transition_status(order.id, OrderStatus.failed)
+                except InvalidOrderTransitionError:
+                    pass
         elif event_type == "charge.refunded" or (
             event_type == "refund.updated" and stripe_object.get("status") == "succeeded"
         ):
