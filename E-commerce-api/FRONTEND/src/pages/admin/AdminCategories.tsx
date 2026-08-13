@@ -12,7 +12,7 @@ export const AdminCategories: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
-    parent_id: '' as number | '',
+    parent_id: null as number | null,
   });
 
   const [search, setSearch] = useState('');
@@ -37,20 +37,19 @@ export const AdminCategories: React.FC = () => {
   const handleSaveCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload = { ...formData, parent_id: formData.parent_id || null };
-      if (editingId) await apiClient.patch(`/categories/${editingId}`, payload);
-      else await apiClient.post('/categories/', payload);
+      if (editingId) await apiClient.patch(`/categories/${editingId}`, formData);
+      else await apiClient.post('/categories/', formData);
       setShowAddModal(false);
       setEditingId(null);
       fetchCategories();
-      setFormData({ name: '', slug: '', parent_id: '' });
+      setFormData({ name: '', slug: '', parent_id: null });
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to create category.');
     }
   };
 
   const startEdit = (category: Category) => {
-    setFormData({ name: category.name, slug: category.slug, parent_id: category.parent_id || '' });
+    setFormData({ name: category.name, slug: category.slug, parent_id: category.parent_id || null });
     setEditingId(category.id);
     setShowAddModal(true);
   };
@@ -125,7 +124,7 @@ export const AdminCategories: React.FC = () => {
                 className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700"
               />
 
-              <select value={formData.parent_id} onChange={(e) => setFormData({ ...formData, parent_id: e.target.value ? Number(e.target.value) : '' })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700">
+              <select value={formData.parent_id ?? ''} onChange={(e) => setFormData({ ...formData, parent_id: e.target.value ? Number(e.target.value) : null })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700">
                 <option value="">No parent (top-level category)</option>
                 {categories.filter((category) => category.id !== editingId).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
               </select>

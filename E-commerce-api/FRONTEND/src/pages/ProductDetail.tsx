@@ -23,6 +23,7 @@ export const ProductDetail: React.FC = () => {
   const [comment, setComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [existingReview, setExistingReview] = useState<Review | null>(null);
 
   useEffect(() => {
     const fetchProductDetails = async () => {
@@ -33,9 +34,24 @@ export const ProductDetail: React.FC = () => {
           apiClient.get<PaginatedResponse<Review>>('/reviews/', { params: { product_id: id } }),
         ]);
         setProduct(prodRes.data);
-        setReviews(revRes.data.items);
+        const fetchedReviews = revRes.data.items;
+        setReviews(fetchedReviews);
         if (prodRes.data.variants?.length > 0) {
           setSelectedVariant(prodRes.data.variants[0]);
+        }
+        if (user) {
+          const mine = fetchedReviews.find((r) => r.user_id === user.id);
+          if (mine) {
+            setExistingReview(mine);
+            setEditingReviewId(mine.id);
+            setRating(mine.rating);
+            setComment(mine.comment || '');
+          } else {
+            setExistingReview(null);
+            setEditingReviewId(null);
+            setRating(5);
+            setComment('');
+          }
         }
       } catch (err) {
         console.error('Error loading product details:', err);
@@ -44,7 +60,7 @@ export const ProductDetail: React.FC = () => {
       }
     };
     fetchProductDetails();
-  }, [id]);
+  }, [id, user]);
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +86,18 @@ export const ProductDetail: React.FC = () => {
     setEditingReviewId(review.id);
     setRating(review.rating);
     setComment(review.comment || '');
+  };
+
+  const cancelReviewEdit = () => {
+    if (existingReview) {
+      setEditingReviewId(existingReview.id);
+      setRating(existingReview.rating);
+      setComment(existingReview.comment || '');
+    } else {
+      setEditingReviewId(null);
+      setComment('');
+      setRating(5);
+    }
   };
 
   const saveReviewEdit = async () => {
@@ -221,11 +249,11 @@ export const ProductDetail: React.FC = () => {
           <span>Ratings & Reviews ({reviews.length})</span>
         </h3>
 
-        {/* Submit Review Form */}
-        {user ? (
-          <form onSubmit={handleReviewSubmit} className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+        {/* Review Form — show existing review editor if user already reviewed */}
+        {user && (
+          <form onSubmit={editingReviewId ? undefined : handleReviewSubmit} className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
             <h4 className="font-mono text-[10px] font-bold uppercase tracking-[.16em] text-zinc-500">{editingReviewId ? 'Edit your review' : 'Leave a review'}</h4>
-            
+
             <div className="flex items-center space-x-1">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -251,12 +279,16 @@ export const ProductDetail: React.FC = () => {
             />
 
             <div className="flex gap-2">
-              <button type={editingReviewId ? 'button' : 'submit'} onClick={editingReviewId ? saveReviewEdit : undefined} disabled={submittingReview} className="btn-primary text-xs py-2 px-4">{editingReviewId ? 'Save Review' : submittingReview ? 'Submitting...' : 'Submit Review'}</button>
-              {editingReviewId && <button type="button" onClick={() => { setEditingReviewId(null); setComment(''); setRating(5); }} className="btn-accent px-3 py-2 text-xs">Cancel</button>}
+              {editingReviewId ? (
+                <>
+                  <button type="button" onClick={saveReviewEdit} disabled={submittingReview} className="btn-primary text-xs py-2 px-4">{submittingReview ? 'Saving...' : 'Save Review'}</button>
+                  <button type="button" onClick={cancelReviewEdit} className="btn-accent px-3 py-2 text-xs">Cancel</button>
+                </>
+              ) : (
+                <button type="submit" disabled={submittingReview} className="btn-primary text-xs py-2 px-4">{submittingReview ? 'Submitting...' : 'Submit Review'}</button>
+              )}
             </div>
           </form>
-        ) : (
-          <p className="text-xs text-zinc-400 italic">Please sign in to post a review.</p>
         )}
 
         {/* Reviews List */}

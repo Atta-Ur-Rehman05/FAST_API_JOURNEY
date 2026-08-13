@@ -138,6 +138,7 @@ export interface CheckoutCreate {
   shipping_address_id: string;
   billing_address_id: string;
   payment_method: PaymentMethod;
+  transaction_id?: string | null;
 }
 
 export interface CheckoutResponse {

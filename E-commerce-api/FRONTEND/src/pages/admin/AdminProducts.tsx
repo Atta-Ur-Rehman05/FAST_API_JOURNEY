@@ -92,23 +92,32 @@ export const AdminProducts: React.FC = () => {
 
     setIsCreating(true);
     try {
-      const productId = editingProduct
-        ? (await apiClient.patch<Product>(`/products/${editingProduct.id}`, formData)).data.id
-        : (await apiClient.post<Product>('/products/', formData)).data.id;
-
-      await Promise.all([
-        ...variantPayload.map((variant, index) => variants[index].id
-          ? apiClient.patch(`/products/${productId}/variants/${variants[index].id}`, variant)
-          : apiClient.post(`/products/${productId}/variants`, variant)),
-        ...images.map((image) => images.findIndex((candidate) => candidate === image) >= 0 && image.id
-          ? apiClient.patch(`/products/${productId}/images/${image.id}`, {
-              image_url: image.image_url.trim(), is_primary: image.is_primary,
-            })
-          : apiClient.post(`/products/${productId}/images`, {
+      if (editingProduct) {
+        const productId = (await apiClient.patch<Product>(`/products/${editingProduct.id}`, formData)).data.id;
+        await Promise.all([
+          ...variantPayload.map((variant, index) => variants[index].id
+            ? apiClient.patch(`/products/${productId}/variants/${variants[index].id}`, variant)
+            : apiClient.post(`/products/${productId}/variants`, variant)),
+          ...images.map((image) => images.findIndex((candidate) => candidate === image) >= 0 && image.id
+            ? apiClient.patch(`/products/${productId}/images/${image.id}`, {
+                image_url: image.image_url.trim(), is_primary: image.is_primary,
+              })
+            : apiClient.post(`/products/${productId}/images`, {
+              image_url: image.image_url.trim(),
+              is_primary: image.is_primary,
+              })),
+        ]);
+      } else {
+        const imagePayload = images.map((image) => ({
           image_url: image.image_url.trim(),
           is_primary: image.is_primary,
-          })),
-      ]);
+        }));
+        await apiClient.post<Product>('/products/', {
+          ...formData,
+          variants: variantPayload,
+          images: imagePayload,
+        });
+      }
       setShowAddModal(false);
       fetchData();
       setFormData({

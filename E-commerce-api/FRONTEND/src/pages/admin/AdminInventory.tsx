@@ -56,9 +56,10 @@ export const AdminInventory: React.FC = () => {
   const handleUpdateStock = async (variantId: string) => {
     setUpdatingId(variantId);
     try {
+      const item = inventory.find((i) => i.variant_id === variantId);
       await apiClient.patch(`/inventory/${variantId}/stock`, {
         stock_quantity: quantities[variantId],
-        reason: 'Admin manual update',
+        reason: `Admin manual update — ${item?.sku ?? variantId}`,
       });
       fetchInventory();
     } catch {
@@ -73,7 +74,8 @@ export const AdminInventory: React.FC = () => {
     if (quantity <= 0) { alert('Enter an adjustment quantity greater than zero.'); return; }
     setUpdatingId(variantId);
     try {
-      await apiClient.post(`/inventory/${variantId}/${action}`, { quantity, reason: `Admin ${action}` });
+      const item = inventory.find((i) => i.variant_id === variantId);
+      await apiClient.post(`/inventory/${variantId}/${action}`, { quantity, reason: `Admin ${action} — ${item?.sku ?? variantId}` });
       fetchInventory();
     } catch (err: any) { alert(err.response?.data?.detail || `Failed to ${action} stock.`); }
     finally { setUpdatingId(null); }
