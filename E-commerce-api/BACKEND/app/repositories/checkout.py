@@ -32,8 +32,7 @@ class CheckoutRepository:
         result = await self.session.execute(
             select(Cart)
             .where(Cart.user_id == user_id)
-            # Serializes checkout attempts for a cart.  The variant rows are
-            # locked separately below, in a stable order, to protect stock.
+            # Locks cart row to serialize checkout attempts for this customer
             .with_for_update()
             .options(
                 selectinload(Cart.items)
@@ -136,7 +135,13 @@ class CheckoutRepository:
             self.session.add(checkout_request)
 
         await self.session.flush()
-        return order, payment
+        
+        # Return fresh instances to avoid stale data
+        fresh_order = await self.get_order_by_id(order.id)
+        fresh_payment = await self.session.execute(
+            select(Payment).where(Payment.order_id == order.id)
+        )
+        return fresh_order, fresh_payment.scalars().one()
 
     async def get_order_by_id(self, order_id: UUID) -> Order:
         result = await self.session.execute(

@@ -1,7 +1,9 @@
 import pytest
 from httpx import AsyncClient
 import uuid
-from app.models.models import Address, AddressType
+from sqlalchemy import select
+
+from app.models.models import Address, AddressType, Cart, CartItem, Order, Payment, ProductVariant
 
 @pytest.mark.asyncio
 async def test_checkout_errors(client: AsyncClient, auth_headers_customer: dict, auth_headers_admin: dict, db_session, customer_user):
@@ -134,3 +136,14 @@ async def test_checkout_success_and_stock_error(client: AsyncClient, auth_header
         "payment_method": "credit_card"
     }, headers=auth_headers_customer)
     assert res_stock_err.status_code == 400, f"Checkout succeeded instead of failing: {res_stock_err.json()}"
+
+    # The failed checkout must roll back as one unit: no extra order/payment,
+    # no extra reservation, and the cart item remains available to the user.
+    assert len((await db_session.execute(select(Order))).scalars().all()) == 1
+    assert len((await db_session.execute(select(Payment))).scalars().all()) == 1
+    variant = await db_session.get(ProductVariant, uuid.UUID(variant_id))
+    assert variant.reserved_quantity == 1
+    cart = (await db_session.execute(select(Cart).where(Cart.user_id == customer_user.id))).scalar_one()
+    remaining_item = (await db_session.execute(select(CartItem).where(CartItem.cart_id == cart.id))).scalar_one()
+    assert remaining_item.variant_id == uuid.UUID(variant_id)
+    assert remaining_item.quantity == 2
