@@ -183,6 +183,19 @@ async def transition_order_status(
         _raise_order_http_error(error)
 
 
+@router.post("/{order_id}/cancel", response_model=OrderResponse)
+async def request_cancellation(
+    order_id: UUID,
+    session: SessionDep,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+):
+    order_service = OrderService(session)
+    try:
+        return await order_service.request_cancellation(current_user.id, order_id)
+    except OrderServiceError as error:
+        _raise_order_http_error(error)
+
+
 @router.post(
     "/{order_id}/items",
     response_model=OrderItemResponse,

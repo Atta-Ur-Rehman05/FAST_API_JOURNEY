@@ -120,18 +120,20 @@ async def test_order_lifecycle(client: AsyncClient, auth_headers_customer: dict,
     assert inventory_res.json()["reserved_quantity"] == 0
     assert inventory_res.json()["available_quantity"] == 20
 
-    # A delivered order consumes the previously reserved physical inventory.
+    addr_id = addr.id
     add_again = await client.post(
         "/api/v1/cart/items",
         json={"variant_id": variant_id, "quantity": 1},
         headers=auth_headers_customer,
     )
     assert add_again.status_code == 201
+    db_session.expire_all()
     checkout_again = await client.post("/api/v1/checkout/", json={
-        "shipping_address_id": str(addr.id),
-        "billing_address_id": str(addr.id),
+        "shipping_address_id": str(addr_id),
+        "billing_address_id": str(addr_id),
         "payment_method": "credit_card",
     }, headers=auth_headers_customer)
+    print(f"checkout_again status: {checkout_again.status_code}, body: {checkout_again.text}")
     assert checkout_again.status_code == 201
     delivered_order_id = checkout_again.json()["order"]["id"]
 
@@ -149,6 +151,21 @@ async def test_order_lifecycle(client: AsyncClient, auth_headers_customer: dict,
     assert delivered_inventory.json()["stock_quantity"] == 19
     assert delivered_inventory.json()["reserved_quantity"] == 0
     assert delivered_inventory.json()["available_quantity"] == 19
+
+    # Customer can request cancellation only on pending/processing orders.
+    await client.post("/api/v1/cart/items", json={"variant_id": variant_id, "quantity": 1}, headers=auth_headers_customer)
+    checkout_res2 = await client.post("/api/v1/checkout/", json={
+        "shipping_address_id": str(addr.id),
+        "billing_address_id": str(addr.id),
+        "payment_method": "credit_card",
+    }, headers=auth_headers_customer)
+    assert checkout_res2.status_code == 201
+    cancelable_order_id = checkout_res2.json()["order"]["id"]
+
+    cancel_res = await client.post(f"/api/v1/orders/{cancelable_order_id}/cancel", headers=auth_headers_customer)
+    assert cancel_res.status_code == 200
+    assert cancel_res.json()["order_status"] == OrderStatus.cancelled.value
+
 
 @pytest.mark.asyncio
 async def test_create_order_direct_and_address_errors(client: AsyncClient, auth_headers_customer: dict):

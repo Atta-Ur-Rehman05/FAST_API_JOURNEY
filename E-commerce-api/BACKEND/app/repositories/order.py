@@ -1,12 +1,12 @@
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.models import Address, Order, OrderItem, ProductVariant
-from app.schemas.order import OrderCreate, OrderItemCreate, OrderItemUpdate, OrderUpdate
+from app.models.models import Address, Cart, Order, OrderItem, ProductVariant
+from app.schemas.order import OrderCreate, OrderItemCreate, OrderItemUpdate
 from app.core.time import utc_now
 
 
@@ -57,27 +57,18 @@ class OrderRepository:
         if user_id is not None: stmt = stmt.where(Order.user_id == user_id)
         return (await self.session.execute(stmt)).scalar_one()
 
-    async def create(self, user_id: UUID, order_in: OrderCreate) -> Order:
-        order = Order(
-            user_id=user_id,
-            shipping_address_id=order_in.shipping_address_id,
-            billing_address_id=order_in.billing_address_id,
-            total_amount=0,
-            order_status="draft"
+    async def get_address_by_id(self, address_id: UUID) -> Optional[Address]:
+        result = await self.session.execute(
+            select(Address).where(Address.id == address_id)
         )
-        self.session.add(order)
-        await self.session.flush()
-        return await self.get_by_id(order.id)
+        return result.scalars().first()
 
-    async def update(self, order: Order, order_in: OrderUpdate) -> Order:
-        update_data = order_in.model_dump(exclude_unset=True)
-        for field, value in update_data.items():
-            setattr(order, field, value)
+    async def get_cart_by_user_id(self, user_id: UUID) -> Optional[Cart]:
+        result = await self.session.execute(
+            select(Cart).where(Cart.user_id == user_id)
+        )
+        return result.scalars().first()
 
-        order.updated_at = utc_now()
-        self.session.add(order)
-        await self.session.commit()
-        return await self.get_by_id(order.id)
 
 class OrderItemRepository:
     def __init__(self, session: AsyncSession):
@@ -88,6 +79,15 @@ class OrderItemRepository:
             select(OrderItem).where(OrderItem.id == item_id)
         )
         return result.scalars().first()
+
+    async def list_by_order_id(self, order_id: UUID) -> list[OrderItem]:
+        result = await self.session.execute(
+            select(OrderItem).where(OrderItem.order_id == order_id)
+        )
+        return list(result.scalars().all())
+
+    async def delete_by_order_id(self, order_id: UUID) -> None:
+        await self.session.execute(delete(OrderItem).where(OrderItem.order_id == order_id))
 
     async def create(
         self, order: Order, *, variant_id: UUID, quantity: int, price_per_item
@@ -128,7 +128,6 @@ class OrderItemRepository:
         )
         order.total_amount = result.scalar_one()
         order.updated_at = utc_now()
-        self.session.add(order)
         await self.session.flush()
 
 
@@ -166,3 +165,4 @@ class OrderProductVariantRepository:
         )
         variants = result.scalars().all()
         return {variant.id: variant for variant in variants}
+
