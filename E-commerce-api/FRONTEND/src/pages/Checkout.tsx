@@ -6,6 +6,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import type { Address, PaymentMethod, CheckoutResponse } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { useCartStore } from '../store/cartStore';
+import { formatPrice } from '../lib/format-price';
 
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
@@ -164,7 +165,7 @@ export const Checkout: React.FC = () => {
 
         <div className="ui-surface p-6 rounded-sm text-left space-y-2 font-mono text-xs shadow-xs">
           <p className="text-zinc-400">Order ID: <span className="text-zinc-100 font-bold">{orderResult.order.id}</span></p>
-          <p className="text-zinc-400">Total Amount: <span className="text-zinc-100 font-bold">Rs. {Number(orderResult.order.total_amount).toFixed(2)}</span></p>
+          <p className="text-zinc-400">Total Amount: <span className="text-zinc-100 font-bold">Rs. {formatPrice(orderResult.order.total_amount)}</span></p>
           <p className="text-zinc-400">Payment Status: <span className="text-emerald-700 capitalize font-bold">{orderResult.payment.payment_status}</span></p>
         </div>
 
@@ -292,7 +293,7 @@ export const Checkout: React.FC = () => {
                   SKU: {item.variant?.sku || item.variant_id.slice(0, 6)} (x{item.quantity})
                 </span>
                 <span className="font-bold text-zinc-100">
-                  Rs. {(Number(item.unit_price) * item.quantity).toFixed(2)}
+                  {formatPrice(Number(item.unit_price) * item.quantity)}
                 </span>
               </div>
             ))}
@@ -302,14 +303,14 @@ export const Checkout: React.FC = () => {
             <div className="flex justify-between text-zinc-400">
               <span>Subtotal</span>
               <span className="font-semibold text-zinc-100">
-                Rs. {(cart?.items?.reduce((sum, item) => sum + Number(item.unit_price) * item.quantity, 0) || 0).toFixed(2)}
+                {formatPrice(cart?.items?.reduce((sum, item) => sum + Number(item.unit_price) * item.quantity, 0) || 0)}
               </span>
             </div>
 
             <div className="flex justify-between text-zinc-100 font-black text-base pt-2 border-t border-zinc-700">
               <span>Total Amount</span>
               <span className="text-zinc-100">
-                Rs. {(cart?.items?.reduce((sum, item) => sum + Number(item.unit_price) * item.quantity, 0) || 0).toFixed(2)}
+                {formatPrice(cart?.items?.reduce((sum, item) => sum + Number(item.unit_price) * item.quantity, 0) || 0)}
               </span>
             </div>
           </div>

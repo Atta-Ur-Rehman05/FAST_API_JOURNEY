@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { RefreshCw, Trash2 } from 'lucide-react';
 import type { Order, OrderStatus, PaginatedResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
+import { formatPrice } from '../../lib/format-price';
 
 const statusLabels: Record<OrderStatus, string> = {
   draft: 'Draft',
@@ -97,7 +98,7 @@ export const AdminOrders: React.FC = () => {
                   <tr key={o.id} className="hover:bg-zinc-900 transition-colors">
                     <td className="px-4 py-3 font-mono font-bold text-zinc-100">{o.id}</td>
                     <td className="px-4 py-3 font-mono font-black text-zinc-100">
-                      Rs. {Number(o.total_amount).toFixed(2)}
+                      {formatPrice(o.total_amount)}
                     </td>
                     <td className="px-4 py-3">
                       <span className="px-2 py-0.5 rounded-xs bg-zinc-900 text-zinc-200 border border-zinc-700 text-[10px] font-bold uppercase">

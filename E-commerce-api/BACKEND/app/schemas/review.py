@@ -3,6 +3,15 @@ from typing import Optional
 from uuid import UUID
 from datetime import datetime
 
+
+class ReviewUserResponse(BaseModel):
+    id: UUID
+    first_name: str
+    last_name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ReviewBase(BaseModel):
     product_id: UUID
     rating: int = Field(ge=1, le=5)
@@ -18,6 +27,7 @@ class ReviewUpdate(BaseModel):
 class ReviewResponse(ReviewBase):
     id: UUID
     user_id: UUID
+    user: ReviewUserResponse
     created_at: datetime
     updated_at: datetime
 

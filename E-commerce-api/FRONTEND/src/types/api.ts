@@ -8,6 +8,7 @@ export interface User {
   first_name: string;
   last_name: string;
   role: RoleType;
+  is_active: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -90,7 +91,7 @@ export interface CartItem {
 
 export interface Cart {
   id: string;
-  user_id?: string;
+  user_id: string;
   items: CartItem[];
   created_at?: string;
   updated_at?: string;

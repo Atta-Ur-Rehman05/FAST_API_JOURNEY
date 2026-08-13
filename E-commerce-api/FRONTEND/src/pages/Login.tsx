@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { LogIn, Lock, Mail, AlertCircle } from 'lucide-react';
@@ -10,6 +10,14 @@ export const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const inactive = sessionStorage.getItem('auth_error');
+    if (inactive === 'inactive') {
+      setError('Your account has been deactivated. Please contact support.');
+      sessionStorage.removeItem('auth_error');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

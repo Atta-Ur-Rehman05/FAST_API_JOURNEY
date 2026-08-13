@@ -27,9 +27,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await apiClient.get<User>('/users/me');
       setUser(response.data);
-    } catch {
+    } catch (err: any) {
       setAccessToken(null);
       setUser(null);
+      if (err.response?.status === 403) {
+        sessionStorage.setItem('auth_error', 'inactive');
+      }
     } finally {
       setIsLoading(false);
     }

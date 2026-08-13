@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Package, Clock, CheckCircle, Save, Trash2, Truck, XCircle } from 'lucide-react';
 import type { Order, PaginatedResponse } from '../types/api';
 import { apiClient } from '../lib/api-client';
+import { formatPrice } from '../lib/format-price';
 
 export const Orders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -90,7 +91,7 @@ export const Orders: React.FC = () => {
                 <div className="flex items-center space-x-4">
                   {getStatusBadge(order.order_status)}
                   <span className="text-base font-black text-zinc-100">
-                    Rs. {Number(order.total_amount).toFixed(2)}
+                    {formatPrice(order.total_amount)}
                   </span>
                 </div>
               </div>

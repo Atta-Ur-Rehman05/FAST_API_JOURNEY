@@ -8,6 +8,7 @@ export const Addresses: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+  const [formError, setFormError] = useState('');
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -21,9 +22,24 @@ export const Addresses: React.FC = () => {
     address_type: 'Home' as Address['address_type'],
   });
 
+  const validateForm = (): boolean => {
+    setFormError('');
+    const phone = formData.phone.trim();
+    const postal = formData.postal_code.trim();
+    if (!/^\+?[0-9\s\-\(\)]+$/.test(phone) || phone.length < 7 || phone.length > 20) {
+      setFormError('Phone number must be 7-20 characters and contain only digits, spaces, hyphens, or parentheses.');
+      return false;
+    }
+    if (!/^[A-Za-z0-9\s\-]+$/.test(postal) || postal.length < 3 || postal.length > 10) {
+      setFormError('Postal code must be 3-10 alphanumeric characters (spaces and hyphens allowed).');
+      return false;
+    }
+    return true;
+  };
+
   const fetchAddresses = async () => {
     try {
-      const res = await apiClient.get<{items: Address[], total: number}>('/addresses/');
+      const res = await apiClient.get<{items: Address[]; total: number; page: number; page_size: number; next_page: number | null}>('/addresses/');
       setAddresses(res.data.items);
     } catch (err) {
       console.error('Error fetching addresses:', err);
@@ -42,6 +58,8 @@ export const Addresses: React.FC = () => {
 
   const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
+    setFormError('');
     try {
       if (editingAddressId) {
         await apiClient.put(`/addresses/${editingAddressId}`, formData);
@@ -177,6 +195,11 @@ export const Addresses: React.FC = () => {
             <h2 className="text-base font-bold text-zinc-100 border-b border-zinc-700 pb-2">{editingAddressId ? 'Edit Address' : 'Add New Address'}</h2>
 
             <form onSubmit={handleSaveAddress} className="space-y-3">
+              {formError && (
+                <div className="p-2 rounded-xs bg-rose-50 border border-rose-200 text-rose-700 text-xs" role="alert">
+                  {formError}
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 <input
                   type="text"

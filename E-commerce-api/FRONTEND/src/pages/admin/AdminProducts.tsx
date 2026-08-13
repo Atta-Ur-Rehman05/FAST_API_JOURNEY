@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ImagePlus, Pencil, Plus, Trash2, X } from 'lucide-react';
 import type { Product, Category, PaginatedResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
+import { formatPrice } from '../../lib/format-price';
 
 type VariantDraft = {
   id?: string;
@@ -222,7 +223,7 @@ export const AdminProducts: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 text-zinc-400">{p.category?.name || `ID: ${p.category_id}`}</td>
                     <td className="px-4 py-3 font-mono font-bold text-zinc-100">
-                      Rs. {Number(p.base_price).toFixed(2)}
+                      {formatPrice(p.base_price)}
                     </td>
                     <td className="px-4 py-3 font-mono text-zinc-100 font-semibold">{p.variants?.length || 0} Variant(s)</td>
                     <td className="px-4 py-3">

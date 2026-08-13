@@ -6,6 +6,7 @@ import { apiClient } from '../lib/api-client';
 import { useCartStore } from '../store/cartStore';
 import { useAuth } from '../context/useAuth';
 import { ProductVisual } from '../components/product/ProductVisual';
+import { formatPrice } from '../lib/format-price';
 
 export const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -174,7 +175,7 @@ export const ProductDetail: React.FC = () => {
             <div className="flex items-baseline justify-between gap-3">
               <span className="font-mono text-[10px] font-bold tracking-[.14em] text-zinc-500">CURRENT PRICE</span>
               <span className="font-mono text-2xl font-black text-zinc-100 sm:text-3xl">
-                Rs. {totalPrice.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                {formatPrice(totalPrice)}
               </span>
             </div>
 

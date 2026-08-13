@@ -3,6 +3,7 @@ from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.models import Review
 from app.schemas.review import ReviewCreate, ReviewUpdate
@@ -14,7 +15,7 @@ class ReviewRepository:
 
     async def get_by_id(self, review_id: UUID) -> Optional[Review]:
         result = await self.session.execute(
-            select(Review).where(Review.id == review_id)
+            select(Review).where(Review.id == review_id).options(selectinload(Review.user))
         )
         return result.scalars().first()
 
@@ -23,7 +24,7 @@ class ReviewRepository:
             select(Review).where(
                 Review.product_id == product_id,
                 Review.user_id == user_id
-            )
+            ).options(selectinload(Review.user))
         )
         return result.scalars().first()
 
@@ -37,6 +38,7 @@ class ReviewRepository:
     ) -> list[Review]:
         stmt = (
             select(Review)
+            .options(selectinload(Review.user))
             .order_by(Review.created_at.desc())
             .offset(skip)
             .limit(limit)
