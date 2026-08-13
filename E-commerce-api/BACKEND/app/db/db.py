@@ -6,19 +6,27 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from app.core.config import settings
 
 
+def _build_engine_kwargs() -> dict:
+    kwargs = {"echo": settings.SQL_ECHO}
+    if settings.DATABASE_URL.startswith("postgresql+asyncpg://"):
+        kwargs.update(
+            {
+                "pool_size": 10,
+                "max_overflow": 20,
+                "pool_timeout": 30,
+                "pool_recycle": 1800,
+                "pool_pre_ping": True,
+            }
+        )
+    return kwargs
 
-#   create async engine
-# SQL statements can include personal and financial data.  Keep statement
-# logging off by default and enable it only with SQL_ECHO=true while debugging.
-engine = create_async_engine(settings.DATABASE_URL, echo=settings.SQL_ECHO)
 
-# create async session
+engine = create_async_engine(settings.DATABASE_URL, **_build_engine_kwargs())
+
 AsyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession, expire_on_commit=False)
 
-# create base
 Base = declarative_base()
 
-# create async session
 async def get_db():
     async with AsyncSessionLocal() as session:
         yield session

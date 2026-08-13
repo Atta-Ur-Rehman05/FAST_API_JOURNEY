@@ -2,7 +2,7 @@ import uuid
 import enum
 from decimal import Decimal
 
-from sqlalchemy import CheckConstraint, Column, String, Integer, Text, Boolean, Numeric, ForeignKey, DateTime, Enum, Index, UniqueConstraint, text
+from sqlalchemy import CheckConstraint, Column, String, Integer, Text, Boolean, Numeric, ForeignKey, DateTime, Enum, Index, UniqueConstraint, text, desc
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
@@ -175,7 +175,7 @@ class Product(Base):
     slug = Column(String, unique=True, nullable=False)
     description = Column(Text, nullable=True)
     base_price = Column(Numeric(10, 2), nullable=False)
-    is_active = Column(Boolean, default=True)
+    is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=utc_now)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
@@ -193,7 +193,7 @@ class ProductVariant(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.id", ondelete="CASCADE"), nullable=False, index=True)
     sku = Column(String, unique=True, nullable=False)
-    price_modifier = Column(Numeric(10, 2), default=0.0)
+    price_modifier = Column(Numeric(10, 2), default=0.0, nullable=False)
     stock_quantity = Column(Integer, default=0, nullable=False)
     # Physical stock on hand. Open orders reserve part of it until delivery or
     # cancellation, so sellable stock is stock_quantity - reserved_quantity.
@@ -331,7 +331,10 @@ class Order(Base):
     shipping_address = relationship("Address", foreign_keys=[shipping_address_id])
     billing_address = relationship("Address", foreign_keys=[billing_address_id])
 
-    __table_args__ = (CheckConstraint("total_amount >= 0", name="ck_orders_total_amount_non_negative"),)
+    __table_args__ = (
+        CheckConstraint("total_amount >= 0", name="ck_orders_total_amount_non_negative"),
+        Index("ix_orders_user_id_created_at", "user_id", desc("created_at")),
+    )
 
 class OrderItem(Base):
     __tablename__ = "order_items"
