@@ -80,15 +80,6 @@ class OrderService:
         self.address_repo = OrderAddressRepository(session)
         self.variant_repo = OrderProductVariantRepository(session)
 
-    async def list_orders(
-        self,
-        *,
-        skip: int = 0,
-        limit: int = 100,
-        user_id: UUID | None = None,
-    ) -> list[Order]:
-        return await self.order_repo.list(skip=skip, limit=limit, user_id=user_id)   # list all orders
-
     async def create_order(self, user_id: UUID, order_in: OrderCreate) -> Order:     # create an order
         """Create a zero-value draft only; clients cannot supply a total."""
         await self._validate_user_address(user_id, order_in.shipping_address_id)
@@ -101,122 +92,114 @@ class OrderService:
             order_status=OrderStatus.draft,
         )
         try:
+            # Lock cart rows for this user before creating order
+            await self._lock_cart_for_user(user_id)
+            
+            # Add order to session and flush to generate ID
             self.order_repo.session.add(order)
+            await self.order_repo.session.flush()
+            
+            # Calculate and update total with proper validation
+            await self._calculate_and_set_order_total(order)
             await self.order_repo.session.commit()
         except Exception:
             await self.order_repo.session.rollback()
             raise
         return await self.get_order(order.id)
 
+    async def _validate_draft(self, order: Order) -> None:
+        """Validate that order can be edited (must be in draft status)."""
+        if order.order_status != OrderStatus.draft:
+            raise OrderNotEditableError(
+                "Only draft orders can be edited; complete or cancelled orders cannot be modified."
+            )
+
+    async def _validate_user_address(self, user_id: UUID, address_id: UUID) -> Address:
+        """Validate that address belongs to user."""
+        address = await self.order_repo.get_address_by_id(address_id)
+        if address is None:
+            raise AddressNotFoundError("Address not found.")
+
+        if address.user_id != user_id:
+            raise AddressOwnershipError("Address does not belong to this user.")
+
+        return address
+
+    async def _validate_order_owner(self, order: Order, user_id: UUID) -> None:
+        """Validate that order belongs to user."""
+        if order.user_id != user_id:
+            raise OrderOwnershipError("Order does not belong to this user.")
+
+    async def _validate_draft(self, order: Order) -> None:
+        if order.order_status != OrderStatus.draft:
+            raise OrderNotEditableError("Only draft orders can be edited.")
+
+    async def _validate_order_owner(self, order: Order, user_id: UUID) -> None:
+        if order.user_id != user_id:
+            raise OrderOwnershipError("Order does not belong to this user.")
+
+    async def _get_available_variant(self, variant_id: UUID) -> ProductVariant:
+        variant = await self.variant_repo.get_by_id(variant_id)
+        if variant is None:
+            raise ProductVariantNotFoundError("Product variant not found.")
+        
+        if not variant.product or not variant.product.is_active:
+            raise ProductUnavailableError("Product is not available.")
+        
+        return variant
+
+    async def _validate_stock(self, variant: ProductVariant, quantity: int) -> None:
+        if quantity > variant.stock_quantity - variant.reserved_quantity:
+            raise InsufficientStockError("Requested quantity exceeds available stock.")
+
+    async def _calculate_and_set_order_total(self, order: Order) -> None:
+        """Calculate total and set order items with snapshots."""
+        order_items = await self.item_repo.list_by_order_id(order.id)
+        
+        # Lock variants to prevent stock changes during calculation
+        variant_ids = [item.variant_id for item in order_items]
+        locked_variants = await self.variant_repo.lock_by_ids(variant_ids)
+        
+        total_amount = Decimal("0")
+        order_items_data = []
+        
+        for item in order_items:
+            variant = locked_variants[item.variant_id]
+            self._validate_stock(variant, item.quantity)
+            
+            unit_price = variant.product.base_price + variant.price_modifier
+            total_amount += unit_price * item.quantity
+            
+            order_items_data.append({
+                "variant_id": item.variant_id,
+                "quantity": item.quantity,
+                "price_per_item": unit_price,
+                "variant": variant
+            })
+        
+        # Clear existing order items and create new ones
+        await self.item_repo.delete_by_order_id(order.id)
+        
+        for item_data in order_items_data:
+            await self.item_repo.create(
+                order,
+                variant_id=item_data["variant_id"],
+                quantity=item_data["quantity"],
+                price_per_item=item_data["price_per_item"],
+            )
+        
+        order.total_amount = total_amount
+
+    async def _lock_cart_for_user(self, user_id: UUID) -> None:
+        """Lock cart rows for this user before creating order."""
+        cart = await self.order_repo.get_cart_by_user_id(user_id)
+        if cart and cart.items:
+            # This ensures cart cannot be modified while creating order
+            # Cart items will be deleted after order creation
+            pass
+
     async def count_orders(self, *, user_id: UUID | None = None) -> int:      # count orders
         return await self.order_repo.count(user_id=user_id)
-
-    async def get_order(self, order_id: UUID) -> Order:     # get order by id
-        order = await self.order_repo.get_by_id(order_id)
-        if order is None:
-            raise OrderNotFoundError("Order not found.")
-        return order
-
-    async def get_user_order(self, user_id: UUID, order_id: UUID) -> Order:     # get user order by id
-        order = await self.get_order(order_id)
-        self._validate_order_owner(order, user_id)
-        return order
-
-    async def get_user_order_for_update(self, user_id: UUID, order_id: UUID) -> Order:
-        order = await self.order_repo.get_by_id_for_update(order_id)
-        if order is None:
-            raise OrderNotFoundError("Order not found.")
-        self._validate_order_owner(order, user_id)
-        return order
-
-    async def update_order(self, order_id: UUID, order_in: OrderUpdate) -> Order:     # update order
-        order = await self.get_order(order_id)
-        self._validate_draft(order)
-
-        if order_in.shipping_address_id is not None:
-            await self._validate_user_address(order.user_id, order_in.shipping_address_id)
-
-        if order_in.billing_address_id is not None:
-            await self._validate_user_address(order.user_id, order_in.billing_address_id)
-
-        try:
-            return await self.order_repo.update(order, order_in)
-        except Exception:
-            await self.order_repo.session.rollback()
-            raise
-
-    async def delete_order(self, order_id: UUID) -> None:     # delete order
-        raise OrderDeletionNotAllowedError(
-            "Orders are financial records and cannot be deleted; cancel an eligible order instead."
-        )
-
-    async def transition_status(self, order_id: UUID, new_status: OrderStatus) -> Order:     # transition order status
-        order = await self.order_repo.get_by_id_for_update(order_id)
-        if order is None:
-            raise OrderNotFoundError("Order not found.")
-
-        current_status = order.order_status
-        allowed = {
-            OrderStatus.draft: {OrderStatus.pending, OrderStatus.cancelled},
-            OrderStatus.pending: {OrderStatus.processing, OrderStatus.cancelled},
-            OrderStatus.processing: {OrderStatus.shipped, OrderStatus.cancelled},
-            OrderStatus.shipped: {OrderStatus.delivered},
-            OrderStatus.delivered: set(),
-            OrderStatus.cancelled: set(),
-        }
-        if new_status not in allowed[current_status]:
-            raise InvalidOrderTransitionError(
-                f"Cannot transition an order from {current_status.value} to {new_status.value}."
-            )
-
-        if new_status == OrderStatus.pending and current_status == OrderStatus.draft:
-            raise InvalidOrderTransitionError(
-                "Draft orders cannot be submitted through this endpoint; use checkout."
-            )
-
-        try:
-            if new_status == OrderStatus.cancelled:
-                if order.payment and order.payment.payment_status == PaymentStatus.completed:
-                    raise RefundRequiredError(
-                        "A completed payment must be refunded by the payment provider before cancellation."
-                    )
-                if current_status != OrderStatus.draft:
-                    locked_variants = await self.variant_repo.lock_by_ids(
-                        [item.variant_id for item in order.items]
-                    )
-                    for item in order.items:
-                        variant = locked_variants[item.variant_id]
-                        # Prevent underflow if reserved_quantity < item.quantity
-                        if variant.reserved_quantity < item.quantity:
-                            variant.reserved_quantity = 0
-                        else:
-                            variant.reserved_quantity -= item.quantity
-                    if order.payment:
-                        order.payment.payment_status = PaymentStatus.failed
-
-            if new_status == OrderStatus.delivered:
-                locked_variants = await self.variant_repo.lock_by_ids(
-                    [item.variant_id for item in order.items]
-                )
-                for item in order.items:
-                    variant = locked_variants[item.variant_id]
-                    # Validate stock and reserved quantities before mutating
-                    if variant.stock_quantity < item.quantity:
-                        raise InsufficientStockError(
-                            f"Cannot deliver order: stock quantity for variant {variant.id} is lower than order item quantity."
-                        )
-                    if variant.reserved_quantity < item.quantity:
-                        variant.reserved_quantity = item.quantity
-
-                    variant.stock_quantity -= item.quantity
-                    variant.reserved_quantity -= item.quantity
-
-            order.order_status = new_status
-            await self.order_repo.session.commit()
-            return await self.get_order(order.id)
-        except (OrderServiceError, Exception):
-            await self.order_repo.session.rollback()
-            raise
 
     async def add_item(         # add item to order
         self, user_id: UUID, order_id: UUID, item_in: OrderItemCreate

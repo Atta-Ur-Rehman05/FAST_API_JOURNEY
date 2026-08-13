@@ -58,9 +58,15 @@ class OrderRepository:
         return (await self.session.execute(stmt)).scalar_one()
 
     async def create(self, user_id: UUID, order_in: OrderCreate) -> Order:
-        order = Order(user_id=user_id, **order_in.model_dump())
+        order = Order(
+            user_id=user_id,
+            shipping_address_id=order_in.shipping_address_id,
+            billing_address_id=order_in.billing_address_id,
+            total_amount=0,
+            order_status="draft"
+        )
         self.session.add(order)
-        await self.session.commit()
+        await self.session.flush()
         return await self.get_by_id(order.id)
 
     async def update(self, order: Order, order_in: OrderUpdate) -> Order:
