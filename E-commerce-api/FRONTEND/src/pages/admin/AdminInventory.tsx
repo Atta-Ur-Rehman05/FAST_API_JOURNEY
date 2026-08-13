@@ -21,12 +21,8 @@ export const AdminInventory: React.FC = () => {
     setLookupError('');
     setLookupResult(null);
     try {
-      let res;
-      if (query.includes('-')) {
-        res = await apiClient.get<InventoryItem>(`/inventory/${query}`);
-      } else {
-        res = await apiClient.get<InventoryItem>(`/inventory/sku/${encodeURIComponent(query)}`);
-      }
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(query);
+      const res = await apiClient.get<InventoryItem>(isUuid ? `/inventory/${query}` : `/inventory/sku/${encodeURIComponent(query)}`);
       setLookupResult(res.data);
     } catch (err: any) {
       setLookupError(err.response?.data?.detail || 'No inventory record found for that SKU or variant ID.');

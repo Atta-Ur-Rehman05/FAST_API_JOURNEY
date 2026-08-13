@@ -53,6 +53,8 @@ export const Orders: React.FC = () => {
         return <span className="px-2.5 py-0.5 rounded-xs bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold uppercase flex items-center gap-1"><Clock className="w-3 h-3" /><span>Processing</span></span>;
       case 'cancelled':
         return <span className="px-2.5 py-0.5 rounded-xs bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold uppercase flex items-center gap-1"><XCircle className="w-3 h-3" /><span>Cancelled</span></span>;
+      case 'failed':
+        return <span className="px-2.5 py-0.5 rounded-xs bg-rose-50 text-rose-700 border border-rose-200 text-[11px] font-bold uppercase flex items-center gap-1"><XCircle className="w-3 h-3" /><span>Failed</span></span>;
       case 'draft':
         return <span className="px-2.5 py-0.5 rounded-xs bg-zinc-800 text-zinc-300 border border-zinc-700 text-[11px] font-bold uppercase">Draft</span>;
       default:

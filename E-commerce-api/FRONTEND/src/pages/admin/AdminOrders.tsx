@@ -10,15 +10,17 @@ const statusLabels: Record<OrderStatus, string> = {
   shipped: 'Shipped',
   delivered: 'Delivered',
   cancelled: 'Cancelled',
+  failed: 'Failed',
 };
 
 const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
-  draft: ['cancelled'],
-  pending: ['processing', 'cancelled'],
-  processing: ['shipped', 'cancelled'],
+  draft: ['pending'],
+  pending: ['processing', 'cancelled', 'failed'],
+  processing: ['shipped', 'cancelled', 'failed'],
   shipped: ['delivered'],
   delivered: [],
   cancelled: [],
+  failed: [],
 };
 
 export const AdminOrders: React.FC = () => {
