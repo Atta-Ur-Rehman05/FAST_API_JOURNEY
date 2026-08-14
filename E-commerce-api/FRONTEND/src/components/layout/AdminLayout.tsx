@@ -29,6 +29,7 @@ export const AdminLayout: React.FC = () => {
     { label: 'Inventory Matrix', path: '/admin/inventory', icon: Warehouse },
     { label: 'Categories', path: '/admin/categories', icon: Folders },
     { label: 'Orders Hub', path: '/admin/orders', icon: ShoppingCart },
+    { label: 'User Management', path: '/admin/users', icon: ShieldAlert },
   ];
 
   return (

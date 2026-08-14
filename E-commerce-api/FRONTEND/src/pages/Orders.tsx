@@ -97,8 +97,10 @@ export const Orders: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {orders.map((order) => (
-            <div key={order.id} className="ui-surface p-5 rounded-sm space-y-3 shadow-xs">
+          {orders.map((order) => {
+            const items = order.items || [];
+            return (
+              <div key={order.id} className="ui-surface p-5 rounded-sm space-y-3 shadow-xs">
               <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-zinc-700 pb-3 gap-2">
                 <div>
                   <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">Order ID</span>
@@ -151,7 +153,8 @@ export const Orders: React.FC = () => {
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

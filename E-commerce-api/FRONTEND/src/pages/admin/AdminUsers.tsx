@@ -107,7 +107,7 @@ export const AdminUsers: React.FC = () => {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                      <td className="px-4 py-3">
                       {editingId === u.id ? (
                         <select value={editActive ? 'true' : 'false'} onChange={(e) => setEditActive(e.target.value === 'true')} className="px-2 py-1 bg-zinc-900 border border-zinc-700 rounded-xs text-zinc-100 text-xs">
                           <option value="true">Active</option>
