@@ -14,8 +14,8 @@ export const WishlistPage: React.FC = () => {
   const fetchWishlist = async () => {
     setLoading(true);
     try {
-      const res = await apiClient.get<{ items: WishlistItem[] }>('/wishlist/items');
-      setItems(res.data.items);
+      const res = await apiClient.get<WishlistItem[]>('/wishlist/items');
+      setItems(res.data);
     } catch {
       setItems([]);
     } finally {
