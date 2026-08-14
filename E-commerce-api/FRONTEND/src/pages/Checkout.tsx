@@ -152,31 +152,43 @@ export const Checkout: React.FC = () => {
     return <div className="max-w-7xl mx-auto px-4 py-16 text-center text-zinc-400 font-medium">Loading checkout session...</div>;
   }
 
-  if (orderResult) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-12 text-center space-y-6">
-        <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-sm">
-          <CheckCircle2 className="w-8 h-8" />
-        </div>
-        <div className="space-y-1">
-          <h1 className="text-2xl font-black text-zinc-100">Order Placed Successfully!</h1>
-          <p className="text-xs text-zinc-400">Thank you for your purchase. We are processing your package for delivery.</p>
-        </div>
+      if (orderResult) {
+        const subtotal = orderResult.subtotal_amount;
+        const tax = orderResult.tax_amount;
+        const shipping = orderResult.shipping_amount;
+        const total = subtotal + tax + shipping;
+        return (
+          <div className="max-w-3xl mx-auto px-4 py-12 text-center space-y-6">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-sm">
+              <CheckCircle2 className="w-8 h-8" />
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-2xl font-black text-zinc-100">Order Placed Successfully!</h1>
+              <p className="text-xs text-zinc-400">Thank you for your purchase. We are processing your package for delivery.</p>
+            </div>
 
-        <div className="ui-surface p-6 rounded-sm text-left space-y-2 font-mono text-xs shadow-xs">
-          <p className="text-zinc-400">Order ID: <span className="text-zinc-100 font-bold">{orderResult.order.id}</span></p>
-          <p className="text-zinc-400">Total Amount: <span className="text-zinc-100 font-bold">Rs. {formatPrice(orderResult.order.total_amount)}</span></p>
-          <p className="text-zinc-400">Payment Status: <span className="text-emerald-700 capitalize font-bold">{orderResult.payment.payment_status}</span></p>
-        </div>
+            <div className="ui-surface p-6 rounded-sm text-left space-y-2 font-mono text-xs shadow-xs">
+              <p className="text-zinc-400">Order ID: <span className="text-zinc-100 font-bold">{orderResult.order.id}</span></p>
+              <div className="border-t border-zinc-800 pt-2 space-y-1">
+                <div className="flex justify-between"><span className="text-zinc-400">Subtotal</span><span className="text-zinc-100">{formatPrice(subtotal)}</span></div>
+                <div className="flex justify-between"><span className="text-zinc-400">Tax (5%)</span><span className="text-zinc-100">{formatPrice(tax)}</span></div>
+                <div className="flex justify-between"><span className="text-zinc-400">Shipping</span><span className="text-zinc-100">{shipping === 0 ? <span className="text-emerald-700 font-bold">FREE</span> : formatPrice(shipping)}</span></div>
+              </div>
+              <div className="border-t border-zinc-800 pt-2 flex justify-between text-sm font-black text-zinc-100">
+                <span>Total Paid</span>
+                <span>{formatPrice(total)}</span>
+              </div>
+            </div>
+            <p className="text-zinc-400">Payment Status: <span className="text-emerald-700 capitalize font-bold">{orderResult.payment.payment_status}</span></p>
 
-        <div className="flex justify-center">
-          <button onClick={() => navigate('/account/orders')} className="btn-primary text-xs font-bold py-2.5 px-6">
-            View My Orders
-          </button>
-        </div>
-      </div>
-    );
-  }
+            <div className="flex justify-center">
+              <button onClick={() => navigate('/account/orders')} className="btn-primary text-xs font-bold py-2.5 px-6">
+                View My Orders
+              </button>
+            </div>
+          </div>
+        );
+      }
 
   if (stripeCheckout?.stripe_client_secret && stripePromise) {
     return (

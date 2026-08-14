@@ -15,6 +15,7 @@ import { ProductDetail } from './pages/ProductDetail';
 import { Addresses } from './pages/Addresses';
 import { Checkout } from './pages/Checkout';
 import { Orders } from './pages/Orders';
+import { Wishlist } from './pages/Wishlist';
 
 import { AdminLayout } from './components/layout/AdminLayout';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -22,6 +23,7 @@ import { AdminProducts } from './pages/admin/AdminProducts';
 import { AdminInventory } from './pages/admin/AdminInventory';
 import { AdminCategories } from './pages/admin/AdminCategories';
 import { AdminOrders } from './pages/admin/AdminOrders';
+import { AdminUsers } from './pages/admin/AdminUsers';
 
 const queryClient = new QueryClient();
 
@@ -47,19 +49,21 @@ export function App() {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
 
-                {/* Customer Account Routes */}
-                <Route path="/account/addresses" element={<Addresses />} />
-                <Route path="/account/orders" element={<Orders />} />
-                <Route path="/checkout" element={<Checkout />} />
+                 {/* Customer Account Routes */}
+                 <Route path="/account/addresses" element={<Addresses />} />
+                 <Route path="/account/orders" element={<Orders />} />
+                 <Route path="/wishlist" element={<Wishlist />} />
+                 <Route path="/checkout" element={<Checkout />} />
 
-                {/* Admin Portal Routes */}
-                <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<AdminDashboard />} />
-                  <Route path="products" element={<AdminProducts />} />
-                  <Route path="inventory" element={<AdminInventory />} />
-                  <Route path="categories" element={<AdminCategories />} />
-                  <Route path="orders" element={<AdminOrders />} />
-                </Route>
+                 {/* Admin Portal Routes */}
+                 <Route path="/admin" element={<AdminLayout />}>
+                   <Route index element={<AdminDashboard />} />
+                   <Route path="products" element={<AdminProducts />} />
+                   <Route path="inventory" element={<AdminInventory />} />
+                   <Route path="categories" element={<AdminCategories />} />
+                   <Route path="orders" element={<AdminOrders />} />
+                   <Route path="users" element={<AdminUsers />} />
+                 </Route>
 
                 {/* Catch-all redirect */}
                 <Route path="*" element={<Navigate to="/products" replace />} />

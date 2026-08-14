@@ -1,5 +1,7 @@
 from uuid import UUID
 
+from decimal import Decimal
+
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from app.models.models import PaymentMethod
@@ -26,3 +28,6 @@ class CheckoutResponse(BaseModel):
     order: OrderResponse
     payment: PaymentResponse
     stripe_client_secret: str | None = None
+    subtotal_amount: float
+    tax_amount: float
+    shipping_amount: float

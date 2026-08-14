@@ -13,6 +13,13 @@ from app.schemas.checkout import CheckoutCreate
 from app.core.metrics import CHECKOUT_RESULTS, STOCK_CONFLICTS
 
 
+from app.core.config import settings
+
+DEFAULT_TAX_RATE = Decimal("0.05")
+DEFAULT_SHIPPING_FLAT = Decimal("99.00")
+FREE_SHIPPING_THRESHOLD = Decimal("999.00")
+
+
 class CheckoutServiceError(Exception):
     def __init__(self, detail: str):
         self.detail = detail
@@ -109,20 +116,34 @@ class CheckoutService:
                 variant = locked_variants.get(item.variant_id)
                 self._validate_variant(variant)
                 self._validate_stock(variant, item.quantity)
-                # Use the locked instance for both the price and decrement.
                 item.variant = variant
                 total_amount += (variant.product.base_price + variant.price_modifier) * item.quantity
+
+            tax_rate = Decimal(str(settings.TAX_RATE)) if getattr(settings, "TAX_RATE", None) is not None else DEFAULT_TAX_RATE
+            shipping_flat = Decimal(str(settings.SHIPPING_FLAT)) if getattr(settings, "SHIPPING_FLAT", None) is not None else DEFAULT_SHIPPING_FLAT
+            free_shipping_threshold = Decimal(str(settings.FREE_SHIPPING_THRESHOLD)) if getattr(settings, "FREE_SHIPPING_THRESHOLD", None) is not None else FREE_SHIPPING_THRESHOLD
+
+            tax_amount = total_amount * tax_rate
+            shipping_amount = shipping_flat if total_amount < free_shipping_threshold else Decimal("0")
+            grand_total = total_amount + tax_amount + shipping_amount
 
             order, payment = await self.checkout_repo.create_checkout_order(
                 user_id=user_id,
                 cart=cart,
                 checkout_in=checkout_in,
-                total_amount=total_amount,
+                total_amount=grand_total,
                 checkout_request=checkout_request,
             )
             await self.checkout_repo.session.commit()
             CHECKOUT_RESULTS.labels(result="success").inc()
-            return await self.checkout_repo.get_checkout_result(order.id)
+            result = await self.checkout_repo.get_checkout_result(order.id)
+            return {
+                "order": result[0],
+                "payment": result[1],
+                "subtotal_amount": float(total_amount),
+                "tax_amount": float(tax_amount),
+                "shipping_amount": float(shipping_amount),
+            }
         except CheckoutServiceError:
             CHECKOUT_RESULTS.labels(result="failure").inc()
             await self.checkout_repo.session.rollback()

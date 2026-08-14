@@ -67,16 +67,16 @@ async def checkout(
 ):
     checkout_service = CheckoutService(session)
     try:
-        order, payment = await checkout_service.checkout(
+        result = await checkout_service.checkout(
             current_user.id, checkout_in, idempotency_key
         )
+        order = result["order"]
+        payment = result["payment"]
         stripe_client_secret = None
         if payment.payment_method == PaymentMethod.stripe:
             intent = await create_payment_intent(
                 amount=payment.amount, order_id=order.id, payment_id=payment.id
             )
-            # The provider-generated ID is the only transaction identifier
-            # trusted by this API.
             if payment.transaction_id != intent.id:
                 await checkout_service.set_payment_transaction_id(payment, intent.id)
             stripe_client_secret = intent.client_secret
@@ -84,6 +84,9 @@ async def checkout(
             "order": order,
             "payment": payment,
             "stripe_client_secret": stripe_client_secret,
+            "subtotal_amount": result["subtotal_amount"],
+            "tax_amount": result["tax_amount"],
+            "shipping_amount": result["shipping_amount"],
         }
     except CheckoutServiceError as error:
         _raise_checkout_http_error(error)
