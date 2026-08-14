@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Clock, CheckCircle, Save, Trash2, Truck, XCircle } from 'lucide-react';
+import { Package, Clock, CheckCircle, Save, Trash2, Truck, XCircle, Ban } from 'lucide-react';
 import type { Order, PaginatedResponse } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { formatPrice } from '../lib/format-price';
@@ -9,6 +9,7 @@ export const Orders: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [itemQuantities, setItemQuantities] = useState<Record<number, number>>({});
   const [updatingItemId, setUpdatingItemId] = useState<number | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -43,6 +44,22 @@ export const Orders: React.FC = () => {
       setOrders((current) => current.map((order) => order.id !== orderId ? order : { ...order, items: order.items.filter((item) => item.id !== itemId) }));
     } catch (err: any) { alert(err.response?.data?.detail || 'Failed to remove order item.'); }
   };
+
+  const cancelOrder = async (orderId: string) => {
+    if (!confirm('Cancel this order? This action cannot be undone.')) return;
+    setCancellingId(orderId);
+    try {
+      await apiClient.post(`/orders/${orderId}/cancel`);
+      setOrders((current) => current.map((order) => order.id === orderId ? { ...order, order_status: 'cancelled' as const } : order));
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to cancel order.');
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
+  const isEditable = (status: string) => status === 'draft';
+  const isCancellable = (status: string) => status === 'draft' || status === 'pending';
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -107,9 +124,9 @@ export const Orders: React.FC = () => {
                       SKU: {item.variant?.sku || `#${item.variant_id.slice(0, 8)}`} (Qty: {item.quantity})
                     </span>
                     <span className="font-bold text-zinc-100">
-                      Rs. {Number(item.price_per_item).toFixed(2)} / ea
+                      {formatPrice(item.price_per_item)} / ea
                     </span>
-                    {order.order_status === 'draft' && (
+                    {isEditable(order.order_status) && (
                       <div className="flex items-center gap-1.5">
                         <input type="number" min="1" value={itemQuantities[item.id] ?? item.quantity} onChange={(e) => setItemQuantities({ ...itemQuantities, [item.id]: Math.max(1, Number(e.target.value) || 1) })} className="w-14 p-1 border border-zinc-700 rounded-xs text-xs font-mono" aria-label="Item quantity" />
                         <button onClick={() => updateItem(order.id, item.id, itemQuantities[item.id] ?? item.quantity)} disabled={updatingItemId === item.id} className="p-1 text-zinc-100 hover:bg-zinc-800" title="Update quantity"><Save className="w-3.5 h-3.5" /></button>
@@ -119,6 +136,20 @@ export const Orders: React.FC = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Cancel button for draft/pending orders */}
+              {isCancellable(order.order_status) && (
+                <div className="flex justify-end pt-2 border-t border-zinc-800">
+                  <button
+                    onClick={() => cancelOrder(order.id)}
+                    disabled={cancellingId === order.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-rose-700 border border-rose-200 rounded-xs hover:bg-rose-50 disabled:opacity-50"
+                  >
+                    <Ban className="w-3.5 h-3.5" />
+                    {cancellingId === order.id ? 'Cancelling...' : 'Cancel Order'}
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

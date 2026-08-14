@@ -103,6 +103,7 @@ export const Products: React.FC = () => {
       if (sortBy === 'price-low') return getProductPrice(first) - getProductPrice(second);
       if (sortBy === 'price-high') return getProductPrice(second) - getProductPrice(first);
       if (sortBy === 'newest') return new Date(second.created_at ?? 0).getTime() - new Date(first.created_at ?? 0).getTime();
+      if (sortBy === 'featured') return new Date(second.created_at ?? 0).getTime() - new Date(first.created_at ?? 0).getTime();
       return 0;
     });
 
