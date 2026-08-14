@@ -41,7 +41,10 @@ async def list_wishlist_items(
     current_user: Annotated[User, Depends(get_current_active_user)],
 ):
     service = WishlistService(session)
-    return await service.list_items(current_user.id)
+    try:
+        return await service.list_items(current_user.id)
+    except WishlistServiceError as error:
+        _raise_wishlist_http_error(error)
 
 
 @router.post("/items", response_model=WishlistItemResponse, status_code=status.HTTP_201_CREATED)
