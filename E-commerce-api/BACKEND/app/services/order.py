@@ -141,11 +141,12 @@ class OrderService:
         skip: int = 0,
         limit: int = 100,
         user_id: UUID | None = None,
+        search: str | None = None,
     ) -> list[Order]:
-        return await self.order_repo.list(skip=skip, limit=limit, user_id=user_id)
+        return await self.order_repo.list(skip=skip, limit=limit, user_id=user_id, search=search)
 
-    async def count_orders(self, *, user_id: UUID | None = None) -> int:
-        return await self.order_repo.count(user_id=user_id)
+    async def count_orders(self, *, user_id: UUID | None = None, search: str | None = None) -> int:
+        return await self.order_repo.count(user_id=user_id, search=search)
 
     async def update_order(self, order_id: UUID, order_in: OrderUpdate) -> Order:
         order = await self.get_order(order_id)

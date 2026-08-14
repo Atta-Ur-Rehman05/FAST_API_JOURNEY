@@ -71,6 +71,10 @@ class ProductService:
         category_id: Optional[int] = None,
         is_active: Optional[bool] = None,
         search: Optional[str] = None,
+        sort_by: str = "created_at",
+        order: str = "desc",
+        max_price: Optional[float] = None,
+        in_stock: Optional[bool] = None,
     ) -> list[Product]:
         return await self.product_repo.list(
             skip=skip,
@@ -78,6 +82,10 @@ class ProductService:
             category_id=category_id,
             is_active=is_active,
             search=search,
+            sort_by=sort_by,
+            order=order,
+            max_price=max_price,
+            in_stock=in_stock,
         )
 
     async def count_products(self, **filters) -> int:

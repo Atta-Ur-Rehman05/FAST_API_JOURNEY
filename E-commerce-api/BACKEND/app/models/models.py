@@ -69,6 +69,7 @@ class User(Base):
     reviews = relationship("Review", back_populates="user", cascade="all, delete-orphan")
     refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
     password_reset_tokens = relationship("PasswordResetToken", back_populates="user", cascade="all, delete-orphan")
+    wishlist = relationship("Wishlist", back_populates="user", uselist=False)
 
 class RefreshToken(Base):
     __tablename__ = "refresh_tokens"
@@ -390,3 +391,36 @@ class StripeWebhookEvent(Base):
     event_type = Column(String(100), nullable=False)
     payment_id = Column(UUID(as_uuid=True), ForeignKey("payments.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+
+# ============================
+# Wishlist Module
+# ============================
+
+class Wishlist(Base):
+    __tablename__ = "wishlists"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+    # Relationships
+    user = relationship("User", back_populates="wishlist")
+    items = relationship("WishlistItem", back_populates="wishlist", cascade="all, delete-orphan")
+
+
+class WishlistItem(Base):
+    __tablename__ = "wishlist_items"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    wishlist_id = Column(UUID(as_uuid=True), ForeignKey("wishlists.id", ondelete="CASCADE"), nullable=False, index=True)
+    product_id = Column(UUID(as_uuid=True), ForeignKey("products.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+    # Relationships
+    wishlist = relationship("Wishlist", back_populates="items")
+    product = relationship("Product")
+
+    __table_args__ = (
+        UniqueConstraint("wishlist_id", "product_id", name="uq_wishlist_product"),
+    )

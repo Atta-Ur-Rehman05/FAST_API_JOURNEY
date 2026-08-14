@@ -74,6 +74,10 @@ async def list_products(
     category_id: Optional[int] = None,
     is_active: Optional[bool] = None,
     search: Optional[str] = None,
+    sort_by: str = "created_at",
+    order: str = "desc",
+    max_price: Annotated[Optional[float], Query(ge=0)] = None,
+    in_stock: bool = False,
 ):
     product_service = ProductService(session)
     items = await product_service.list_products(
@@ -82,8 +86,18 @@ async def list_products(
         category_id=category_id,
         is_active=is_active,
         search=search,
+        sort_by=sort_by,
+        order=order,
+        max_price=max_price,
+        in_stock=in_stock,
     )
-    total = await product_service.count_products(category_id=category_id, is_active=is_active, search=search)
+    total = await product_service.count_products(
+        category_id=category_id,
+        is_active=is_active,
+        search=search,
+        max_price=max_price,
+        in_stock=in_stock,
+    )
     return PaginatedResponse.create(items=items, total=total, skip=skip, limit=limit)
 
 

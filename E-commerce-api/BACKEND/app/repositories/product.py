@@ -46,14 +46,28 @@ class ProductRepository:
         category_id: Optional[int] = None,
         is_active: Optional[bool] = None,
         search: Optional[str] = None,
+        sort_by: str = "created_at",
+        order: str = "desc",
+        max_price: Optional[float] = None,
+        in_stock: Optional[bool] = None,
     ) -> list[Product]:
+        allowed_sort_fields = {"created_at", "base_price", "name"}
+        sort_field = sort_by if sort_by in allowed_sort_fields else "created_at"
+        sort_dir = "asc" if order.lower() == "asc" else "desc"
+
         stmt = (
             select(Product)
             .options(selectinload(Product.images), selectinload(Product.variants), selectinload(Product.category))
-            .order_by(Product.created_at.desc())
-            .offset(skip)
-            .limit(limit)
         )
+
+        if sort_field == "base_price":
+            stmt = stmt.order_by(Product.base_price.asc() if sort_dir == "asc" else Product.base_price.desc())
+        elif sort_field == "name":
+            stmt = stmt.order_by(Product.name.asc() if sort_dir == "asc" else Product.name.desc())
+        else:
+            stmt = stmt.order_by(Product.created_at.desc() if sort_dir == "desc" else Product.created_at.asc())
+
+        stmt = stmt.offset(skip).limit(limit)
 
         if category_id is not None:
             stmt = stmt.where(Product.category_id == category_id)
@@ -64,14 +78,37 @@ class ProductRepository:
         if search:
             stmt = stmt.where(Product.name.ilike(f"%{search}%"))
 
+        if max_price is not None:
+            stmt = stmt.where(Product.base_price <= max_price)
+
+        if in_stock:
+            stmt = stmt.join(ProductVariant, ProductVariant.product_id == Product.id).where(
+                (ProductVariant.stock_quantity - ProductVariant.reserved_quantity) > 0
+            ).distinct()
+
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def count(self, *, category_id=None, is_active=None, search=None) -> int:
+    async def count(self, *, category_id=None, is_active=None, search=None, max_price=None, in_stock=None) -> int:
         stmt = select(func.count(Product.id))
-        if category_id is not None: stmt = stmt.where(Product.category_id == category_id)
-        if is_active is not None: stmt = stmt.where(Product.is_active == is_active)
-        if search: stmt = stmt.where(Product.name.ilike(f"%{search}%"))
+
+        if category_id is not None:
+            stmt = stmt.where(Product.category_id == category_id)
+
+        if is_active is not None:
+            stmt = stmt.where(Product.is_active == is_active)
+
+        if search:
+            stmt = stmt.where(Product.name.ilike(f"%{search}%"))
+
+        if max_price is not None:
+            stmt = stmt.where(Product.base_price <= max_price)
+
+        if in_stock:
+            stmt = stmt.join(ProductVariant, ProductVariant.product_id == Product.id).where(
+                (ProductVariant.stock_quantity - ProductVariant.reserved_quantity) > 0
+            ).distinct()
+
         return (await self.session.execute(stmt)).scalar_one()
 
     async def create(self, product_in: ProductCreate) -> Product:

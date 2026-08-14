@@ -37,6 +37,7 @@ class OrderRepository:
         skip: int = 0,
         limit: int = 100,
         user_id: Optional[UUID] = None,
+        search: Optional[str] = None,
     ) -> list[Order]:
         stmt = (
             select(Order)
@@ -49,12 +50,16 @@ class OrderRepository:
         if user_id is not None:
             stmt = stmt.where(Order.user_id == user_id)
 
+        if search:
+            stmt = stmt.where(Order.id.ilike(f"%{search}%"))
+
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def count(self, *, user_id: Optional[UUID] = None) -> int:
+    async def count(self, *, user_id: Optional[UUID] = None, search: Optional[str] = None) -> int:
         stmt = select(func.count(Order.id))
         if user_id is not None: stmt = stmt.where(Order.user_id == user_id)
+        if search: stmt = stmt.where(Order.id.ilike(f"%{search}%"))
         return (await self.session.execute(stmt)).scalar_one()
 
     async def get_address_by_id(self, address_id: UUID) -> Optional[Address]:

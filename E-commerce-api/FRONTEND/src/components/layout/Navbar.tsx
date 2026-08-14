@@ -3,14 +3,17 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Menu, ShoppingCart, LogOut, LayoutDashboard, Search, User as UserIcon, Sparkles, Grid2X2, X } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import { useCartStore } from '../../store/cartStore';
+import { useWishlistStore } from '../../store/wishlistStore';
 
 export const Navbar: React.FC = () => {
   const { user, logout, isAdmin } = useAuth();
   const { cart, toggleCart } = useCartStore();
+  const { wishlist } = useWishlistStore();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const totalItems = cart?.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  const wishlistCount = wishlist?.items?.length || 0;
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +50,7 @@ export const Navbar: React.FC = () => {
           </form>
           <div className="flex shrink-0 items-center gap-2">
             {isAdmin && <button onClick={() => navigate('/admin')} className="hidden items-center gap-1.5 rounded-md border border-zinc-800 bg-zinc-900/50 px-2.5 py-1.5 text-xs font-bold text-zinc-300 hover:bg-zinc-800 md:flex"><LayoutDashboard className="h-3.5 w-3.5" /> Control</button>}
+            {user && <button onClick={() => navigate('/wishlist')} className="relative rounded-full border border-zinc-800 bg-zinc-900 p-2 text-zinc-300 transition hover:text-white" aria-label="Wishlist"><Heart className="h-5 w-5" />{wishlistCount > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-zinc-100 px-1 font-mono text-[10px] font-black text-zinc-950">{wishlistCount}</span>}</button>}
             <button onClick={toggleCart} className="relative rounded-full border border-zinc-800 bg-zinc-900 p-2 text-zinc-300 transition hover:text-white" aria-label="Shopping cart"><ShoppingCart className="h-5 w-5" />{totalItems > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-zinc-100 px-1 font-mono text-[10px] font-black text-zinc-950">{totalItems}</span>}</button>
             {user ? <div className="hidden items-center gap-1 border-l border-zinc-800 pl-2 sm:flex"><Link to="/account/orders" className="ui-icon-button p-1.5" aria-label="My orders"><UserIcon className="h-4 w-4" /></Link><button onClick={handleLogout} className="ui-icon-button p-1.5" aria-label="Logout"><LogOut className="h-4 w-4" /></button></div> : <Link to="/login" className="hidden rounded-md border border-zinc-800 px-3 py-1.5 text-xs font-bold text-zinc-300 hover:bg-zinc-900 sm:block">Sign in</Link>}
             <button onClick={() => setIsMenuOpen((open) => !open)} className="ui-icon-button rounded-md p-2 lg:hidden" aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={isMenuOpen} aria-controls="mobile-navigation">{isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>

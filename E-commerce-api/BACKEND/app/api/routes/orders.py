@@ -89,10 +89,11 @@ async def list_orders(
     _: Annotated[User, Depends(get_current_admin_user)],
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 100,
+    search: str | None = None,
 ):
     order_service = OrderService(session)
-    items = await order_service.list_orders(skip=skip, limit=limit)
-    total = await order_service.count_orders()
+    items = await order_service.list_orders(skip=skip, limit=limit, search=search)
+    total = await order_service.count_orders(search=search)
     return PaginatedResponse.create(items=items, total=total, skip=skip, limit=limit)
 
 

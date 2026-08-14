@@ -11,6 +11,7 @@ from app.api.routes import (
     products,
     reviews,
     users,
+    wishlist,
 )
 
 api_router = APIRouter()
@@ -25,3 +26,4 @@ api_router.include_router(orders.router, prefix="/orders", tags=["orders"])
 api_router.include_router(payments.router, prefix="/payments", tags=["payments"])
 api_router.include_router(checkout.router, prefix="/checkout", tags=["checkout"])
 api_router.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
+api_router.include_router(wishlist.router, prefix="/wishlist", tags=["wishlist"])

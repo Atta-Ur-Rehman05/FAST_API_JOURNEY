@@ -37,6 +37,9 @@ class Settings(BaseSettings):  # configuration schema for the application
     FRONTEND_URL: str = "http://localhost:5173"
     ISSUER: str = "ecommerce-api"
     AUDIENCE: str = "ecommerce-client"
+    TAX_RATE: float = 0.05
+    SHIPPING_FLAT: float = 99.0
+    FREE_SHIPPING_THRESHOLD: float = 999.0
 
     @model_validator(mode="after")
     def validate_production_settings(self) -> "Settings":

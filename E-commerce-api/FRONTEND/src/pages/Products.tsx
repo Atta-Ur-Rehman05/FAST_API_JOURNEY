@@ -4,6 +4,7 @@ import { Filter, ShoppingCart, Tag, Eye, ChevronRight, ChevronLeft, Heart, Spark
 import type { Product, Category, PaginatedResponse } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { useCartStore } from '../store/cartStore';
+import { useWishlistStore } from '../store/wishlistStore';
 import { ProductVisual } from '../components/product/ProductVisual';
 
 const PAGE_SIZE = 24;
@@ -22,9 +23,6 @@ export const Products: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('featured');
   const [maxPrice, setMaxPrice] = useState(MAX_PRICE);
   const [inStockOnly, setInStockOnly] = useState(false);
-  const [savedProductIds, setSavedProductIds] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem('saved_product_ids') || '[]'); } catch { return []; }
-  });
 
   const [searchParams] = useSearchParams();
   const searchUrlTerm = searchParams.get('search') || '';
@@ -32,14 +30,20 @@ export const Products: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState(searchUrlTerm);
 
   const { addItem } = useCartStore();
+  const { wishlist, addItem: addWishlistItem, removeItem: removeWishlistItem } = useWishlistStore();
 
-  const toggleSavedProduct = (productId: string) => {
-    setSavedProductIds((current) => {
-      const next = current.includes(productId) ? current.filter((id) => id !== productId) : [...current, productId];
-      localStorage.setItem('saved_product_ids', JSON.stringify(next));
-      return next;
-    });
+  const toggleSavedProduct = async (productId: string) => {
+    const isSaved = wishlist?.items?.some((item) => item.product_id === productId);
+    if (isSaved) {
+      await removeWishlistItem(productId);
+    } else {
+      await addWishlistItem(productId);
+    }
   };
+
+  useEffect(() => {
+    useWishlistStore.getState().fetchWishlist();
+  }, []);
 
   useEffect(() => {
     setSearchTerm(searchUrlTerm);
@@ -65,6 +69,13 @@ export const Products: React.FC = () => {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
+      const sortByMap: Record<SortOption, { sort_by: string; order: string }> = {
+        'featured': { sort_by: 'created_at', order: 'desc' },
+        'price-low': { sort_by: 'base_price', order: 'asc' },
+        'price-high': { sort_by: 'base_price', order: 'desc' },
+        'newest': { sort_by: 'created_at', order: 'desc' },
+      };
+      const sort = sortByMap[sortBy];
       const res = await apiClient.get<PaginatedResponse<Product>>('/products/', {
         params: {
           skip: page * PAGE_SIZE,
@@ -72,6 +83,10 @@ export const Products: React.FC = () => {
           search: searchTerm || undefined,
           category_id: selectedCategory ?? undefined,
           is_active: true,
+          sort_by: sort.sort_by,
+          order: sort.order,
+          max_price: maxPrice < MAX_PRICE ? maxPrice : undefined,
+          in_stock: inStockOnly,
         },
       });
       setProducts(res.data.items);
@@ -81,7 +96,7 @@ export const Products: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, searchTerm, selectedCategory]);
+  }, [page, searchTerm, selectedCategory, sortBy, maxPrice, inStockOnly]);
 
   useEffect(() => {
     fetchProducts();
@@ -93,19 +108,6 @@ export const Products: React.FC = () => {
     const primaryVariant = product.variants?.[0];
     return Number(product.base_price) + (primaryVariant ? Number(primaryVariant.price_modifier) : 0);
   };
-
-  const visibleProducts = products
-    .filter((product) => {
-      const hasStock = product.variants?.some((variant) => variant.available_quantity > 0) ?? false;
-      return getProductPrice(product) <= maxPrice && (!inStockOnly || hasStock);
-    })
-    .sort((first, second) => {
-      if (sortBy === 'price-low') return getProductPrice(first) - getProductPrice(second);
-      if (sortBy === 'price-high') return getProductPrice(second) - getProductPrice(first);
-      if (sortBy === 'newest') return new Date(second.created_at ?? 0).getTime() - new Date(first.created_at ?? 0).getTime();
-      if (sortBy === 'featured') return new Date(second.created_at ?? 0).getTime() - new Date(first.created_at ?? 0).getTime();
-      return 0;
-    });
 
   const renderCategoryButton = (cat: Category, depth: number = 0): React.ReactNode => (
     <React.Fragment key={cat.id}>
@@ -276,7 +278,7 @@ export const Products: React.FC = () => {
                 </div>
               ))}
             </div>
-          ) : visibleProducts.length === 0 ? (
+          ) : products.length === 0 ? (
             <div className="ui-surface p-12 rounded-sm text-center space-y-3">
               <p className="text-base font-bold text-zinc-100">No matching products found</p>
               <p className="text-xs text-zinc-400">Try resetting your category or search keywords.</p>
@@ -290,11 +292,11 @@ export const Products: React.FC = () => {
           ) : (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                {visibleProducts.map((product) => {
+                {products.map((product) => {
                   const primaryVariant = product.variants?.[0];
                   const displayPrice = Number(product.base_price) + (primaryVariant ? Number(primaryVariant.price_modifier) : 0);
                   const hasStock = primaryVariant ? primaryVariant.available_quantity > 0 : false;
-                  const isSaved = savedProductIds.includes(product.id);
+                  const isSaved = wishlist?.items?.some((item) => item.product_id === product.id) || false;
 
                   return (
                     <div key={product.id} className="ui-card p-3 flex flex-col justify-between group relative"

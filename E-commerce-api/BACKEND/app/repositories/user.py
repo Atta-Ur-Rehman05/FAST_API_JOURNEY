@@ -35,3 +35,12 @@ class UserRepository:
         await self.session.commit()
         await self.session.refresh(db_user)
         return db_user
+
+    async def update(self, user: User, user_in: UserUpdate) -> User:
+        update_data = user_in.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(user, field, value)
+        self.session.add(user)
+        await self.session.flush()
+        await self.session.refresh(user)
+        return user
