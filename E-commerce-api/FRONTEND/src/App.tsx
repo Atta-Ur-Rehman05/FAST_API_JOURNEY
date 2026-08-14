@@ -17,7 +17,7 @@ import { ProductDetail } from './pages/ProductDetail';
 import { Addresses } from './pages/Addresses';
 import { Checkout } from './pages/Checkout';
 import { Orders } from './pages/Orders';
-import { Wishlist } from './pages/Wishlist';
+import { WishlistPage } from './pages/Wishlist';
 
 import { AdminLayout } from './components/layout/AdminLayout';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -55,7 +55,7 @@ export function App() {
                    {/* Customer Account Routes */}
                    <Route path="/account/addresses" element={<Addresses />} />
                    <Route path="/account/orders" element={<Orders />} />
-                   <Route path="/wishlist" element={<Wishlist />} />
+                   <Route path="/wishlist" element={<WishlistPage />} />
                    <Route path="/checkout" element={<Checkout />} />
 
                    {/* Admin Portal Routes */}
