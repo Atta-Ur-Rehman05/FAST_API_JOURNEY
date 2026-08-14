@@ -30,10 +30,14 @@ export const AdminOrders: React.FC = () => {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [refundingId, setRefundingId] = useState<string | null>(null);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchOrders = async () => {
+    setLoading(true);
     try {
-      const res = await apiClient.get<PaginatedResponse<Order>>('/orders/');
+      const res = await apiClient.get<PaginatedResponse<Order>>('/orders/', {
+        params: searchQuery ? { search: searchQuery } : undefined,
+      });
       setOrders(res.data.items);
     } catch (err) {
       console.error('Error fetching admin orders:', err);
@@ -90,9 +94,19 @@ export const AdminOrders: React.FC = () => {
           <h1 className="text-xl sm:text-2xl font-bold text-zinc-100">Order Fulfillment Hub</h1>
           <p className="text-xs text-zinc-400 mt-0.5">Manage order status transitions and dispatch workflow</p>
         </div>
-        <button onClick={fetchOrders} className="p-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-400 rounded-xs shadow-2xs">
-          <RefreshCw className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="Search by order ID..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && fetchOrders()}
+            className="px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700"
+          />
+          <button onClick={fetchOrders} className="p-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-400 rounded-xs shadow-2xs">
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {loading ? (

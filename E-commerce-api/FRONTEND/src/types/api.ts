@@ -13,6 +13,20 @@ export interface User {
   updated_at?: string;
 }
 
+export interface WishlistItem {
+  id: string;
+  product_id: string;
+  created_at?: string;
+  product?: Product;
+}
+
+export interface Wishlist {
+  id: string;
+  user_id: string;
+  items: WishlistItem[];
+  created_at?: string;
+}
+
 export interface Token {
   access_token: string;
   token_type: string;
@@ -146,6 +160,9 @@ export interface CheckoutResponse {
   order: Order;
   payment: Payment;
   stripe_client_secret?: string | null;
+  subtotal_amount: number;
+  tax_amount: number;
+  shipping_amount: number;
 }
 
 export interface Review {
