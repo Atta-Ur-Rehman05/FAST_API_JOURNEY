@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
+import { Suspense, lazy } from 'react';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -20,65 +20,64 @@ import { Checkout } from './pages/Checkout';
 import { Orders } from './pages/Orders';
 import { WishlistPage } from './pages/Wishlist';
 
-import { AdminLayout } from './components/layout/AdminLayout';
-import { AdminDashboard } from './pages/admin/AdminDashboard';
-import { AdminProducts } from './pages/admin/AdminProducts';
-import { AdminInventory } from './pages/admin/AdminInventory';
-import { AdminCategories } from './pages/admin/AdminCategories';
-import { AdminOrders } from './pages/admin/AdminOrders';
-import { AdminUsers } from './pages/admin/AdminUsers';
+// Admin routes - code split to reduce initial bundle size for non-admin users
+const AdminLayout = lazy(() => import('./components/layout/AdminLayout').then(m => ({ default: m.AdminLayout })));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const AdminProducts = lazy(() => import('./pages/admin/AdminProducts').then(m => ({ default: m.AdminProducts })));
+const AdminInventory = lazy(() => import('./pages/admin/AdminInventory').then(m => ({ default: m.AdminInventory })));
+const AdminCategories = lazy(() => import('./pages/admin/AdminCategories').then(m => ({ default: m.AdminCategories })));
+const AdminOrders = lazy(() => import('./pages/admin/AdminOrders').then(m => ({ default: m.AdminOrders })));
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers').then(m => ({ default: m.AdminUsers })));
 
-const queryClient = new QueryClient();
+const AdminSuspense = ({ children }: { children: React.ReactNode }) => <Suspense fallback={<div className="text-center text-zinc-400 text-xs py-12">Loading admin panel...</div>}>{children}</Suspense>;
 
 export function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <ErrorBoundary>
-            <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-50 font-sans">
-              <Navbar />
-              <CartDrawer />
+    <AuthProvider>
+      <BrowserRouter>
+        <ErrorBoundary>
+          <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-50 font-sans">
+            <Navbar />
+            <CartDrawer />
 
-              <div className="flex-1">
-                <Routes>
-                  {/* Storefront Routes */}
-                  <Route path="/" element={<Navigate to="/products" replace />} />
-                  <Route path="/products" element={<Products />} />
-                  <Route path="/products/:id" element={<ProductDetail />} />
+            <div className="flex-1">
+              <Routes>
+                {/* Storefront Routes */}
+                <Route path="/" element={<Navigate to="/products" replace />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/products/:id" element={<ProductDetail />} />
 
-                  {/* Auth Routes */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
+                {/* Auth Routes */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
 
-                   {/* Customer Account Routes */}
-                   <Route path="/account/addresses" element={<Addresses />} />
-                   <Route path="/account/orders" element={<Orders />} />
-                   <Route path="/wishlist" element={<WishlistPage />} />
-                   <Route path="/checkout" element={<Checkout />} />
+                 {/* Customer Account Routes */}
+                 <Route path="/account/addresses" element={<Addresses />} />
+                 <Route path="/account/orders" element={<Orders />} />
+                 <Route path="/wishlist" element={<WishlistPage />} />
+                 <Route path="/checkout" element={<Checkout />} />
 
-                    {/* Admin Portal Routes */}
-                    <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
-                      <Route index element={<AdminDashboard />} />
-                      <Route path="products" element={<AdminProducts />} />
-                      <Route path="inventory" element={<AdminInventory />} />
-                      <Route path="categories" element={<AdminCategories />} />
-                      <Route path="orders" element={<AdminOrders />} />
-                      <Route path="users" element={<AdminUsers />} />
-                    </Route>
+                  {/* Admin Portal Routes - code split */}
+                  <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+                    <Route index element={<AdminSuspense><AdminDashboard /></AdminSuspense>} />
+                    <Route path="products" element={<AdminSuspense><AdminProducts /></AdminSuspense>} />
+                    <Route path="inventory" element={<AdminSuspense><AdminInventory /></AdminSuspense>} />
+                    <Route path="categories" element={<AdminSuspense><AdminCategories /></AdminSuspense>} />
+                    <Route path="orders" element={<AdminSuspense><AdminOrders /></AdminSuspense>} />
+                    <Route path="users" element={<AdminSuspense><AdminUsers /></AdminSuspense>} />
+                  </Route>
 
-                  {/* Catch-all redirect */}
-                  <Route path="*" element={<Navigate to="/products" replace />} />
-                </Routes>
-              </div>
-              <Footer />
+                {/* Catch-all redirect */}
+                <Route path="*" element={<Navigate to="/products" replace />} />
+              </Routes>
             </div>
-          </ErrorBoundary>
-        </BrowserRouter>
-      </AuthProvider>
-    </QueryClientProvider>
+            <Footer />
+          </div>
+        </ErrorBoundary>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
