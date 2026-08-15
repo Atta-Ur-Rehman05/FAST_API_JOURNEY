@@ -68,7 +68,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   clearCart: async () => {
     set({ isLoading: true });
     try {
-      await apiClient.delete('/cart/items');
+      await apiClient.delete('/cart/clear');
       await get().fetchCart();
     } finally {
       set({ isLoading: false });

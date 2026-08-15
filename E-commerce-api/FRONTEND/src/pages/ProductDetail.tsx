@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Pencil, Star, ShoppingCart, ArrowLeft, Trash2, Zap } from 'lucide-react';
-import type { Product, ProductVariant, Review, PaginatedResponse } from '../types/api';
+import type { Product, ProductVariant, Review } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { useCartStore } from '../store/cartStore';
 import { useAuth } from '../context/useAuth';
@@ -32,10 +32,10 @@ export const ProductDetail: React.FC = () => {
       try {
         const [prodRes, revRes] = await Promise.all([
           apiClient.get<Product>(`/products/${id}`),
-          apiClient.get<PaginatedResponse<Review>>('/reviews/', { params: { product_id: id } }),
+          apiClient.get<Review[]>(`/reviews/product/${id}`),
         ]);
         setProduct(prodRes.data);
-        const fetchedReviews = revRes.data.items;
+        const fetchedReviews = revRes.data;
         setReviews(fetchedReviews);
         if (prodRes.data.variants?.length > 0) {
           setSelectedVariant(prodRes.data.variants[0]);

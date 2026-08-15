@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Clock, CheckCircle, Save, Trash2, Truck, XCircle, Ban } from 'lucide-react';
+import { Package, Clock, CheckCircle, Truck, XCircle, Ban } from 'lucide-react';
 import type { Order, PaginatedResponse } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { formatPrice } from '../lib/format-price';
@@ -7,8 +7,6 @@ import { formatPrice } from '../lib/format-price';
 export const Orders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [itemQuantities, setItemQuantities] = useState<Record<number, number>>({});
-  const [updatingItemId, setUpdatingItemId] = useState<number | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -25,31 +23,11 @@ export const Orders: React.FC = () => {
     fetchOrders();
   }, []);
 
-  const updateItem = async (orderId: string, itemId: number, quantity: number) => {
-    if (quantity <= 0) return;
-    setUpdatingItemId(itemId);
-    try {
-      const response = await apiClient.patch(`/orders/${orderId}/items/${itemId}`, { quantity });
-      setOrders((current) => current.map((order) => order.id !== orderId ? order : {
-        ...order, items: order.items.map((item) => item.id === itemId ? { ...item, ...response.data } : item),
-      }));
-    } catch (err: any) { alert(err.response?.data?.detail || 'Failed to update order item.'); }
-    finally { setUpdatingItemId(null); }
-  };
-
-  const deleteItem = async (orderId: string, itemId: number) => {
-    if (!confirm('Remove this item from the order?')) return;
-    try {
-      await apiClient.delete(`/orders/${orderId}/items/${itemId}`);
-      setOrders((current) => current.map((order) => order.id !== orderId ? order : { ...order, items: order.items.filter((item) => item.id !== itemId) }));
-    } catch (err: any) { alert(err.response?.data?.detail || 'Failed to remove order item.'); }
-  };
-
   const cancelOrder = async (orderId: string) => {
     if (!confirm('Cancel this order? This action cannot be undone.')) return;
     setCancellingId(orderId);
     try {
-      await apiClient.post(`/orders/${orderId}/cancel`);
+      await apiClient.patch(`/orders/${orderId}/status`, { order_status: 'cancelled' });
       setOrders((current) => current.map((order) => order.id === orderId ? { ...order, order_status: 'cancelled' as const } : order));
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to cancel order.');
@@ -58,7 +36,6 @@ export const Orders: React.FC = () => {
     }
   };
 
-  const isEditable = (status: string) => status === 'draft';
   const isCancellable = (status: string) => status === 'draft' || status === 'pending';
 
   const getStatusBadge = (status: string) => {
@@ -127,13 +104,6 @@ export const Orders: React.FC = () => {
                     <span className="font-bold text-zinc-100">
                       {formatPrice(item.price_per_item)} / ea
                     </span>
-                    {isEditable(order.order_status) && (
-                      <div className="flex items-center gap-1.5">
-                        <input type="number" min="1" value={itemQuantities[item.id] ?? item.quantity} onChange={(e) => setItemQuantities({ ...itemQuantities, [item.id]: Math.max(1, Number(e.target.value) || 1) })} className="w-14 p-1 border border-zinc-700 rounded-xs text-xs font-mono" aria-label="Item quantity" />
-                        <button onClick={() => updateItem(order.id, item.id, itemQuantities[item.id] ?? item.quantity)} disabled={updatingItemId === item.id} className="p-1 text-zinc-100 hover:bg-zinc-800" title="Update quantity"><Save className="w-3.5 h-3.5" /></button>
-                        <button onClick={() => deleteItem(order.id, item.id)} className="p-1 text-rose-600 hover:bg-rose-50" title="Remove item"><Trash2 className="w-3.5 h-3.5" /></button>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>

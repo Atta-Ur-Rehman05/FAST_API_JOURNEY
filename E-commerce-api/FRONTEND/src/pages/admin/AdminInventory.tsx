@@ -56,10 +56,8 @@ export const AdminInventory: React.FC = () => {
   const handleUpdateStock = async (variantId: string) => {
     setUpdatingId(variantId);
     try {
-      const item = inventory.find((i) => i.variant_id === variantId);
-      await apiClient.patch(`/inventory/${variantId}/stock`, {
+      await apiClient.put(`/inventory/${variantId}`, {
         stock_quantity: quantities[variantId],
-        reason: `Admin manual update — ${item?.sku ?? variantId}`,
       });
       fetchInventory();
     } catch {
