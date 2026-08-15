@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { apiClient } from '../lib/api-client';
+
+const MIN_PASSWORD_LENGTH = 8;
 
 export const ResetPassword: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -13,13 +15,49 @@ export const ResetPassword: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  useEffect(() => {
+    const urlToken = searchParams.get('token');
+    if (urlToken) {
+      setToken(urlToken);
+    }
+  }, [searchParams]);
+
+  const validatePassword = (value: string): string | null => {
+    if (value.length < MIN_PASSWORD_LENGTH) {
+      return `Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`;
+    }
+    if (!/[A-Z]/.test(value)) {
+      return 'Password must contain at least one uppercase letter.';
+    }
+    if (!/[a-z]/.test(value)) {
+      return 'Password must contain at least one lowercase letter.';
+    }
+    if (!/[0-9]/.test(value)) {
+      return 'Password must contain at least one number.';
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       return;
     }
+
+    if (!token.trim()) {
+      setError('Reset token is missing or invalid.');
+      return;
+    }
+
     setLoading(true);
     try {
       await apiClient.post('/auth/password-reset/confirm', { token, new_password: password });
@@ -31,6 +69,14 @@ export const ResetPassword: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (token) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('token');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [token]);
 
   return (
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-8">

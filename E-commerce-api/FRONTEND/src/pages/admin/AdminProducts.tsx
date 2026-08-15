@@ -3,6 +3,7 @@ import { ImagePlus, Pencil, Plus, Trash2, X } from 'lucide-react';
 import type { Product, Category, PaginatedResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
 import { formatPrice } from '../../lib/format-price';
+import { sanitizeText } from '../../lib/sanitize';
 
 type VariantDraft = {
   id?: string;
@@ -218,7 +219,7 @@ export const AdminProducts: React.FC = () => {
                 {products.map((p) => (
                   <tr key={p.id} className="hover:bg-zinc-900 transition-colors">
                     <td className="px-4 py-3 font-bold text-zinc-100">
-                      {p.name}
+                      {sanitizeText(p.name)}
                       <span className="block text-[11px] font-mono text-zinc-400 font-normal">Slug: {p.slug}</span>
                     </td>
                     <td className="px-4 py-3 text-zinc-400">{p.category?.name || `ID: ${p.category_id}`}</td>

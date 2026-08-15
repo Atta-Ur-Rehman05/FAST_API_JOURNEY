@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { UserPlus, Mail, Lock, User, AlertCircle } from 'lucide-react';
 
+const MIN_PASSWORD_LENGTH = 8;
+
 export const Register: React.FC = () => {
   const [formData, setFormData] = useState({
     email: '',
@@ -15,9 +17,30 @@ export const Register: React.FC = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
 
+  const validatePassword = (value: string): string | null => {
+    if (value.length < MIN_PASSWORD_LENGTH) {
+      return `Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`;
+    }
+    if (!/[A-Z]/.test(value)) {
+      return 'Password must contain at least one uppercase letter.';
+    }
+    if (!/[a-z]/.test(value)) {
+      return 'Password must contain at least one lowercase letter.';
+    }
+    if (!/[0-9]/.test(value)) {
+      return 'Password must contain at least one number.';
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) {
+      setError(passwordError);
+      return;
+    }
     setLoading(true);
     try {
       await register(formData);

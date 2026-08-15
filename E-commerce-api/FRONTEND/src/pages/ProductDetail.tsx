@@ -7,6 +7,7 @@ import { useCartStore } from '../store/cartStore';
 import { useAuth } from '../context/useAuth';
 import { ProductVisual } from '../components/product/ProductVisual';
 import { formatPrice } from '../lib/format-price';
+import { sanitizeText } from '../lib/sanitize';
 
 export const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -315,7 +316,7 @@ export const ProductDetail: React.FC = () => {
                     </div>
                   )}
                 </div>
-                <p className="text-xs text-zinc-100 mt-1">{rev.comment}</p>
+                <p className="text-xs text-zinc-100 mt-1" dangerouslySetInnerHTML={{ __html: sanitizeText(rev.comment || '') }} />
               </div>
             ))
           )}

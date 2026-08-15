@@ -7,6 +7,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { CartDrawer } from './components/cart/CartDrawer';
+import { AdminRoute } from './components/auth/AdminRoute';
 
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
@@ -58,15 +59,15 @@ export function App() {
                    <Route path="/wishlist" element={<WishlistPage />} />
                    <Route path="/checkout" element={<Checkout />} />
 
-                   {/* Admin Portal Routes */}
-                   <Route path="/admin" element={<AdminLayout />}>
-                     <Route index element={<AdminDashboard />} />
-                     <Route path="products" element={<AdminProducts />} />
-                     <Route path="inventory" element={<AdminInventory />} />
-                     <Route path="categories" element={<AdminCategories />} />
-                     <Route path="orders" element={<AdminOrders />} />
-                     <Route path="users" element={<AdminUsers />} />
-                   </Route>
+                    {/* Admin Portal Routes */}
+                    <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+                      <Route index element={<AdminDashboard />} />
+                      <Route path="products" element={<AdminProducts />} />
+                      <Route path="inventory" element={<AdminInventory />} />
+                      <Route path="categories" element={<AdminCategories />} />
+                      <Route path="orders" element={<AdminOrders />} />
+                      <Route path="users" element={<AdminUsers />} />
+                    </Route>
 
                   {/* Catch-all redirect */}
                   <Route path="*" element={<Navigate to="/products" replace />} />

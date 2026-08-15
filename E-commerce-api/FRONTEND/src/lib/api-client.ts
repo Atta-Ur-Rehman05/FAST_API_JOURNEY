@@ -6,6 +6,19 @@ if (!API_BASE_URL) {
   throw new Error('VITE_API_BASE_URL must be configured for this environment.');
 }
 
+const CSRF_COOKIE_NAME = 'csrftoken';
+
+function getCookie(name: string): string | null {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+}
+
+function getCsrfToken(): string | null {
+  return getCookie(CSRF_COOKIE_NAME);
+}
+
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
@@ -20,12 +33,21 @@ let accessToken: string | null = null;
 
 export const setAccessToken = (token: string | null) => { accessToken = token; };
 
-// Request interceptor: Attach the in-memory access token when available.
+// Request interceptor: Attach the in-memory access token and CSRF token when available.
 apiClient.interceptors.request.use(
   (config) => {
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
+
+    const method = config.method?.toLowerCase();
+    if (method && ['post', 'put', 'patch', 'delete'].includes(method)) {
+      const csrfToken = getCsrfToken();
+      if (csrfToken) {
+        config.headers['X-CSRF-Token'] = csrfToken;
+      }
+    }
+
     return config;
   },
   (error) => Promise.reject(error)
@@ -69,3 +91,5 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export { getCsrfToken };
