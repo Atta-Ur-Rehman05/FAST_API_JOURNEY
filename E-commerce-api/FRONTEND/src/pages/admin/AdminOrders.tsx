@@ -4,16 +4,6 @@ import type { Order, OrderStatus, PaginatedResponse, Payment } from '../../types
 import { apiClient } from '../../lib/api-client';
 import { formatPrice } from '../../lib/format-price';
 
-const statusLabels: Record<OrderStatus, string> = {
-  draft: 'Draft',
-  pending: 'Pending',
-  processing: 'Processing',
-  shipped: 'Shipped',
-  delivered: 'Delivered',
-  cancelled: 'Cancelled',
-  failed: 'Failed',
-};
-
 const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
   draft: ['pending'],
   pending: ['processing', 'cancelled', 'failed'],
@@ -27,7 +17,6 @@ const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
 export const AdminOrders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [refundingId, setRefundingId] = useState<string | null>(null);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,18 +38,6 @@ export const AdminOrders: React.FC = () => {
   useEffect(() => {
     fetchOrders();
   }, []);
-
-  const handleUpdateStatus = async (orderId: string, newStatus: OrderStatus) => {
-    setUpdatingId(orderId);
-    try {
-      await apiClient.patch(`/orders/${orderId}/status`, { order_status: newStatus });
-      fetchOrders();
-    } catch {
-      alert('Failed to update order status.');
-    } finally {
-      setUpdatingId(null);
-    }
-  };
 
   const handleDeleteOrder = async (orderId: string) => {
     if (!confirm('Delete this order? This cannot be undone.')) return;

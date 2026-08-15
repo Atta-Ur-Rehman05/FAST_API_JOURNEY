@@ -98,7 +98,6 @@ export const Orders: React.FC = () => {
       ) : (
         <div className="space-y-4">
           {orders.map((order) => {
-            const items = order.items || [];
             return (
               <div key={order.id} className="ui-surface p-5 rounded-sm space-y-3 shadow-xs">
               <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-zinc-700 pb-3 gap-2">

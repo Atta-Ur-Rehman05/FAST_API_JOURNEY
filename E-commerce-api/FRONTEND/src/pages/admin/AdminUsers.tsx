@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, RefreshCw, Pencil, CheckCircle2, XCircle } from 'lucide-react';
+import { RefreshCw, Pencil, CheckCircle2, XCircle } from 'lucide-react';
 import type { User, RoleType, PaginatedResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
 

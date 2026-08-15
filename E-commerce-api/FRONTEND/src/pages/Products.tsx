@@ -104,11 +104,6 @@ export const Products: React.FC = () => {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const getProductPrice = (product: Product) => {
-    const primaryVariant = product.variants?.[0];
-    return Number(product.base_price) + (primaryVariant ? Number(primaryVariant.price_modifier) : 0);
-  };
-
   const renderCategoryButton = (cat: Category, depth: number = 0): React.ReactNode => (
     <React.Fragment key={cat.id}>
       <button

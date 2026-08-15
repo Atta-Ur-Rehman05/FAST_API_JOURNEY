@@ -68,7 +68,7 @@ export const AdminCategories: React.FC = () => {
           <p className="text-xs text-zinc-400 mt-0.5">Organize product categories and storefront navigation</p>
         </div>
         <button
-          onClick={() => { setFormData({ name: '', slug: '', parent_id: '' }); setEditingId(null); setShowAddModal(true); }}
+          onClick={() => { setFormData({ name: '', slug: '', parent_id: null }); setEditingId(null); setShowAddModal(true); }}
           className="btn-primary text-xs font-bold flex items-center space-x-1.5 shadow-xs"
         >
           <Plus className="w-4 h-4" />
