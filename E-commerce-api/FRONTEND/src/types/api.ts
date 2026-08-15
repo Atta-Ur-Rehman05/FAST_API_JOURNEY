@@ -13,20 +13,6 @@ export interface User {
   updated_at?: string;
 }
 
-export interface WishlistItem {
-  id: string;
-  product_id: string;
-  created_at?: string;
-  product?: Product;
-}
-
-export interface Wishlist {
-  id: string;
-  user_id: string;
-  items: WishlistItem[];
-  created_at?: string;
-}
-
 export interface Token {
   access_token: string;
   token_type: string;
@@ -52,6 +38,14 @@ export interface Address {
   updated_at?: string;
 }
 
+export interface AddressListResponse {
+  items: Address[];
+  total: number;
+  page: number;
+  page_size: number;
+  next_page: number | null;
+}
+
 export interface Category {
   id: number;
   name: string;
@@ -59,6 +53,14 @@ export interface Category {
   parent_id?: number | null;
   subcategories?: Category[];
   children?: Category[];
+}
+
+export interface CategoryTreeResponse {
+  id: number;
+  name: string;
+  slug: string;
+  parent_id?: number | null;
+  children?: CategoryTreeResponse[];
 }
 
 export interface ProductImage {
@@ -94,6 +96,50 @@ export interface Product {
   updated_at?: string;
 }
 
+export interface ProductCreate {
+  name: string;
+  slug: string;
+  description?: string;
+  base_price: number;
+  category_id: number;
+  is_active: boolean;
+  variants?: ProductVariantCreate[];
+  images?: ProductImageCreate[];
+}
+
+export interface ProductUpdate {
+  name?: string;
+  slug?: string;
+  description?: string;
+  base_price?: number;
+  category_id?: number;
+  is_active?: boolean;
+}
+
+export interface ProductVariantCreate {
+  sku: string;
+  price_modifier: number;
+  stock_quantity: number;
+  attributes?: Record<string, any>;
+}
+
+export interface ProductVariantUpdate {
+  sku?: string;
+  price_modifier?: number;
+  stock_quantity?: number;
+  attributes?: Record<string, any>;
+}
+
+export interface ProductImageCreate {
+  image_url: string;
+  is_primary: boolean;
+}
+
+export interface ProductImageUpdate {
+  image_url?: string;
+  is_primary?: boolean;
+}
+
 export interface CartItem {
   id: number;
   cart_id: string;
@@ -105,10 +151,19 @@ export interface CartItem {
 
 export interface Cart {
   id: string;
-  user_id: string;
+  user_id?: string;
   items: CartItem[];
   created_at?: string;
   updated_at?: string;
+}
+
+export interface CartItemCreate {
+  variant_id: string;
+  quantity: number;
+}
+
+export interface CartItemUpdate {
+  quantity: number;
 }
 
 export type OrderStatus = 'draft' | 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'failed';
@@ -122,6 +177,15 @@ export interface OrderItem {
   quantity: number;
   price_per_item: number;
   variant?: ProductVariant;
+}
+
+export interface OrderItemCreate {
+  variant_id: string;
+  quantity: number;
+}
+
+export interface OrderItemUpdate {
+  quantity: number;
 }
 
 export interface Payment {
@@ -149,11 +213,27 @@ export interface Order {
   updated_at?: string;
 }
 
+export interface OrderCreate {
+  shipping_address_id: string;
+  billing_address_id: string;
+  payment_method: PaymentMethod;
+  items?: OrderItemCreate[];
+}
+
+export interface OrderUpdate {
+  shipping_address_id?: string;
+  billing_address_id?: string;
+  payment_method?: PaymentMethod;
+}
+
+export interface OrderStatusUpdate {
+  order_status: OrderStatus;
+}
+
 export interface CheckoutCreate {
   shipping_address_id: string;
   billing_address_id: string;
   payment_method: PaymentMethod;
-  transaction_id?: string | null;
 }
 
 export interface CheckoutResponse {
@@ -175,11 +255,74 @@ export interface Review {
   user?: Partial<User>;
 }
 
+export interface ReviewCreate {
+  product_id: string;
+  rating: number;
+  comment?: string;
+}
+
+export interface ReviewUpdate {
+  rating?: number;
+  comment?: string;
+}
+
+export interface WishlistItem {
+  id: string;
+  product_id: string;
+  created_at?: string;
+  product?: Product;
+}
+
+export interface Wishlist {
+  id: string;
+  user_id: string;
+  items: WishlistItem[];
+  created_at?: string;
+}
+
+export interface WishlistItemCreate {
+  product_id: string;
+}
+
+export interface WishlistResponse {
+  id: string;
+  user_id: string;
+  items: WishlistItem[];
+  created_at?: string;
+}
+
+export interface WishlistItemResponse {
+  id: string;
+  product_id: string;
+  created_at?: string;
+  product?: Product;
+}
+
 export interface InventoryItem {
   variant_id: string;
   product_id: string;
   product_name: string | null;
   sku: string;
+  stock_quantity: number;
+  reserved_quantity: number;
+  available_quantity: number;
+  low_stock_threshold: number;
+  is_low_stock: boolean;
+  is_out_of_stock: boolean;
+}
+
+export interface InventoryStockSet {
+  stock_quantity: number;
+  reason?: string;
+}
+
+export interface InventoryStockAdjustment {
+  quantity: number;
+  reason?: string;
+}
+
+export interface InventoryAdjustmentResponse {
+  variant_id: string;
   stock_quantity: number;
   reserved_quantity: number;
   available_quantity: number;
