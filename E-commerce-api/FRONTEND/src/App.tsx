@@ -16,9 +16,14 @@ import { ResetPassword } from './pages/ResetPassword';
 import { Products } from './pages/Products';
 import { ProductDetail } from './pages/ProductDetail';
 import { Addresses } from './pages/Addresses';
+import { AddressDetail } from './pages/AddressDetail';
 import { Checkout } from './pages/Checkout';
 import { Orders } from './pages/Orders';
+import { OrderDetail } from './pages/OrderDetail';
 import { WishlistPage } from './pages/Wishlist';
+import { WishlistDetail } from './pages/WishlistDetail';
+import { CategoryDetail } from './pages/CategoryDetail';
+import { ReviewDetail } from './pages/ReviewDetail';
 
 // Admin routes - code split to reduce initial bundle size for non-admin users
 const AdminLayout = lazy(() => import('./components/layout/AdminLayout').then(m => ({ default: m.AdminLayout })));
@@ -53,11 +58,16 @@ export function App() {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
 
-                 {/* Customer Account Routes */}
-                 <Route path="/account/addresses" element={<Addresses />} />
-                 <Route path="/account/orders" element={<Orders />} />
-                 <Route path="/wishlist" element={<WishlistPage />} />
-                 <Route path="/checkout" element={<Checkout />} />
+{/* Customer Account Routes */}
+                  <Route path="/account/addresses" element={<Addresses />} />
+                  <Route path="/account/addresses/:id" element={<AddressDetail />} />
+                  <Route path="/account/orders" element={<Orders />} />
+                  <Route path="/account/orders/:id" element={<OrderDetail />} />
+                  <Route path="/wishlist" element={<WishlistPage />} />
+                  <Route path="/wishlist/detail" element={<WishlistDetail />} />
+                  <Route path="/categories/:id" element={<CategoryDetail />} />
+                  <Route path="/reviews/:id" element={<ReviewDetail />} />
+                  <Route path="/checkout" element={<Checkout />} />
 
                   {/* Admin Portal Routes - code split */}
                   <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>

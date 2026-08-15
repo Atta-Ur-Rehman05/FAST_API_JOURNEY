@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, CreditCard, Truck, ShieldCheck, ArrowRight } from 'lucide-react';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import type { Address, PaymentMethod, CheckoutResponse } from '../types/api';
+import type { Address, AddressListResponse, PaymentMethod, CheckoutResponse } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { useCartStore } from '../store/cartStore';
 import { formatPrice } from '../lib/format-price';
@@ -94,7 +94,7 @@ export const Checkout: React.FC = () => {
     const initCheckout = async () => {
       try {
         await fetchCart();
-        const addrRes = await apiClient.get<{items: Address[], total: number}>('/addresses/');
+        const addrRes = await apiClient.get<AddressListResponse>('/addresses/');
         const addrList = addrRes.data.items;
         setAddresses(addrList);
         const defaultShipping = addrList.find(a => a.is_default_shipping) || addrList[0];

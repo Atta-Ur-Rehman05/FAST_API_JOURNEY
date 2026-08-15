@@ -50,6 +50,7 @@ export interface Category {
   id: number;
   name: string;
   slug: string;
+  description?: string;
   parent_id?: number | null;
   subcategories?: Category[];
   children?: Category[];
@@ -171,6 +172,15 @@ export type PaymentMethod = 'credit_card' | 'paypal' | 'stripe' | 'cod';
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 
 export interface OrderItem {
+  id: number;
+  order_id: string;
+  variant_id: string;
+  quantity: number;
+  price_per_item: number;
+  variant?: ProductVariant;
+}
+
+export interface OrderItemResponse {
   id: number;
   order_id: string;
   variant_id: string;

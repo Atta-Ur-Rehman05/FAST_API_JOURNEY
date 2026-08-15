@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Filter, ShoppingCart, Tag, Eye, ChevronRight, ChevronLeft, Heart, Sparkles } from 'lucide-react';
-import type { Product, Category, PaginatedResponse } from '../types/api';
+import type { Product, CategoryTreeResponse, PaginatedResponse } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { useCartStore } from '../store/cartStore';
 import { useWishlistStore } from '../store/wishlistStore';
@@ -15,7 +15,7 @@ type SortOption = 'featured' | 'price-low' | 'price-high' | 'newest';
 
 export const Products: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categoryTree, setCategoryTree] = useState<Category[]>([]);
+  const [categoryTree, setCategoryTree] = useState<CategoryTreeResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [page, setPage] = useState(0);
@@ -55,7 +55,7 @@ export const Products: React.FC = () => {
   useEffect(() => {
     const fetchTree = async () => {
       try {
-        const res = await apiClient.get<PaginatedResponse<Category>>('/categories/tree', {
+        const res = await apiClient.get<PaginatedResponse<CategoryTreeResponse>>('/categories/tree', {
           params: { limit: 100 },
         });
         setCategoryTree(res.data.items);
@@ -104,7 +104,7 @@ export const Products: React.FC = () => {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  const renderCategoryButton = (cat: Category, depth: number = 0): React.ReactNode => (
+  const renderCategoryButton = (cat: CategoryTreeResponse, depth: number = 0): React.ReactNode => (
     <React.Fragment key={cat.id}>
       <button
         onClick={() => { setSelectedCategory(cat.id); setPage(0); }}
@@ -118,7 +118,7 @@ export const Products: React.FC = () => {
         <span className="truncate pr-2">{cat.name}</span>
         {depth > 0 && <ChevronRight className="w-3 h-3 opacity-60" />}
       </button>
-      {(cat.children ?? cat.subcategories)?.map((child) => renderCategoryButton(child, depth + 1))}
+      {(cat.children)?.map((child) => renderCategoryButton(child, depth + 1))}
     </React.Fragment>
   );
 
