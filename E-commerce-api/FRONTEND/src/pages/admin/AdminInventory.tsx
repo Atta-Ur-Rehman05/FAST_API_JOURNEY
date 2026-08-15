@@ -56,7 +56,7 @@ export const AdminInventory: React.FC = () => {
   const handleUpdateStock = async (variantId: string) => {
     setUpdatingId(variantId);
     try {
-      await apiClient.put(`/inventory/${variantId}`, {
+      await apiClient.patch(`/inventory/${variantId}/stock`, {
         stock_quantity: quantities[variantId],
       });
       fetchInventory();

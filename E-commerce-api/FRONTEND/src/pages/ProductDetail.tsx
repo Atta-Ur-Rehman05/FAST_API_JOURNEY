@@ -33,7 +33,7 @@ export const ProductDetail: React.FC = () => {
       try {
         const [prodRes, revRes] = await Promise.all([
           apiClient.get<Product>(`/products/${id}`),
-          apiClient.get<Review[]>(`/reviews/product/${id}`),
+          apiClient.get<Review[]>(`/reviews/`, { params: { product_id: id } }),
         ]);
         setProduct(prodRes.data);
         const fetchedReviews = revRes.data;
