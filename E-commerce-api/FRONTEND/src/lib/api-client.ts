@@ -31,7 +31,12 @@ export const apiClient = axios.create({
 // cookie, so JavaScript cannot read it.
 let accessToken: string | null = null;
 
-export const setAccessToken = (token: string | null) => { accessToken = token; };
+export const setAccessToken = (token: string | null) => {
+  accessToken = token;
+  if (token) {
+    didRefreshFail = false;
+  }
+};
 
 // Request interceptor: Attach the in-memory access token and CSRF token when available.
 apiClient.interceptors.request.use(
@@ -54,13 +59,19 @@ apiClient.interceptors.request.use(
 );
 
 let refreshPromise: Promise<string | null> | null = null;
+let didRefreshFail = false;
 
 export const refreshAccessToken = async (): Promise<string | null> => {
+  if (didRefreshFail) {
+    return null;
+  }
   try {
     const res = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true });
+    didRefreshFail = false;
     setAccessToken(res.data.access_token);
     return res.data.access_token as string;
   } catch {
+    didRefreshFail = true;
     setAccessToken(null);
     return null;
   }
@@ -72,6 +83,8 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config || {};
     const isAuthEndpoint = (originalRequest.url || '').includes('/auth/');
+    const isLoginPage = window.location.pathname === '/login';
+    const isRegisterPage = window.location.pathname === '/register';
 
     if (error.response?.status === 401 && !isAuthEndpoint && !originalRequest.__retriedWithRefresh) {
       originalRequest.__retriedWithRefresh = true;
@@ -84,7 +97,7 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       }
       setAccessToken(null);
-      if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+      if (!isLoginPage && !isRegisterPage) {
         window.location.href = '/login';
       }
     }

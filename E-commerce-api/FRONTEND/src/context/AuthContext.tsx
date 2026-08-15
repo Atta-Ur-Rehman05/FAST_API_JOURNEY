@@ -5,6 +5,7 @@ import { apiClient, refreshAccessToken, setAccessToken } from '../lib/api-client
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  authError: string | null;
   login: (email: string, pass: string) => Promise<void>;
   register: (data: { email: string; password: string; first_name: string; last_name: string }) => Promise<void>;
   logout: () => Promise<void>;
@@ -17,21 +18,24 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const fetchCurrentUser = async () => {
     const token = await refreshAccessToken();
     if (!token) {
+      setUser(null);
       setIsLoading(false);
       return;
     }
     try {
       const response = await apiClient.get<User>('/users/me');
       setUser(response.data);
+      setAuthError(null);
     } catch (err: any) {
       setAccessToken(null);
       setUser(null);
       if (err.response?.status === 403) {
-        sessionStorage.setItem('auth_error', 'inactive');
+        setAuthError('inactive');
       }
     } finally {
       setIsLoading(false);
@@ -54,6 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAccessToken(response.data.access_token);
     const currentUser = await apiClient.get<User>('/users/me');
     setUser(currentUser.data);
+    setAuthError(null);
     setIsLoading(false);
   };
 
@@ -70,13 +75,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     setAccessToken(null);
     setUser(null);
+    setAuthError(null);
   };
 
   const isCustomer = user?.role === 'customer';
   const isAdmin = user?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout, isCustomer, isAdmin }}>
+    <AuthContext.Provider value={{ user, isLoading, authError, login, register, logout, isCustomer, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );
