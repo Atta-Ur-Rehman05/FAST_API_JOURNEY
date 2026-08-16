@@ -94,11 +94,26 @@ class CheckoutService:
                             "Idempotency-Key was already used with a different checkout request."
                         )
                     if checkout_request.order_id is not None:
-                        result = await self.checkout_repo.get_checkout_result(
+                        order, payment = await self.checkout_repo.get_checkout_result(
                             checkout_request.order_id
                         )
                         await self.checkout_repo.session.commit()
-                        return result
+                        subtotal = sum(
+                            (item.price_per_item * item.quantity)
+                            for item in order.items
+                        )
+                        tax_rate = Decimal(str(settings.TAX_RATE)) if getattr(settings, "TAX_RATE", None) is not None else DEFAULT_TAX_RATE
+                        shipping_flat = Decimal(str(settings.SHIPPING_FLAT)) if getattr(settings, "SHIPPING_FLAT", None) is not None else DEFAULT_SHIPPING_FLAT
+                        free_shipping_threshold = Decimal(str(settings.FREE_SHIPPING_THRESHOLD)) if getattr(settings, "FREE_SHIPPING_THRESHOLD", None) is not None else FREE_SHIPPING_THRESHOLD
+                        tax_amount = subtotal * tax_rate
+                        shipping_amount = shipping_flat if subtotal < free_shipping_threshold else Decimal("0")
+                        return {
+                            "order": order,
+                            "payment": payment,
+                            "subtotal_amount": float(subtotal),
+                            "tax_amount": float(tax_amount),
+                            "shipping_amount": float(shipping_amount),
+                        }
                 else:
                     checkout_request = await self.checkout_repo.create_checkout_request(
                         user_id=user_id,
