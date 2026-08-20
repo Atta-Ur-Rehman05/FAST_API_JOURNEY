@@ -211,14 +211,19 @@ export interface Payment {
 export interface Order {
   id: string;
   user_id: string;
+  user: {
+    email: string;
+    first_name: string;
+    last_name: string;
+  };
   shipping_address_id: string;
   billing_address_id: string;
+  shipping_address: Address;
+  billing_address: Address;
   total_amount: number;
   order_status: OrderStatus;
   items: OrderItem[];
   payment?: Payment;
-  shipping_address?: Address;
-  billing_address?: Address;
   created_at?: string;
   updated_at?: string;
 }
@@ -442,4 +447,13 @@ export interface SiteLogo {
   logo_url: string;
   favicon_url?: string | null;
   updated_at?: string;
+}
+
+export interface MonthlyStats {
+  year: number;
+  monthly: Array<{
+    month: string;
+    users: number;
+    sales: number;
+  }>;
 }

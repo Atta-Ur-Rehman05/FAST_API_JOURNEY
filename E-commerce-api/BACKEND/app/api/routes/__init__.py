@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from app.api.routes import (
     addresses,
+    admin_stats,
     auth,
     cart,
     categories,
@@ -10,6 +11,7 @@ from app.api.routes import (
     payments,
     products,
     reviews,
+    uploads,
     users,
     wishlist,
 )
@@ -27,3 +29,5 @@ api_router.include_router(payments.router, prefix="/payments", tags=["payments"]
 api_router.include_router(checkout.router, prefix="/checkout", tags=["checkout"])
 api_router.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
 api_router.include_router(wishlist.router, prefix="/wishlist", tags=["wishlist"])
+api_router.include_router(admin_stats.router, prefix="/admin/stats", tags=["admin"])
+api_router.include_router(uploads.router, prefix="/upload", tags=["uploads"])

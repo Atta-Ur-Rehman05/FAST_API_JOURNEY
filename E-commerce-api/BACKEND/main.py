@@ -6,7 +6,9 @@ import uuid
 from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from typing import Annotated
+from pathlib import Path
 from app.models.models import User
 from sqlalchemy import text
 from app.db.db import create_tables
@@ -17,9 +19,6 @@ from app.core.config import settings
 from app.core.logging import configure_logging
 from app.core.metrics import REQUEST_DURATION, REDIS_UP, POSTGRES_UP
 from app.core.rate_limit import login_rate_limiter
-from fastapi import Depends
-from app.api.dependencies import get_current_admin_user
-from fastapi import Depends
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -87,6 +86,11 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api/v1")
+
+# Serve uploaded images as static files
+upload_dir = Path(__file__).resolve().parent / "uploads"
+if upload_dir.exists():
+    app.mount("/uploads", StaticFiles(directory=str(upload_dir)), name="uploads")
 
 @app.get("/")
 async def root():

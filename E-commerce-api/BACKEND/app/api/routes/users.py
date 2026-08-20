@@ -32,7 +32,12 @@ async def list_users(
     stmt = select(User)
     if search:
         stmt = stmt.where(User.email.ilike(f"%{search}%"))
-    total = (await session.execute(select(func.count(User.id)).where(User.email.ilike(f"%{search}%") if search else True))).scalar_one()
+
+    count_stmt = select(func.count(User.id))
+    if search:
+        count_stmt = count_stmt.where(User.email.ilike(f"%{search}%"))
+    total = (await session.execute(count_stmt)).scalar_one()
+
     result = await session.execute(stmt.offset(skip).limit(limit).order_by(User.created_at.desc()))
     items = list(result.scalars().all())
     return PaginatedResponse.create(items=items, total=total, skip=skip, limit=limit)
