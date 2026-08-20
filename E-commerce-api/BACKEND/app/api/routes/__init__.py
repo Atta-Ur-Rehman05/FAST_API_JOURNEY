@@ -3,14 +3,18 @@ from app.api.routes import (
     addresses,
     admin_stats,
     auth,
+    banners,
+    blogs,
     cart,
     categories,
     checkout,
     inventory,
+    logo,
     orders,
     payments,
     products,
     reviews,
+    slides,
     uploads,
     users,
     wishlist,
@@ -31,3 +35,7 @@ api_router.include_router(reviews.router, prefix="/reviews", tags=["reviews"])
 api_router.include_router(wishlist.router, prefix="/wishlist", tags=["wishlist"])
 api_router.include_router(admin_stats.router, prefix="/admin/stats", tags=["admin"])
 api_router.include_router(uploads.router, prefix="/upload", tags=["uploads"])
+api_router.include_router(banners.router, prefix="/banners", tags=["banners"])
+api_router.include_router(blogs.router, prefix="/blogs", tags=["blogs"])
+api_router.include_router(slides.router, prefix="/slides", tags=["slides"])
+api_router.include_router(logo.router, prefix="/logo", tags=["logo"])
