@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
 import type { HomeSlide, HomeSlideCreate, HomeSlideUpdate } from '../../types/api';
+import { ImageUpload } from '../../components/admin/ImageUpload';
 
 type SlideDraft = {
   id?: number;
@@ -147,7 +148,12 @@ export const AdminHomeSlides: React.FC = () => {
             <form onSubmit={handleSave} className="space-y-3">
               <input type="text" required placeholder="Title" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
               <input type="text" placeholder="Subtitle" value={draft.subtitle} onChange={(e) => setDraft({ ...draft, subtitle: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
-              <input type="url" required placeholder="Image URL" value={draft.image_url} onChange={(e) => setDraft({ ...draft, image_url: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
+              <ImageUpload
+                label="Slide Image"
+                currentImageUrl={draft.image_url}
+                onImageUploaded={(url) => setDraft({ ...draft, image_url: url })}
+                onImageRemoved={() => setDraft({ ...draft, image_url: '' })}
+              />
               <input type="url" placeholder="Link URL (optional)" value={draft.link_url} onChange={(e) => setDraft({ ...draft, link_url: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
               <input type="number" placeholder="Sort Order" value={draft.sort_order} onChange={(e) => setDraft({ ...draft, sort_order: Number(e.target.value) })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
               <label className="flex items-center gap-2 text-xs font-semibold text-zinc-300"><input type="checkbox" checked={draft.is_active} onChange={(e) => setDraft({ ...draft, is_active: e.target.checked })} /> Slide is active</label>

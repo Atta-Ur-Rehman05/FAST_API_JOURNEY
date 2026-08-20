@@ -7,6 +7,7 @@ from app.models.models import OrderStatus
 from app.schemas.address import AddressResponse
 from app.schemas.payment import PaymentResponse
 from app.schemas.product import ProductVariantResponse
+from app.schemas.user import UserResponse
 
 class OrderItemBase(BaseModel):
     variant_id: UUID
@@ -57,6 +58,7 @@ class OrderStatusUpdate(BaseModel):
 class OrderResponse(OrderBase):
     id: UUID
     user_id: UUID
+    user: UserResponse
     created_at: datetime
     updated_at: datetime
     items: List[OrderItemResponse] = Field(default_factory=list)

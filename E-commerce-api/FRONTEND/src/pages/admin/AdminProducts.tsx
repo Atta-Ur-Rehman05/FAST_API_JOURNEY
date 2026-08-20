@@ -4,6 +4,7 @@ import type { Product, Category, PaginatedResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
 import { formatPrice } from '../../lib/format-price';
 import { sanitizeText } from '../../lib/sanitize';
+import { ImageUpload } from '../../components/admin/ImageUpload';
 
 type VariantDraft = {
   id?: string;
@@ -326,7 +327,7 @@ export const AdminProducts: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Product Images</h3>
-                    <p className="text-[11px] text-zinc-500">Optional. The API accepts image URLs.</p>
+                    <p className="text-[11px] text-zinc-500">Upload product images from your device.</p>
                   </div>
                   <button type="button" onClick={() => setImages((current) => [...current, emptyImage()])} className="text-xs font-bold text-zinc-200 hover:text-white flex items-center gap-1">
                     <ImagePlus className="w-3.5 h-3.5" /> Add Image
@@ -335,7 +336,11 @@ export const AdminProducts: React.FC = () => {
 
                 {images.map((image, index) => (
                   <div key={index} className="relative flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-950/50 p-3 pr-9">
-                    <input type="url" required placeholder="https://example.com/product-image.jpg" value={image.image_url} onChange={(e) => updateImage(index, { image_url: e.target.value })} className="min-w-0 flex-1 p-2 border text-xs" />
+                    <ImageUpload
+                      currentImageUrl={image.image_url}
+                      onImageUploaded={(url) => updateImage(index, { image_url: url })}
+                      onImageRemoved={() => updateImage(index, { image_url: '' })}
+                    />
                     <label className="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-semibold text-zinc-300"><input type="radio" name="primary-image" checked={image.is_primary} onChange={() => updateImage(index, { is_primary: true })} /> Primary</label>
                     <button type="button" onClick={() => removeImage(index)} className="absolute right-2 top-3 text-zinc-400 hover:text-rose-600" aria-label="Remove image"><X className="w-4 h-4" /></button>
                   </div>

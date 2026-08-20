@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
 import type { Blog, BlogCreate, BlogUpdate } from '../../types/api';
+import { ImageUpload } from '../../components/admin/ImageUpload';
 
 type BlogDraft = {
   id?: number;
@@ -183,7 +184,12 @@ export const AdminBlogs: React.FC = () => {
               <input type="text" required placeholder="Slug" value={draft.slug} onChange={(e) => setDraft({ ...draft, slug: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs font-mono text-zinc-100 focus:outline-none focus:border-zinc-700" />
               <input type="text" placeholder="Excerpt" value={draft.excerpt} onChange={(e) => setDraft({ ...draft, excerpt: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
               <textarea rows={5} required placeholder="Content (HTML supported)" value={draft.content} onChange={(e) => setDraft({ ...draft, content: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700 font-mono" />
-              <input type="url" placeholder="Cover Image URL" value={draft.cover_image_url} onChange={(e) => setDraft({ ...draft, cover_image_url: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
+              <ImageUpload
+                label="Cover Image"
+                currentImageUrl={draft.cover_image_url}
+                onImageUploaded={(url) => setDraft({ ...draft, cover_image_url: url })}
+                onImageRemoved={() => setDraft({ ...draft, cover_image_url: '' })}
+              />
               <input type="text" placeholder="Author Name" value={draft.author_name} onChange={(e) => setDraft({ ...draft, author_name: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
               <label className="flex items-center gap-2 text-xs font-semibold text-zinc-300"><input type="checkbox" checked={draft.is_published} onChange={(e) => setDraft({ ...draft, is_published: e.target.checked })} /> Publish immediately</label>
               <div className="flex justify-end space-x-2 pt-2 border-t border-zinc-700">

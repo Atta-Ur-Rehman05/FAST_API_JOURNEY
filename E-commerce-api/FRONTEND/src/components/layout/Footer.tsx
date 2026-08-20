@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CreditCard, RefreshCcw, Send, ShieldCheck, Truck } from 'lucide-react';
-import type { Category, PaginatedResponse } from '../../types/api';
+import { CreditCard, RefreshCcw, Send, ShieldCheck, Truck, FileText } from 'lucide-react';
+import type { Category, PaginatedResponse, Blog } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
+import { usePublicContent } from '../../hooks/usePublicContent';
 
 const assurances = [
   { icon: Truck, title: 'Free Express Shipping', text: 'On all orders over Rs. 5,000' },
@@ -15,6 +16,8 @@ export const Footer: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterMessage, setNewsletterMessage] = useState('');
+  const { blogs, logo } = usePublicContent();
+  const publishedBlogs = blogs.slice(0, 3);
 
   useEffect(() => {
     apiClient.get<PaginatedResponse<Category>>('/categories/', { params: { limit: 5, root_only: true } })
@@ -42,9 +45,16 @@ export const Footer: React.FC = () => {
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 sm:px-8 lg:grid-cols-[2fr_1fr_1fr_1fr]">
+      <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 sm:px-8 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr]">
         <div>
-          <Link to="/products" className="inline-flex items-center gap-2 text-xl font-black tracking-tight text-zinc-50"><span className="grid h-10 w-10 place-items-center rounded-xl bg-zinc-100 text-zinc-950">Z</span>ZETAMALL</Link>
+          <Link to="/products" className="inline-flex items-center gap-2 text-xl font-black tracking-tight text-zinc-50">
+            {logo?.logo_url ? (
+              <img src={logo.logo_url} alt="ZetaMall" className="h-10 w-auto object-contain" />
+            ) : (
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-zinc-100 text-zinc-950">Z</span>
+            )}
+            {!logo?.logo_url && <span>ZETAMALL</span>}
+          </Link>
           <p className="mt-5 max-w-sm text-sm leading-6">ZetaMall — next-generation modern digital marketplace. Crafted for high performance, minimalism, and precision.</p>
           <p className="mt-7 text-xs font-bold tracking-[.12em] text-zinc-300">SUBSCRIBE TO NEWSLETTER</p>
           <form className="mt-3 flex max-w-md gap-2" onSubmit={handleNewsletterSubmit} noValidate>
@@ -58,6 +68,19 @@ export const Footer: React.FC = () => {
         <div><h3 className="text-sm font-black text-zinc-100">CATALOG</h3><div className="mt-4 space-y-3 text-sm">{categories.length ? categories.map((category) => <Link key={category.id} to={`/products?category_id=${category.id}`} className="block hover:text-white">{category.name}</Link>) : <Link to="/products" className="block hover:text-white">Browse products</Link>}</div></div>
         <div><h3 className="text-sm font-black text-zinc-100">CUSTOMER CARE</h3><div className="mt-4 space-y-3 text-sm"><Link to="/account/orders" className="block hover:text-white">Track Order</Link><Link to="/account/addresses" className="block hover:text-white">Shipping Info</Link><a href="mailto:support@zetamall.example" className="block hover:text-white">Returns &amp; Refunds</a><a href="mailto:support@zetamall.example" className="block hover:text-white">FAQ &amp; Support</a><a href="mailto:support@zetamall.example" className="block hover:text-white">Contact Us</a></div></div>
         <div><h3 className="text-sm font-black text-zinc-100">SHOP WITH CONFIDENCE</h3><div className="mt-4 space-y-3 text-sm"><p>Secure checkout</p><p>Live inventory status</p><p>Order tracking</p><p>30-day returns</p></div></div>
+        {publishedBlogs.length > 0 && (
+          <div>
+            <h3 className="text-sm font-black text-zinc-100 flex items-center gap-1.5"><FileText className="h-4 w-4" /> LATEST POSTS</h3>
+            <div className="mt-4 space-y-3 text-sm">
+              {publishedBlogs.map((blog) => (
+                <Link key={blog.id} to={`/blogs/${blog.slug}`} className="block hover:text-white group">
+                  <p className="text-xs font-bold text-zinc-200 group-hover:text-white line-clamp-2">{blog.title}</p>
+                  {blog.published_at && <p className="text-[10px] text-zinc-500 mt-0.5">{new Date(blog.published_at).toLocaleDateString()}</p>}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="mx-auto flex max-w-7xl flex-col gap-3 border-t border-zinc-800 px-5 py-7 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-8"><span>© 2026 ZetaMall Inc. All rights reserved.</span><span>Built with precision for modern e-commerce.</span></div>

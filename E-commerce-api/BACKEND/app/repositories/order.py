@@ -5,7 +5,7 @@ from sqlalchemy import func, select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.models import Address, Cart, Order, OrderItem, ProductVariant
+from app.models.models import Address, Cart, Order, OrderItem, ProductVariant, User
 from app.schemas.order import OrderCreate, OrderItemCreate, OrderItemUpdate
 from app.core.time import utc_now
 
@@ -18,7 +18,7 @@ class OrderRepository:
         result = await self.session.execute(
             select(Order)
             .where(Order.id == order_id)
-            .options(selectinload(Order.items).selectinload(OrderItem.variant).selectinload(ProductVariant.product), selectinload(Order.payment), selectinload(Order.shipping_address), selectinload(Order.billing_address))
+            .options(selectinload(Order.user), selectinload(Order.items).selectinload(OrderItem.variant).selectinload(ProductVariant.product), selectinload(Order.payment), selectinload(Order.shipping_address), selectinload(Order.billing_address))
         )
         return result.scalars().first()
 
@@ -27,7 +27,7 @@ class OrderRepository:
             select(Order)
             .where(Order.id == order_id)
             .with_for_update()
-            .options(selectinload(Order.items).selectinload(OrderItem.variant).selectinload(ProductVariant.product), selectinload(Order.payment), selectinload(Order.shipping_address), selectinload(Order.billing_address))
+            .options(selectinload(Order.user), selectinload(Order.items).selectinload(OrderItem.variant).selectinload(ProductVariant.product), selectinload(Order.payment), selectinload(Order.shipping_address), selectinload(Order.billing_address))
         )
         return result.scalars().first()
 
@@ -41,7 +41,7 @@ class OrderRepository:
     ) -> list[Order]:
         stmt = (
             select(Order)
-            .options(selectinload(Order.items).selectinload(OrderItem.variant).selectinload(ProductVariant.product), selectinload(Order.payment), selectinload(Order.shipping_address), selectinload(Order.billing_address))
+            .options(selectinload(Order.user), selectinload(Order.items).selectinload(OrderItem.variant).selectinload(ProductVariant.product), selectinload(Order.payment), selectinload(Order.shipping_address), selectinload(Order.billing_address))
             .order_by(Order.created_at.desc())
             .offset(skip)
             .limit(limit)

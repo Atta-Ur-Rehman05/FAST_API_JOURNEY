@@ -4,11 +4,13 @@ import { Menu, ShoppingCart, LogOut, LayoutDashboard, Search, User as UserIcon, 
 import { useAuth } from '../../context/useAuth';
 import { useCartStore } from '../../store/cartStore';
 import { useWishlistStore } from '../../store/wishlistStore';
+import { usePublicContent } from '../../hooks/usePublicContent';
 
 export const Navbar: React.FC = () => {
   const { user, logout, isAdmin } = useAuth();
   const { cart, toggleCart } = useCartStore();
   const { wishlist } = useWishlistStore();
+  const { logo } = usePublicContent();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -36,8 +38,12 @@ export const Navbar: React.FC = () => {
       <div className="border-b border-zinc-800 bg-zinc-950/80 px-4 py-3 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 md:gap-8">
           <Link to="/" className="flex shrink-0 items-center gap-2" onClick={closeMenu}>
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-zinc-100 text-lg font-black text-zinc-950" aria-hidden="true">Z</span>
-            <span className="hidden text-lg font-black tracking-tight text-zinc-100 sm:inline">ZETA <span className="font-medium text-zinc-500">MALL</span></span>
+            {logo?.logo_url ? (
+              <img src={logo.logo_url} alt="ZetaMall" className="h-9 w-auto object-contain" />
+            ) : (
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-zinc-100 text-lg font-black text-zinc-950" aria-hidden="true">Z</span>
+            )}
+            {!logo?.logo_url && <span className="hidden text-lg font-black tracking-tight text-zinc-100 sm:inline">ZETA <span className="font-medium text-zinc-500">MALL</span></span>}
           </Link>
           <nav className="hidden shrink-0 items-center gap-1 lg:flex" aria-label="Primary navigation">
             <Link to="/products" className="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-bold text-zinc-100 hover:bg-zinc-800">Shop</Link>
@@ -49,7 +55,6 @@ export const Navbar: React.FC = () => {
             <button type="submit" className="ui-icon-button absolute right-1 top-1/2 -translate-y-1/2 rounded-full p-1.5" aria-label="Search"><Search className="h-4 w-4" /></button>
           </form>
           <div className="flex shrink-0 items-center gap-2">
-            {isAdmin && <button onClick={() => navigate('/admin')} className="hidden items-center gap-1.5 rounded-md border border-zinc-800 bg-zinc-900/50 px-2.5 py-1.5 text-xs font-bold text-zinc-300 hover:bg-zinc-800 md:flex"><LayoutDashboard className="h-3.5 w-3.5" /> Control</button>}
             {user && <button onClick={() => navigate('/wishlist')} className="relative rounded-full border border-zinc-800 bg-zinc-900 p-2 text-zinc-300 transition hover:text-white" aria-label="Wishlist"><Heart className="h-5 w-5" />{wishlistCount > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-zinc-100 px-1 font-mono text-[10px] font-black text-zinc-950">{wishlistCount}</span>}</button>}
             <button onClick={toggleCart} className="relative rounded-full border border-zinc-800 bg-zinc-900 p-2 text-zinc-300 transition hover:text-white" aria-label="Shopping cart"><ShoppingCart className="h-5 w-5" />{totalItems > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-zinc-100 px-1 font-mono text-[10px] font-black text-zinc-950">{totalItems}</span>}</button>
             {user ? <div className="hidden items-center gap-1 border-l border-zinc-800 pl-2 sm:flex"><Link to="/account/orders" className="ui-icon-button p-1.5" aria-label="My orders"><UserIcon className="h-4 w-4" /></Link><button onClick={handleLogout} className="ui-icon-button p-1.5" aria-label="Logout"><LogOut className="h-4 w-4" /></button></div> : <Link to="/login" className="hidden rounded-md border border-zinc-800 px-3 py-1.5 text-xs font-bold text-zinc-300 hover:bg-zinc-900 sm:block">Sign in</Link>}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, Save } from 'lucide-react';
 import type { SiteLogo } from '../../types/api';
+import { ImageUpload } from '../../components/admin/ImageUpload';
 
 const DEFAULT_LOGO: SiteLogo = {
   id: 1,
@@ -80,28 +81,21 @@ export const AdminManageLogo: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Logo URL</label>
-            <input
-              type="url"
-              required
-              placeholder="https://example.com/logo.png"
-              value={logoUrl}
-              onChange={(e) => setLogoUrl(e.target.value)}
-              className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700"
+            <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Logo</label>
+            <ImageUpload
+              currentImageUrl={logoUrl}
+              onImageUploaded={(url) => setLogoUrl(url)}
+              onImageRemoved={() => setLogoUrl('')}
             />
-            <p className="text-[10px] text-zinc-500">Recommended: transparent PNG, max 200px wide</p>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Favicon URL</label>
-            <input
-              type="url"
-              placeholder="https://example.com/favicon.ico"
-              value={faviconUrl}
-              onChange={(e) => setFaviconUrl(e.target.value)}
-              className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700"
+            <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Favicon</label>
+            <ImageUpload
+              currentImageUrl={faviconUrl}
+              onImageUploaded={(url) => setFaviconUrl(url)}
+              onImageRemoved={() => setFaviconUrl('')}
             />
-            <p className="text-[10px] text-zinc-500">Recommended: 32x32 or 64x64 ICO/PNG</p>
           </div>
 
           {message && (

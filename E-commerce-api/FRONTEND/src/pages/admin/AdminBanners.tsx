@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import type { Banner, BannerCreate, BannerUpdate } from '../../types/api';
+import { ImageUpload } from '../../components/admin/ImageUpload';
 
 type BannerDraft = {
   id?: number;
@@ -173,7 +174,12 @@ export const AdminBanners: React.FC = () => {
             <h2 className="text-base font-bold text-zinc-100 border-b border-zinc-700 pb-2">{editingBanner ? 'Edit Banner' : 'Add New Banner'}</h2>
             <form onSubmit={handleSave} className="space-y-3">
               <input type="text" required placeholder="Title" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
-              <input type="url" required placeholder="Image URL" value={draft.image_url} onChange={(e) => setDraft({ ...draft, image_url: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
+              <ImageUpload
+                label="Banner Image"
+                currentImageUrl={draft.image_url}
+                onImageUploaded={(url) => setDraft({ ...draft, image_url: url })}
+                onImageRemoved={() => setDraft({ ...draft, image_url: '' })}
+              />
               <input type="url" placeholder="Link URL (optional)" value={draft.link_url} onChange={(e) => setDraft({ ...draft, link_url: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
               <select value={draft.position} onChange={(e) => setDraft({ ...draft, position: e.target.value as BannerDraft['position'] })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700">
                 <option value="hero">Hero</option>

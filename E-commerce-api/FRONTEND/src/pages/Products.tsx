@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Filter, ShoppingCart, Tag, Eye, ChevronRight, ChevronLeft, Heart, Sparkles } from 'lucide-react';
-import type { Product, CategoryTreeResponse, PaginatedResponse } from '../types/api';
+import { Filter, ShoppingCart, Tag, Eye, ChevronRight, ChevronLeft, Heart, Sparkles, ArrowRight } from 'lucide-react';
+import type { Product, CategoryTreeResponse, PaginatedResponse, HomeSlide, Blog } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { useCartStore } from '../store/cartStore';
 import { useWishlistStore } from '../store/wishlistStore';
+import { usePublicContent } from '../hooks/usePublicContent';
 import { ProductVisual } from '../components/product/ProductVisual';
 
 const PAGE_SIZE = 24;
@@ -23,11 +24,16 @@ export const Products: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('featured');
   const [maxPrice, setMaxPrice] = useState(MAX_PRICE);
   const [inStockOnly, setInStockOnly] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   const [searchParams] = useSearchParams();
   const searchUrlTerm = searchParams.get('search') || '';
   const categoryUrlId = Number(searchParams.get('category_id'));
   const [searchTerm, setSearchTerm] = useState(searchUrlTerm);
+
+  const { slides, blogs, loading: publicLoading } = usePublicContent();
+  const activeSlides = slides.filter((s) => s.is_active).sort((a, b) => a.sort_order - b.sort_order);
+  const publishedBlogs = blogs.slice(0, 3);
 
   const { addItem } = useCartStore();
   const { wishlist, addItem: addWishlistItem, removeItem: removeWishlistItem } = useWishlistStore();
@@ -102,6 +108,14 @@ export const Products: React.FC = () => {
     fetchProducts();
   }, [fetchProducts]);
 
+  useEffect(() => {
+    if (activeSlides.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % activeSlides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [activeSlides.length]);
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const renderCategoryButton = (cat: CategoryTreeResponse, depth: number = 0): React.ReactNode => (
@@ -124,49 +138,55 @@ export const Products: React.FC = () => {
 
   return (
     <div className="min-h-full bg-zinc-950">
-      <section className="border-b border-zinc-800 bg-zinc-950 px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
-        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-center lg:gap-16">
-          <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-1 rounded-full border border-zinc-800 bg-zinc-900 px-2 py-0.5 text-[10px] font-bold tracking-[.16em] text-zinc-400">
-              <Sparkles className="h-3 w-3" /> NEW SEASON COLLECTION 2026
-            </span>
-            <h1 className="mt-5 max-w-xl text-4xl font-black leading-[1.08] tracking-tight text-zinc-50 sm:text-5xl">
-              Elevate Your<br /><span className="text-zinc-500">Digital Experience</span>
-            </h1>
-            <p className="mt-5 max-w-xl text-sm leading-6 text-zinc-400">
-              Discover studio-grade wireless audio, precision Retina workstations, and luxury crafted leather accessories.
-            </p>
-            <button
-              onClick={() => { setSelectedCategory(null); setSearchTerm(''); setPage(0); }}
-              className="btn-primary mt-7 text-sm"
-            >
-              Explore Store Catalog <ChevronRight className="ml-1 h-4 w-4" />
-            </button>
+      {!publicLoading && activeSlides.length > 0 && (
+        <section className="relative border-b border-zinc-800 bg-zinc-950 overflow-hidden">
+          <div className="relative aspect-[16/5] sm:aspect-[16/4] lg:aspect-[16/3] w-full">
+            {activeSlides.map((slide, index) => (
+              <Link
+                key={slide.id}
+                to={slide.link_url || '/products'}
+                className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+              >
+                <img
+                  src={slide.image_url}
+                  alt={slide.title}
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/80 via-zinc-950/40 to-transparent" />
+                <div className="absolute inset-0 flex items-center">
+                  <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
+                    <div className="max-w-xl">
+                      <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-zinc-50 leading-[1.1]">
+                        {slide.title}
+                      </h2>
+                      {slide.subtitle && (
+                        <p className="mt-3 text-sm sm:text-base text-zinc-300 leading-relaxed">
+                          {slide.subtitle}
+                        </p>
+                      )}
+                      <span className="mt-5 inline-flex items-center gap-1 text-xs font-bold text-zinc-100 hover:text-white">
+                        Shop Now <ArrowRight className="h-3.5 w-3.5" />
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
-
-          <article className="mx-auto w-full max-w-sm rounded-[1.35rem] border border-zinc-800 bg-zinc-900/70 p-3 shadow-2xl shadow-black/30 ring-1 ring-zinc-800/70 lg:mx-0">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-amber-300">
-              <img
-                src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&q=85"
-                alt="Black noise-cancelling headphones"
-                className="h-full w-full object-cover"
-              />
-              <span className="absolute left-3 top-3 rounded-full bg-zinc-50 px-2.5 py-1 text-[10px] font-black text-zinc-950">SPECIAL OFFER</span>
+          {activeSlides.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-1.5">
+              {activeSlides.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentSlide(index)}
+                  className={`h-1.5 rounded-full transition-all ${index === currentSlide ? 'w-6 bg-zinc-100' : 'w-1.5 bg-zinc-500 hover:bg-zinc-300'}`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
             </div>
-            <div className="px-1 pb-2 pt-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-zinc-100">★ 4.9 (128)</span>
-                <span className="font-mono text-zinc-500">In Stock</span>
-              </div>
-              <h2 className="mt-1.5 text-base font-black text-zinc-50">Aura Studio Noise-Canceling</h2>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-lg font-black text-zinc-50">$349.99</span>
-                <span className="text-xs text-zinc-500 line-through">$399.99</span>
-              </div>
-            </div>
-          </article>
-        </div>
-      </section>
+          )}
+        </section>
+      )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
       {/* Page Header */}
@@ -377,6 +397,34 @@ export const Products: React.FC = () => {
           )}
         </main>
       </div>
+
+      {/* Blog Section */}
+      {!publicLoading && publishedBlogs.length > 0 && (
+        <section className="border-t border-zinc-800 py-12">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-black text-zinc-100 uppercase tracking-tight">From the Blog</h2>
+              <Link to="/blogs" className="text-xs font-bold text-zinc-400 hover:text-white flex items-center gap-1">View all <ArrowRight className="w-3.5 h-3.5" /></Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {publishedBlogs.map((blog) => (
+                <Link key={blog.id} to={`/blogs/${blog.slug}`} className="ui-card p-4 flex flex-col gap-3 group">
+                  {blog.cover_image_url && (
+                    <div className="aspect-video bg-zinc-900 rounded-lg overflow-hidden border border-zinc-800">
+                      <img src={blog.cover_image_url} alt={blog.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="text-sm font-bold text-zinc-100 line-clamp-2 group-hover:text-white transition-colors">{blog.title}</h3>
+                    <p className="mt-1 text-[11px] text-zinc-400 line-clamp-2">{blog.excerpt}</p>
+                    {blog.author_name && <p className="mt-2 text-[10px] font-mono text-zinc-500">By {blog.author_name}</p>}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       </div>
     </div>
