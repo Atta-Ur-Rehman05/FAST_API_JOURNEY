@@ -340,3 +340,106 @@ export interface InventoryAdjustmentResponse {
   is_low_stock: boolean;
   is_out_of_stock: boolean;
 }
+
+export interface HomeSlide {
+  id: number;
+  title: string;
+  subtitle?: string | null;
+  image_url: string;
+  link_url?: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface HomeSlideCreate {
+  title: string;
+  subtitle?: string;
+  image_url: string;
+  link_url?: string;
+  is_active?: boolean;
+  sort_order?: number;
+}
+
+export interface HomeSlideUpdate {
+  title?: string;
+  subtitle?: string;
+  image_url?: string;
+  link_url?: string;
+  is_active?: boolean;
+  sort_order?: number;
+}
+
+export interface Banner {
+  id: number;
+  title: string;
+  image_url: string;
+  link_url?: string | null;
+  position: 'hero' | 'sidebar' | 'footer' | 'top';
+  is_active: boolean;
+  sort_order: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface BannerCreate {
+  title: string;
+  image_url: string;
+  link_url?: string;
+  position?: 'hero' | 'sidebar' | 'footer' | 'top';
+  is_active?: boolean;
+  sort_order?: number;
+}
+
+export interface BannerUpdate {
+  title?: string;
+  image_url?: string;
+  link_url?: string;
+  position?: 'hero' | 'sidebar' | 'footer' | 'top';
+  is_active?: boolean;
+  sort_order?: number;
+}
+
+export interface Blog {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  content: string;
+  cover_image_url?: string | null;
+  author_name?: string | null;
+  is_published: boolean;
+  published_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface BlogCreate {
+  title: string;
+  slug: string;
+  excerpt?: string;
+  content: string;
+  cover_image_url?: string;
+  author_name?: string;
+  is_published?: boolean;
+  published_at?: string;
+}
+
+export interface BlogUpdate {
+  title?: string;
+  slug?: string;
+  excerpt?: string;
+  content?: string;
+  cover_image_url?: string;
+  author_name?: string;
+  is_published?: boolean;
+  published_at?: string;
+}
+
+export interface SiteLogo {
+  id: number;
+  logo_url: string;
+  favicon_url?: string | null;
+  updated_at?: string;
+}

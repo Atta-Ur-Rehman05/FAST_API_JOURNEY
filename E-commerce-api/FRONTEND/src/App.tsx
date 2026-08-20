@@ -28,9 +28,12 @@ import { ReviewDetail } from './pages/ReviewDetail';
 // Admin routes - code split to reduce initial bundle size for non-admin users
 const AdminLayout = lazy(() => import('./components/layout/AdminLayout').then(m => ({ default: m.AdminLayout })));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
-const AdminProducts = lazy(() => import('./pages/admin/AdminProducts').then(m => ({ default: m.AdminProducts })));
-const AdminInventory = lazy(() => import('./pages/admin/AdminInventory').then(m => ({ default: m.AdminInventory })));
+const AdminHomeSlides = lazy(() => import('./pages/admin/AdminHomeSlides').then(m => ({ default: m.AdminHomeSlides })));
 const AdminCategories = lazy(() => import('./pages/admin/AdminCategories').then(m => ({ default: m.AdminCategories })));
+const AdminProducts = lazy(() => import('./pages/admin/AdminProducts').then(m => ({ default: m.AdminProducts })));
+const AdminBanners = lazy(() => import('./pages/admin/AdminBanners').then(m => ({ default: m.AdminBanners })));
+const AdminBlogs = lazy(() => import('./pages/admin/AdminBlogs').then(m => ({ default: m.AdminBlogs })));
+const AdminManageLogo = lazy(() => import('./pages/admin/AdminManageLogo').then(m => ({ default: m.AdminManageLogo })));
 const AdminOrders = lazy(() => import('./pages/admin/AdminOrders').then(m => ({ default: m.AdminOrders })));
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers').then(m => ({ default: m.AdminUsers })));
 
@@ -72,9 +75,12 @@ export function App() {
                   {/* Admin Portal Routes - code split */}
                   <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
                     <Route index element={<AdminSuspense><AdminDashboard /></AdminSuspense>} />
-                    <Route path="products" element={<AdminSuspense><AdminProducts /></AdminSuspense>} />
-                    <Route path="inventory" element={<AdminSuspense><AdminInventory /></AdminSuspense>} />
+                    <Route path="slides" element={<AdminSuspense><AdminHomeSlides /></AdminSuspense>} />
                     <Route path="categories" element={<AdminSuspense><AdminCategories /></AdminSuspense>} />
+                    <Route path="products" element={<AdminSuspense><AdminProducts /></AdminSuspense>} />
+                    <Route path="banners" element={<AdminSuspense><AdminBanners /></AdminSuspense>} />
+                    <Route path="blogs" element={<AdminSuspense><AdminBlogs /></AdminSuspense>} />
+                    <Route path="logo" element={<AdminSuspense><AdminManageLogo /></AdminSuspense>} />
                     <Route path="orders" element={<AdminSuspense><AdminOrders /></AdminSuspense>} />
                     <Route path="users" element={<AdminSuspense><AdminUsers /></AdminSuspense>} />
                   </Route>
