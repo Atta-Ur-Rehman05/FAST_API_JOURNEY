@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
 import type { Blog, BlogCreate, BlogUpdate } from '../../types/api';
 import { ImageUpload } from '../../components/admin/ImageUpload';
+import { apiClient } from '../../lib/api-client';
 
 type BlogDraft = {
   id?: number;
@@ -26,12 +27,6 @@ const emptyBlog = (): BlogDraft => ({
   published_at: '',
 });
 
-const MOCK_BLOGS: Blog[] = [
-  { id: 1, title: 'Getting Started with Our Store', slug: 'getting-started', excerpt: 'A quick guide to finding the best products.', content: '<p>Full content here...</p>', cover_image_url: 'https://picsum.photos/seed/blog1/800/400', author_name: 'Admin', is_published: true, published_at: '2026-01-15T00:00:00Z', created_at: '2026-01-15T00:00:00Z', updated_at: '2026-01-15T00:00:00Z' },
-  { id: 2, title: 'Summer Fashion Trends 2026', slug: 'summer-fashion-2026', excerpt: 'Top picks for the season.', content: '<p>Full content here...</p>', cover_image_url: 'https://picsum.photos/seed/blog2/800/400', author_name: 'Editor', is_published: true, published_at: '2026-02-01T00:00:00Z', created_at: '2026-02-01T00:00:00Z', updated_at: '2026-02-01T00:00:00Z' },
-  { id: 3, title: 'Draft: Upcoming Sale', slug: 'upcoming-sale', excerpt: 'Preview of our next big sale.', content: '<p>Full content here...</p>', cover_image_url: '', author_name: 'Admin', is_published: false, published_at: null, created_at: '2026-03-01T00:00:00Z', updated_at: '2026-03-01T00:00:00Z' },
-];
-
 export const AdminBlogs: React.FC = () => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,10 +37,8 @@ export const AdminBlogs: React.FC = () => {
   const fetchBlogs = async () => {
     setLoading(true);
     try {
-      // const res = await apiClient.get<Blog[]>('/blogs/');
-      // setBlogs(res.data);
-      await new Promise((r) => setTimeout(r, 300));
-      setBlogs(MOCK_BLOGS);
+      const res = await apiClient.get<{ items: Blog[] }>('/blogs/');
+      setBlogs(res.data.items);
     } catch {
       console.error('Error fetching blogs');
     } finally {
@@ -91,24 +84,36 @@ export const AdminBlogs: React.FC = () => {
       is_published: draft.is_published,
       published_at: draft.published_at || undefined,
     };
-    // if (editingBlog) {
-    //   await apiClient.patch(`/blogs/${editingBlog.id}`, payload as BlogUpdate);
-    // } else {
-    //   await apiClient.post('/blogs/', payload);
-    // }
-    setShowModal(false);
-    fetchBlogs();
+    try {
+      if (editingBlog) {
+        await apiClient.patch(`/blogs/${editingBlog.id}`, payload as BlogUpdate);
+      } else {
+        await apiClient.post('/blogs/', payload);
+      }
+      setShowModal(false);
+      fetchBlogs();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to save blog.');
+    }
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm('Delete this blog post?')) return;
-    // await apiClient.delete(`/blogs/${id}`);
-    setBlogs((s) => s.filter((x) => x.id !== id));
+    try {
+      await apiClient.delete(`/blogs/${id}`);
+      setBlogs((s) => s.filter((x) => x.id !== id));
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to delete blog.');
+    }
   };
 
   const togglePublish = async (blog: Blog) => {
-    // await apiClient.patch(`/blogs/${blog.id}`, { is_published: !blog.is_published });
-    setBlogs((s) => s.map((b) => (b.id === blog.id ? { ...b, is_published: !b.is_published } : b)));
+    try {
+      await apiClient.patch(`/blogs/${blog.id}`, { is_published: !blog.is_published });
+      setBlogs((s) => s.map((b) => (b.id === blog.id ? { ...b, is_published: !b.is_published } : b)));
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to update publish status.');
+    }
   };
 
   return (

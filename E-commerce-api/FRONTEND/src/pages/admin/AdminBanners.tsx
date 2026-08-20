@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import type { Banner, BannerCreate, BannerUpdate } from '../../types/api';
 import { ImageUpload } from '../../components/admin/ImageUpload';
+import { apiClient } from '../../lib/api-client';
 
 type BannerDraft = {
   id?: number;
@@ -22,12 +23,6 @@ const emptyBanner = (): BannerDraft => ({
   sort_order: 0,
 });
 
-const MOCK_BANNERS: Banner[] = [
-  { id: 1, title: 'Summer Sale Banner', image_url: 'https://picsum.photos/seed/banner1/1200/300', link_url: '/products', position: 'hero', is_active: true, sort_order: 1, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
-  { id: 2, title: 'Sidebar Promo', image_url: 'https://picsum.photos/seed/banner2/300/250', link_url: '/products', position: 'sidebar', is_active: true, sort_order: 1, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
-  { id: 3, title: 'Footer Brand', image_url: 'https://picsum.photos/seed/banner3/1200/100', link_url: '/', position: 'footer', is_active: false, sort_order: 1, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
-];
-
 export const AdminBanners: React.FC = () => {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,10 +33,8 @@ export const AdminBanners: React.FC = () => {
   const fetchBanners = async () => {
     setLoading(true);
     try {
-      // const res = await apiClient.get<Banner[]>('/banners/');
-      // setBanners(res.data);
-      await new Promise((r) => setTimeout(r, 300));
-      setBanners(MOCK_BANNERS);
+      const res = await apiClient.get<Banner[]>('/banners/');
+      setBanners(res.data);
     } catch {
       console.error('Error fetching banners');
     } finally {
@@ -83,19 +76,27 @@ export const AdminBanners: React.FC = () => {
       is_active: draft.is_active,
       sort_order: draft.sort_order,
     };
-    // if (editingBanner) {
-    //   await apiClient.patch(`/banners/${editingBanner.id}`, payload as BannerUpdate);
-    // } else {
-    //   await apiClient.post('/banners/', payload);
-    // }
-    setShowModal(false);
-    fetchBanners();
+    try {
+      if (editingBanner) {
+        await apiClient.patch(`/banners/${editingBanner.id}`, payload as BannerUpdate);
+      } else {
+        await apiClient.post('/banners/', payload);
+      }
+      setShowModal(false);
+      fetchBanners();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to save banner.');
+    }
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm('Delete this banner?')) return;
-    // await apiClient.delete(`/banners/${id}`);
-    setBanners((s) => s.filter((x) => x.id !== id));
+    try {
+      await apiClient.delete(`/banners/${id}`);
+      setBanners((s) => s.filter((x) => x.id !== id));
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to delete banner.');
+    }
   };
 
   const positionColors: Record<string, string> = {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
 import type { HomeSlide, HomeSlideCreate, HomeSlideUpdate } from '../../types/api';
 import { ImageUpload } from '../../components/admin/ImageUpload';
+import { apiClient } from '../../lib/api-client';
 
 type SlideDraft = {
   id?: number;
@@ -22,12 +23,6 @@ const emptySlide = (): SlideDraft => ({
   sort_order: 0,
 });
 
-const MOCK_SLIDES: HomeSlide[] = [
-  { id: 1, title: 'Summer Sale', subtitle: 'Up to 50% off', image_url: 'https://picsum.photos/seed/slide1/800/400', link_url: '/products', is_active: true, sort_order: 1, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
-  { id: 2, title: 'New Arrivals', subtitle: 'Check out the latest drops', image_url: 'https://picsum.photos/seed/slide2/800/400', link_url: '/products', is_active: true, sort_order: 2, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
-  { id: 3, title: 'Free Shipping', subtitle: 'On orders over Rs. 5000', image_url: 'https://picsum.photos/seed/slide3/800/400', link_url: '/products', is_active: false, sort_order: 3, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
-];
-
 export const AdminHomeSlides: React.FC = () => {
   const [slides, setSlides] = useState<HomeSlide[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,10 +33,8 @@ export const AdminHomeSlides: React.FC = () => {
   const fetchSlides = async () => {
     setLoading(true);
     try {
-      // const res = await apiClient.get<HomeSlide[]>('/slides/');
-      // setSlides(res.data);
-      await new Promise((r) => setTimeout(r, 300));
-      setSlides(MOCK_SLIDES);
+      const res = await apiClient.get<HomeSlide[]>('/slides/');
+      setSlides(res.data);
     } catch {
       console.error('Error fetching slides');
     } finally {
@@ -83,19 +76,27 @@ export const AdminHomeSlides: React.FC = () => {
       is_active: draft.is_active,
       sort_order: draft.sort_order,
     };
-    // if (editingSlide) {
-    //   await apiClient.patch(`/slides/${editingSlide.id}`, payload as HomeSlideUpdate);
-    // } else {
-    //   await apiClient.post('/slides/', payload);
-    // }
-    setShowModal(false);
-    fetchSlides();
+    try {
+      if (editingSlide) {
+        await apiClient.patch(`/slides/${editingSlide.id}`, payload as HomeSlideUpdate);
+      } else {
+        await apiClient.post('/slides/', payload);
+      }
+      setShowModal(false);
+      fetchSlides();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to save slide.');
+    }
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm('Delete this slide?')) return;
-    // await apiClient.delete(`/slides/${id}`);
-    setSlides((s) => s.filter((x) => x.id !== id));
+    try {
+      await apiClient.delete(`/slides/${id}`);
+      setSlides((s) => s.filter((x) => x.id !== id));
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to delete slide.');
+    }
   };
 
   return (

@@ -2,13 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Upload, Save } from 'lucide-react';
 import type { SiteLogo } from '../../types/api';
 import { ImageUpload } from '../../components/admin/ImageUpload';
-
-const DEFAULT_LOGO: SiteLogo = {
-  id: 1,
-  logo_url: 'https://picsum.photos/seed/logo/200/60',
-  favicon_url: 'https://picsum.photos/seed/favicon/32/32',
-  updated_at: '2026-01-01T00:00:00Z',
-};
+import { apiClient } from '../../lib/api-client';
 
 export const AdminManageLogo: React.FC = () => {
   const [logo, setLogo] = useState<SiteLogo | null>(null);
@@ -21,12 +15,10 @@ export const AdminManageLogo: React.FC = () => {
   const fetchLogo = async () => {
     setLoading(true);
     try {
-      // const res = await apiClient.get<SiteLogo>('/logo/');
-      // setLogo(res.data);
-      await new Promise((r) => setTimeout(r, 300));
-      setLogo(DEFAULT_LOGO);
-      setLogoUrl(DEFAULT_LOGO.logo_url);
-      setFaviconUrl(DEFAULT_LOGO.favicon_url || '');
+      const res = await apiClient.get<SiteLogo>('/logo/');
+      setLogo(res.data);
+      setLogoUrl(res.data.logo_url);
+      setFaviconUrl(res.data.favicon_url || '');
     } catch {
       console.error('Error fetching logo');
     } finally {
@@ -43,10 +35,9 @@ export const AdminManageLogo: React.FC = () => {
     setSaving(true);
     setMessage(null);
     try {
-      // await apiClient.put('/logo/', { logo_url: logoUrl, favicon_url: faviconUrl || undefined });
-      await new Promise((r) => setTimeout(r, 500));
-      setLogo({ id: logo?.id || 1, logo_url: logoUrl, favicon_url: faviconUrl || null, updated_at: new Date().toISOString() });
+      await apiClient.put('/logo/', { logo_url: logoUrl, favicon_url: faviconUrl || undefined });
       setMessage('Logo settings saved successfully.');
+      fetchLogo();
     } catch {
       setMessage('Failed to save logo settings.');
     } finally {
