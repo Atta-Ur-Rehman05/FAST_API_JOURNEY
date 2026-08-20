@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ImagePlus, FolderTree, Package, Users, ShoppingCart, Image, FileText, Layers, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { LayoutDashboard, ImagePlus, FolderTree, Package, Users, ShoppingCart, Image, FileText, Layers, LogOut, PanelLeftClose, PanelLeftOpen, Warehouse } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 
 export const AdminLayout: React.FC = () => {
@@ -19,6 +19,7 @@ export const AdminLayout: React.FC = () => {
     { label: 'Home Slides', path: '/admin/slides', icon: ImagePlus, hasDropdown: true },
     { label: 'Category', path: '/admin/categories', icon: FolderTree, hasDropdown: true },
     { label: 'Products', path: '/admin/products', icon: Package, hasDropdown: true },
+    { label: 'Inventory', path: '/admin/inventory', icon: Warehouse },
     { label: 'Users', path: '/admin/users', icon: Users },
     { label: 'Orders', path: '/admin/orders', icon: ShoppingCart },
     { label: 'Banners', path: '/admin/banners', icon: Image, hasDropdown: true },

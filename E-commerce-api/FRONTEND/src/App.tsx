@@ -36,6 +36,7 @@ const AdminBlogs = lazy(() => import('./pages/admin/AdminBlogs').then(m => ({ de
 const AdminManageLogo = lazy(() => import('./pages/admin/AdminManageLogo').then(m => ({ default: m.AdminManageLogo })));
 const AdminOrders = lazy(() => import('./pages/admin/AdminOrders').then(m => ({ default: m.AdminOrders })));
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers').then(m => ({ default: m.AdminUsers })));
+const AdminInventory = lazy(() => import('./pages/admin/AdminInventory').then(m => ({ default: m.AdminInventory })));
 
 const AdminSuspense = ({ children }: { children: React.ReactNode }) => <Suspense fallback={<div className="text-center text-zinc-400 text-xs py-12">Loading admin panel...</div>}>{children}</Suspense>;
 
@@ -78,6 +79,7 @@ export function App() {
                     <Route path="slides" element={<AdminSuspense><AdminHomeSlides /></AdminSuspense>} />
                     <Route path="categories" element={<AdminSuspense><AdminCategories /></AdminSuspense>} />
                     <Route path="products" element={<AdminSuspense><AdminProducts /></AdminSuspense>} />
+                    <Route path="inventory" element={<AdminSuspense><AdminInventory /></AdminSuspense>} />
                     <Route path="banners" element={<AdminSuspense><AdminBanners /></AdminSuspense>} />
                     <Route path="blogs" element={<AdminSuspense><AdminBlogs /></AdminSuspense>} />
                     <Route path="logo" element={<AdminSuspense><AdminManageLogo /></AdminSuspense>} />
