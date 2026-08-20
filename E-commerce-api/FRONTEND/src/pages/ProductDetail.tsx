@@ -33,10 +33,10 @@ export const ProductDetail: React.FC = () => {
       try {
         const [prodRes, revRes] = await Promise.all([
           apiClient.get<Product>(`/products/${id}`),
-          apiClient.get<Review[]>(`/reviews/`, { params: { product_id: id } }),
+          apiClient.get<PaginatedResponse<Review>>(`/reviews/`, { params: { product_id: id } }),
         ]);
         setProduct(prodRes.data);
-        const fetchedReviews = revRes.data;
+        const fetchedReviews = revRes.data.items;
         setReviews(fetchedReviews);
         if (prodRes.data.variants?.length > 0) {
           setSelectedVariant(prodRes.data.variants[0]);
