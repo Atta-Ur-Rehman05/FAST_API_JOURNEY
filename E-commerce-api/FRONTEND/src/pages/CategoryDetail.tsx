@@ -9,6 +9,7 @@ export const CategoryDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [category, setCategory] = useState<Category | null>(null);
+  const [children, setChildren] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -22,6 +23,18 @@ export const CategoryDetail: React.FC = () => {
       setCategory(res.data);
     } catch (err) {
       console.error('Error fetching category:', err);
+    }
+  };
+
+  const fetchChildren = async () => {
+    if (!id) return;
+    try {
+      const res = await apiClient.get<PaginatedResponse<Category>>('/categories/', {
+        params: { parent_id: Number(id) },
+      });
+      setChildren(res.data.items);
+    } catch (err) {
+      console.error('Error fetching subcategories:', err);
     }
   };
 
@@ -48,6 +61,7 @@ export const CategoryDetail: React.FC = () => {
   useEffect(() => {
     fetchCategory();
     fetchProducts();
+    fetchChildren();
   }, [id, page]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -71,7 +85,7 @@ export const CategoryDetail: React.FC = () => {
       <button
         onClick={() => { navigate(`/categories/${cat.id}`); }}
         className={`w-full text-left px-3 py-2 rounded-xs text-xs transition-colors flex items-center justify-between ${
-          category.id === cat.id
+          category?.id === cat.id
             ? 'bg-zinc-100 text-zinc-950 font-bold'
             : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'
         }`}
@@ -80,7 +94,6 @@ export const CategoryDetail: React.FC = () => {
         <span className="truncate pr-2">{cat.name}</span>
         {depth > 0 && <ChevronRight className="w-3 h-3 opacity-60" />}
       </button>
-      {cat.children?.map((child) => renderCategoryButton(child, depth + 1))}
     </React.Fragment>
   );
 
@@ -117,9 +130,9 @@ export const CategoryDetail: React.FC = () => {
         <div className="ui-surface grid grid-cols-1 gap-5 rounded-2xl p-4 sm:p-6 lg:grid-cols-[1.05fr_.95fr] lg:gap-8 lg:p-8">
           <div className="min-w-0 lg:col-span-2">
             <h2 className="text-base font-bold text-zinc-100 mb-4">Subcategories</h2>
-            {category.children?.length ? (
+            {children.length > 0 ? (
               <div className="space-y-1">
-                {category.children.map((child) => renderCategoryButton(child))}
+                {children.map((child) => renderCategoryButton(child, 1))}
               </div>
             ) : (
               <p className="text-zinc-400 text-xs">No subcategories</p>
