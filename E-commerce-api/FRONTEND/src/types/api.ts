@@ -52,8 +52,6 @@ export interface Category {
   slug: string;
   description?: string;
   parent_id?: number | null;
-  subcategories?: Category[];
-  children?: Category[];
 }
 
 export interface CategoryTreeResponse {
@@ -147,7 +145,7 @@ export interface CartItem {
   variant_id: string;
   quantity: number;
   unit_price: number;
-  variant?: ProductVariant;
+  variant: ProductVariant;
 }
 
 export interface Cart {
@@ -177,7 +175,7 @@ export interface OrderItem {
   variant_id: string;
   quantity: number;
   price_per_item: number;
-  variant?: ProductVariant;
+  variant: ProductVariant;
 }
 
 export interface OrderItemResponse {
@@ -186,7 +184,7 @@ export interface OrderItemResponse {
   variant_id: string;
   quantity: number;
   price_per_item: number;
-  variant?: ProductVariant;
+  variant: ProductVariant;
 }
 
 export interface OrderItemCreate {
@@ -285,7 +283,6 @@ export interface WishlistItem {
   id: string;
   product_id: string;
   created_at?: string;
-  product?: Product;
 }
 
 export interface Wishlist {
@@ -310,7 +307,6 @@ export interface WishlistItemResponse {
   id: string;
   product_id: string;
   created_at?: string;
-  product?: Product;
 }
 
 export interface InventoryItem {
