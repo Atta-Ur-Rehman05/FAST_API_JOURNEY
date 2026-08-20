@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
-import type { Blog, BlogCreate, BlogUpdate } from '../../types/api';
+import type { Blog, BlogCreate, BlogUpdate, PaginatedResponse } from '../../types/api';
 import { ImageUpload } from '../../components/admin/ImageUpload';
 import { apiClient } from '../../lib/api-client';
 
@@ -37,7 +37,7 @@ export const AdminBlogs: React.FC = () => {
   const fetchBlogs = async () => {
     setLoading(true);
     try {
-      const res = await apiClient.get<{ items: Blog[] }>('/blogs/');
+      const res = await apiClient.get<PaginatedResponse<Blog>>('/blogs/');
       setBlogs(res.data.items);
     } catch {
       console.error('Error fetching blogs');
