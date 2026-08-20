@@ -27,7 +27,7 @@ export const Orders: React.FC = () => {
     if (!confirm('Cancel this order? This action cannot be undone.')) return;
     setCancellingId(orderId);
     try {
-      await apiClient.patch(`/orders/${orderId}/status`, { order_status: 'cancelled' });
+      await apiClient.post(`/orders/${orderId}/cancel`);
       setOrders((current) => current.map((order) => order.id === orderId ? { ...order, order_status: 'cancelled' as const } : order));
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to cancel order.');
