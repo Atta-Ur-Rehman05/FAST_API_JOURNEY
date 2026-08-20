@@ -1,0 +1,199 @@
+import React, { useState, useEffect } from 'react';
+import { Plus, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
+import type { Blog, BlogCreate, BlogUpdate } from '../../types/api';
+
+type BlogDraft = {
+  id?: number;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  cover_image_url: string;
+  author_name: string;
+  is_published: boolean;
+  published_at: string;
+};
+
+const emptyBlog = (): BlogDraft => ({
+  title: '',
+  slug: '',
+  excerpt: '',
+  content: '',
+  cover_image_url: '',
+  author_name: '',
+  is_published: false,
+  published_at: '',
+});
+
+const MOCK_BLOGS: Blog[] = [
+  { id: 1, title: 'Getting Started with Our Store', slug: 'getting-started', excerpt: 'A quick guide to finding the best products.', content: '<p>Full content here...</p>', cover_image_url: 'https://picsum.photos/seed/blog1/800/400', author_name: 'Admin', is_published: true, published_at: '2026-01-15T00:00:00Z', created_at: '2026-01-15T00:00:00Z', updated_at: '2026-01-15T00:00:00Z' },
+  { id: 2, title: 'Summer Fashion Trends 2026', slug: 'summer-fashion-2026', excerpt: 'Top picks for the season.', content: '<p>Full content here...</p>', cover_image_url: 'https://picsum.photos/seed/blog2/800/400', author_name: 'Editor', is_published: true, published_at: '2026-02-01T00:00:00Z', created_at: '2026-02-01T00:00:00Z', updated_at: '2026-02-01T00:00:00Z' },
+  { id: 3, title: 'Draft: Upcoming Sale', slug: 'upcoming-sale', excerpt: 'Preview of our next big sale.', content: '<p>Full content here...</p>', cover_image_url: '', author_name: 'Admin', is_published: false, published_at: null, created_at: '2026-03-01T00:00:00Z', updated_at: '2026-03-01T00:00:00Z' },
+];
+
+export const AdminBlogs: React.FC = () => {
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
+  const [draft, setDraft] = useState<BlogDraft>(emptyBlog());
+
+  const fetchBlogs = async () => {
+    setLoading(true);
+    try {
+      // const res = await apiClient.get<Blog[]>('/blogs/');
+      // setBlogs(res.data);
+      await new Promise((r) => setTimeout(r, 300));
+      setBlogs(MOCK_BLOGS);
+    } catch {
+      console.error('Error fetching blogs');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBlogs();
+  }, []);
+
+  const openCreate = () => {
+    setEditingBlog(null);
+    setDraft(emptyBlog());
+    setShowModal(true);
+  };
+
+  const openEdit = (blog: Blog) => {
+    setEditingBlog(blog);
+    setDraft({
+      id: blog.id,
+      title: blog.title,
+      slug: blog.slug,
+      excerpt: blog.excerpt || '',
+      content: blog.content,
+      cover_image_url: blog.cover_image_url || '',
+      author_name: blog.author_name || '',
+      is_published: blog.is_published,
+      published_at: blog.published_at || '',
+    });
+    setShowModal(true);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload: BlogCreate = {
+      title: draft.title.trim(),
+      slug: draft.slug.trim(),
+      excerpt: draft.excerpt.trim() || undefined,
+      content: draft.content,
+      cover_image_url: draft.cover_image_url.trim() || undefined,
+      author_name: draft.author_name.trim() || undefined,
+      is_published: draft.is_published,
+      published_at: draft.published_at || undefined,
+    };
+    // if (editingBlog) {
+    //   await apiClient.patch(`/blogs/${editingBlog.id}`, payload as BlogUpdate);
+    // } else {
+    //   await apiClient.post('/blogs/', payload);
+    // }
+    setShowModal(false);
+    fetchBlogs();
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Delete this blog post?')) return;
+    // await apiClient.delete(`/blogs/${id}`);
+    setBlogs((s) => s.filter((x) => x.id !== id));
+  };
+
+  const togglePublish = async (blog: Blog) => {
+    // await apiClient.patch(`/blogs/${blog.id}`, { is_published: !blog.is_published });
+    setBlogs((s) => s.map((b) => (b.id === blog.id ? { ...b, is_published: !b.is_published } : b)));
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-zinc-100">Blogs</h1>
+          <p className="text-xs text-zinc-500 mt-0.5">Write and publish storefront articles and announcements</p>
+        </div>
+        <button onClick={openCreate} className="btn-primary text-xs font-bold flex items-center space-x-1.5 shadow-xs">
+          <Plus className="w-4 h-4" />
+          <span>Add Blog</span>
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="text-center text-zinc-400 text-xs py-12">Loading blogs...</div>
+      ) : blogs.length === 0 ? (
+        <div className="ui-surface p-12 rounded-sm text-center text-zinc-400 text-xs">No blog posts yet.</div>
+      ) : (
+        <div className="ui-surface rounded-sm overflow-hidden border border-zinc-700 shadow-xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs text-zinc-100">
+              <thead className="bg-zinc-900 text-zinc-400 uppercase text-[11px] font-bold border-b border-zinc-700">
+                <tr>
+                  <th className="px-4 py-3">Cover</th>
+                  <th className="px-4 py-3">Title</th>
+                  <th className="px-4 py-3">Slug</th>
+                  <th className="px-4 py-3">Author</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {blogs.map((b) => (
+                  <tr key={b.id} className="hover:bg-zinc-900 transition-colors">
+                    <td className="px-4 py-3">
+                      {b.cover_image_url ? (
+                        <div className="w-16 h-10 bg-zinc-900 rounded-xs overflow-hidden border border-zinc-700">
+                          <img src={b.cover_image_url} alt={b.title} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <span className="text-zinc-600 text-[10px]">No cover</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 font-bold text-zinc-100">{b.title}</td>
+                    <td className="px-4 py-3 font-mono text-zinc-400 text-[11px]">{b.slug}</td>
+                    <td className="px-4 py-3 text-zinc-300">{b.author_name || '—'}</td>
+                    <td className="px-4 py-3">
+                      <button onClick={() => togglePublish(b)} className={`flex items-center gap-1 px-2 py-0.5 rounded-xs text-[10px] font-bold uppercase border ${b.is_published ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-zinc-100 text-zinc-600 border-zinc-300'}`}>
+                        {b.is_published ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                        {b.is_published ? 'Published' : 'Draft'}
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 flex gap-1.5">
+                      <button onClick={() => openEdit(b)} className="p-1.5 text-zinc-400 hover:text-zinc-100 border border-zinc-700 rounded-xs"><Pencil className="w-4 h-4" /></button>
+                      <button onClick={() => handleDelete(b.id)} className="p-1.5 text-zinc-400 hover:text-rose-600"><Trash2 className="w-4 h-4" /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-zinc-900 p-6 rounded-sm space-y-4 shadow-xl border border-zinc-700">
+            <h2 className="text-base font-bold text-zinc-100 border-b border-zinc-700 pb-2">{editingBlog ? 'Edit Blog' : 'Add New Blog'}</h2>
+            <form onSubmit={handleSave} className="space-y-3">
+              <input type="text" required placeholder="Title" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value, slug: e.target.value.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-') })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
+              <input type="text" required placeholder="Slug" value={draft.slug} onChange={(e) => setDraft({ ...draft, slug: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs font-mono text-zinc-100 focus:outline-none focus:border-zinc-700" />
+              <input type="text" placeholder="Excerpt" value={draft.excerpt} onChange={(e) => setDraft({ ...draft, excerpt: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
+              <textarea rows={5} required placeholder="Content (HTML supported)" value={draft.content} onChange={(e) => setDraft({ ...draft, content: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700 font-mono" />
+              <input type="url" placeholder="Cover Image URL" value={draft.cover_image_url} onChange={(e) => setDraft({ ...draft, cover_image_url: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
+              <input type="text" placeholder="Author Name" value={draft.author_name} onChange={(e) => setDraft({ ...draft, author_name: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
+              <label className="flex items-center gap-2 text-xs font-semibold text-zinc-300"><input type="checkbox" checked={draft.is_published} onChange={(e) => setDraft({ ...draft, is_published: e.target.checked })} /> Publish immediately</label>
+              <div className="flex justify-end space-x-2 pt-2 border-t border-zinc-700">
+                <button type="button" onClick={() => setShowModal(false)} className="px-3 py-2 border border-zinc-700 text-xs font-semibold text-zinc-400 hover:bg-zinc-800 rounded-xs">Cancel</button>
+                <button type="submit" className="btn-primary text-xs font-bold py-2 px-4">{editingBlog ? 'Save Changes' : 'Create Blog'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
