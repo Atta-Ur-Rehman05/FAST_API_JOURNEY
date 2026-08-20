@@ -424,3 +424,60 @@ class WishlistItem(Base):
     __table_args__ = (
         UniqueConstraint("wishlist_id", "product_id", name="uq_wishlist_product"),
     )
+
+
+# ============================
+# Public Content Module
+# ============================
+
+class Banner(Base):
+    __tablename__ = "banners"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String, nullable=False)
+    image_url = Column(String, nullable=False)
+    link_url = Column(String, nullable=True)
+    position = Column(String, nullable=False, default="hero")
+    is_active = Column(Boolean, default=True, nullable=False)
+    sort_order = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
+class HomeSlide(Base):
+    __tablename__ = "home_slides"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String, nullable=False)
+    subtitle = Column(String, nullable=True)
+    image_url = Column(String, nullable=False)
+    link_url = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    sort_order = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
+class Blog(Base):
+    __tablename__ = "blogs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String, nullable=False)
+    slug = Column(String, unique=True, nullable=False, index=True)
+    excerpt = Column(Text, nullable=True)
+    content = Column(Text, nullable=False)
+    cover_image_url = Column(String, nullable=True)
+    author_name = Column(String, nullable=True)
+    is_published = Column(Boolean, default=False, nullable=False)
+    published_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=utc_now)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
+class SiteLogo(Base):
+    __tablename__ = "site_logo"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    logo_url = Column(String, nullable=False)
+    favicon_url = Column(String, nullable=True)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
