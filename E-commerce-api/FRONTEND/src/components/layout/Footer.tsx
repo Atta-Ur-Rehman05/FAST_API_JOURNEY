@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CreditCard, RefreshCcw, Send, ShieldCheck, Truck, FileText } from 'lucide-react';
-import type { Category, PaginatedResponse, Blog } from '../../types/api';
+import type { Category, PaginatedResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
 import { usePublicContent } from '../../hooks/usePublicContent';
 
