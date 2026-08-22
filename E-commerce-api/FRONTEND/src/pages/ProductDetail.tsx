@@ -8,19 +8,23 @@ import { useAuth } from '../context/useAuth';
 import { ProductVisual } from '../components/product/ProductVisual';
 import { formatPrice } from '../lib/format-price';
 import { sanitizeText } from '../lib/sanitize';
+import { toast } from 'sonner';
+import { useConfirm } from '../hooks/useConfirm';
+import { SkeletonCard } from '../components/ui/Skeleton';
 
 export const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addItem } = useCartStore();
+  const { confirm, dialog } = useConfirm();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
 
-  // Review Form state
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
@@ -57,6 +61,7 @@ export const ProductDetail: React.FC = () => {
         }
       } catch (err) {
         console.error('Error loading product details:', err);
+        setFetchError(true);
       } finally {
         setLoading(false);
       }
@@ -77,8 +82,11 @@ export const ProductDetail: React.FC = () => {
       setReviews([res.data, ...reviews]);
       setComment('');
       setRating(5);
+      setExistingReview(res.data);
+      setEditingReviewId(res.data.id);
+      toast.success('Review submitted');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to submit review.');
+      toast.error(err.response?.data?.detail || 'Failed to submit review.');
     } finally {
       setSubmittingReview(false);
     }
@@ -108,20 +116,32 @@ export const ProductDetail: React.FC = () => {
       const response = await apiClient.patch<Review>(`/reviews/${editingReviewId}`, { rating, comment });
       setReviews((current) => current.map((review) => review.id === editingReviewId ? response.data : review));
       setEditingReviewId(null); setComment(''); setRating(5);
-    } catch (err: any) { alert(err.response?.data?.detail || 'Failed to update review.'); }
+      setExistingReview(response.data);
+      toast.success('Review updated');
+    } catch (err: any) { toast.error(err.response?.data?.detail || 'Failed to update review.'); }
   };
 
   const deleteReview = async (reviewId: string) => {
-    if (!confirm('Delete this review?')) return;
-    try { await apiClient.delete(`/reviews/${reviewId}`); setReviews((current) => current.filter((review) => review.id !== reviewId)); }
-    catch (err: any) { alert(err.response?.data?.detail || 'Failed to delete review.'); }
+    const ok = await confirm({
+      title: 'Delete review',
+      message: 'Are you sure you want to delete this review? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
+    try { await apiClient.delete(`/reviews/${reviewId}`); setReviews((current) => current.filter((review) => review.id !== reviewId)); toast.success('Review deleted'); }
+    catch (err: any) { toast.error(err.response?.data?.detail || 'Failed to delete review.'); }
   };
 
   if (loading) {
-    return <div className="mx-auto max-w-7xl px-4 py-20 text-center font-mono text-xs uppercase tracking-[.16em] text-zinc-500">Loading product record...</div>;
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-20">
+        <SkeletonCard />
+      </div>
+    );
   }
 
-  if (!product) {
+  if (fetchError || !product) {
     return (
       <div className="ui-surface mx-auto my-12 max-w-7xl space-y-4 rounded-2xl px-4 py-16 text-center">
         <p className="font-mono text-[10px] font-bold tracking-[.16em] text-zinc-500">RECORD UNAVAILABLE</p>
@@ -251,7 +271,7 @@ export const ProductDetail: React.FC = () => {
           <span>Ratings & Reviews ({reviews.length})</span>
         </h3>
 
-        {/* Review Form — show existing review editor if user already reviewed */}
+        {/* Review Form */}
         {user && (
           <form onSubmit={editingReviewId ? undefined : handleReviewSubmit} className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
             <h4 className="font-mono text-[10px] font-bold uppercase tracking-[.16em] text-zinc-500">{editingReviewId ? 'Edit your review' : 'Leave a review'}</h4>
@@ -322,7 +342,7 @@ export const ProductDetail: React.FC = () => {
           )}
         </div>
       </div>
-
+      {dialog}
     </div>
   );
 };
