@@ -3,6 +3,10 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import type { Banner, BannerCreate, BannerUpdate } from '../../types/api';
 import { ImageUpload } from '../../components/admin/ImageUpload';
 import { apiClient } from '../../lib/api-client';
+import { toast } from 'sonner';
+import { useConfirm } from '../../hooks/useConfirm';
+import { Modal } from '../../components/ui/Modal';
+import { SkeletonTable } from '../../components/ui/Skeleton';
 
 type BannerDraft = {
   id?: number;
@@ -29,6 +33,7 @@ export const AdminBanners: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
   const [draft, setDraft] = useState<BannerDraft>(emptyBanner());
+  const { confirm, dialog } = useConfirm();
 
   const fetchBanners = async () => {
     setLoading(true);
@@ -84,18 +89,26 @@ export const AdminBanners: React.FC = () => {
       }
       setShowModal(false);
       fetchBanners();
+      toast.success(editingBanner ? 'Banner updated' : 'Banner created');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to save banner.');
+      toast.error(err.response?.data?.detail || 'Failed to save banner.');
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Delete this banner?')) return;
+    const ok = await confirm({
+      title: 'Delete banner',
+      message: 'Are you sure you want to delete this banner?',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
     try {
       await apiClient.delete(`/banners/${id}`);
       setBanners((s) => s.filter((x) => x.id !== id));
+      toast.success('Banner deleted');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to delete banner.');
+      toast.error(err.response?.data?.detail || 'Failed to delete banner.');
     }
   };
 
@@ -120,7 +133,7 @@ export const AdminBanners: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="text-center text-zinc-400 text-xs py-12">Loading banners...</div>
+        <SkeletonTable rows={4} cols={6} />
       ) : banners.length === 0 ? (
         <div className="ui-surface p-12 rounded-sm text-center text-zinc-400 text-xs">No banners configured yet.</div>
       ) : (
@@ -169,35 +182,31 @@ export const AdminBanners: React.FC = () => {
         </div>
       )}
 
-      {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-zinc-900 p-6 rounded-sm space-y-4 shadow-xl border border-zinc-700">
-            <h2 className="text-base font-bold text-zinc-100 border-b border-zinc-700 pb-2">{editingBanner ? 'Edit Banner' : 'Add New Banner'}</h2>
-            <form onSubmit={handleSave} className="space-y-3">
-              <input type="text" required placeholder="Title" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
-              <ImageUpload
-                label="Banner Image"
-                currentImageUrl={draft.image_url}
-                onImageUploaded={(url) => setDraft({ ...draft, image_url: url })}
-                onImageRemoved={() => setDraft({ ...draft, image_url: '' })}
-              />
-              <input type="url" placeholder="Link URL (optional)" value={draft.link_url} onChange={(e) => setDraft({ ...draft, link_url: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
-              <select value={draft.position} onChange={(e) => setDraft({ ...draft, position: e.target.value as BannerDraft['position'] })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700">
-                <option value="hero">Hero</option>
-                <option value="sidebar">Sidebar</option>
-                <option value="footer">Footer</option>
-                <option value="top">Top</option>
-              </select>
-              <input type="number" placeholder="Sort Order" value={draft.sort_order} onChange={(e) => setDraft({ ...draft, sort_order: Number(e.target.value) })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
-              <label className="flex items-center gap-2 text-xs font-semibold text-zinc-300"><input type="checkbox" checked={draft.is_active} onChange={(e) => setDraft({ ...draft, is_active: e.target.checked })} /> Banner is active</label>
-              <div className="flex justify-end space-x-2 pt-2 border-t border-zinc-700">
-                <button type="button" onClick={() => setShowModal(false)} className="px-3 py-2 border border-zinc-700 text-xs font-semibold text-zinc-400 hover:bg-zinc-800 rounded-xs">Cancel</button>
-                <button type="submit" className="btn-primary text-xs font-bold py-2 px-4">{editingBanner ? 'Save Changes' : 'Create Banner'}</button>
-              </div>
-            </form>
+      <Modal open={showModal} onClose={() => setShowModal(false)} title={editingBanner ? 'Edit Banner' : 'Add New Banner'} maxWidth="max-w-lg">
+        <form onSubmit={handleSave} className="space-y-3">
+          <input type="text" required placeholder="Title" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
+          <ImageUpload
+            label="Banner Image"
+            currentImageUrl={draft.image_url}
+            onImageUploaded={(url) => setDraft({ ...draft, image_url: url })}
+            onImageRemoved={() => setDraft({ ...draft, image_url: '' })}
+          />
+          <input type="url" placeholder="Link URL (optional)" value={draft.link_url} onChange={(e) => setDraft({ ...draft, link_url: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
+          <select value={draft.position} onChange={(e) => setDraft({ ...draft, position: e.target.value as BannerDraft['position'] })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700">
+            <option value="hero">Hero</option>
+            <option value="sidebar">Sidebar</option>
+            <option value="footer">Footer</option>
+            <option value="top">Top</option>
+          </select>
+          <input type="number" placeholder="Sort Order" value={draft.sort_order} onChange={(e) => setDraft({ ...draft, sort_order: Number(e.target.value) })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
+          <label className="flex items-center gap-2 text-xs font-semibold text-zinc-300"><input type="checkbox" checked={draft.is_active} onChange={(e) => setDraft({ ...draft, is_active: e.target.checked })} /> Banner is active</label>
+          <div className="flex justify-end space-x-2 pt-2 border-t border-zinc-700">
+            <button type="button" onClick={() => setShowModal(false)} className="px-3 py-2 border border-zinc-700 text-xs font-semibold text-zinc-400 hover:bg-zinc-800 rounded-xs">Cancel</button>
+            <button type="submit" className="btn-primary text-xs font-bold py-2 px-4">{editingBanner ? 'Save Changes' : 'Create Banner'}</button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
+      {dialog}
     </div>
   );
 };

@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import type { Category, PaginatedResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
+import { toast } from 'sonner';
+import { useConfirm } from '../../hooks/useConfirm';
+import { Modal } from '../../components/ui/Modal';
 
 export const AdminCategories: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -16,8 +19,9 @@ export const AdminCategories: React.FC = () => {
   });
 
   const [search, setSearch] = useState('');
+  const { confirm, dialog } = useConfirm();
 
-  const fetchCategories = useCallback(async () => {
+  const fetchCategories = async () => {
     try {
       const res = await apiClient.get<PaginatedResponse<Category>>('/categories/', {
         params: { search: search || undefined },
@@ -28,7 +32,7 @@ export const AdminCategories: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  };
 
   useEffect(() => {
     fetchCategories();
@@ -43,8 +47,9 @@ export const AdminCategories: React.FC = () => {
       setEditingId(null);
       fetchCategories();
       setFormData({ name: '', slug: '', parent_id: null });
+      toast.success(editingId ? 'Category updated' : 'Category created');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to create category.');
+      toast.error(err.response?.data?.detail || 'Failed to save category.');
     }
   };
 
@@ -55,9 +60,15 @@ export const AdminCategories: React.FC = () => {
   };
 
   const deleteCategory = async (id: number) => {
-    if (!confirm('Delete this category? Categories with products or children cannot be deleted.')) return;
-    try { await apiClient.delete(`/categories/${id}`); fetchCategories(); }
-    catch (err: any) { alert(err.response?.data?.detail || 'Failed to delete category.'); }
+    const ok = await confirm({
+      title: 'Delete category',
+      message: 'Are you sure? Categories with products or children cannot be deleted.',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
+    try { await apiClient.delete(`/categories/${id}`); fetchCategories(); toast.success('Category deleted'); }
+    catch (err: any) { toast.error(err.response?.data?.detail || 'Failed to delete category.'); }
   };
 
   return (
@@ -109,54 +120,49 @@ export const AdminCategories: React.FC = () => {
       )}
 
       {/* Add Category Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-zinc-900 p-6 rounded-sm space-y-4 shadow-xl border border-zinc-700">
-            <h2 className="text-base font-bold text-zinc-100 border-b border-zinc-700 pb-2">{editingId ? 'Edit Category' : 'Add New Category'}</h2>
+      <Modal open={showAddModal} onClose={() => { setShowAddModal(false); setEditingId(null); }} title={editingId ? 'Edit Category' : 'Add New Category'} maxWidth="max-w-md">
+        <form onSubmit={handleSaveCategory} className="space-y-3">
+          <input
+            type="text"
+            required
+            placeholder="Category Name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+            className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700"
+          />
 
-            <form onSubmit={handleSaveCategory} className="space-y-3">
-              <input
-                type="text"
-                required
-                placeholder="Category Name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
-                className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700"
-              />
+          <select value={formData.parent_id ?? ''} onChange={(e) => setFormData({ ...formData, parent_id: e.target.value ? Number(e.target.value) : null })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700">
+            <option value="">No parent (top-level category)</option>
+            {categories.filter((category) => category.id !== editingId).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+          </select>
 
-              <select value={formData.parent_id ?? ''} onChange={(e) => setFormData({ ...formData, parent_id: e.target.value ? Number(e.target.value) : null })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700">
-                <option value="">No parent (top-level category)</option>
-                {categories.filter((category) => category.id !== editingId).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-              </select>
+          <input
+            type="text"
+            required
+            placeholder="Slug"
+            value={formData.slug}
+            onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+            className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs font-mono text-zinc-100 focus:outline-none focus:border-zinc-700"
+          />
 
-              <input
-                type="text"
-                required
-                placeholder="Slug"
-                value={formData.slug}
-                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs font-mono text-zinc-100 focus:outline-none focus:border-zinc-700"
-              />
-
-              <div className="flex justify-end space-x-2 pt-2 border-t border-zinc-700">
-                <button
-                  type="button"
-                  onClick={() => { setShowAddModal(false); setEditingId(null); }}
-                  className="px-3 py-2 border border-zinc-700 text-xs font-semibold text-zinc-400 hover:bg-zinc-800 rounded-xs"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary text-xs font-bold py-2 px-4"
-                >
-                  {editingId ? 'Save Changes' : 'Create Category'}
-                </button>
-              </div>
-            </form>
+          <div className="flex justify-end space-x-2 pt-2 border-t border-zinc-700">
+            <button
+              type="button"
+              onClick={() => { setShowAddModal(false); setEditingId(null); }}
+              className="px-3 py-2 border border-zinc-700 text-xs font-semibold text-zinc-400 hover:bg-zinc-800 rounded-xs"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn-primary text-xs font-bold py-2 px-4"
+            >
+              {editingId ? 'Save Changes' : 'Create Category'}
+            </button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
+      {dialog}
     </div>
   );
 };

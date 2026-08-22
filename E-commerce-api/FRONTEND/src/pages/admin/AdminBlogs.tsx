@@ -3,6 +3,10 @@ import { Plus, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
 import type { Blog, BlogCreate, BlogUpdate, PaginatedResponse } from '../../types/api';
 import { ImageUpload } from '../../components/admin/ImageUpload';
 import { apiClient } from '../../lib/api-client';
+import { toast } from 'sonner';
+import { useConfirm } from '../../hooks/useConfirm';
+import { Modal } from '../../components/ui/Modal';
+import { SkeletonTable } from '../../components/ui/Skeleton';
 
 type BlogDraft = {
   id?: number;
@@ -32,7 +36,8 @@ export const AdminBlogs: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
-  const [draft, setDraft] = useState<BlogDraft>(emptyBlog());
+  const [draft, setDraft] = useState<BlogDraft>(emptyBlog);
+  const { confirm, dialog } = useConfirm();
 
   const fetchBlogs = async () => {
     setLoading(true);
@@ -92,27 +97,36 @@ export const AdminBlogs: React.FC = () => {
       }
       setShowModal(false);
       fetchBlogs();
+      toast.success(editingBlog ? 'Blog updated' : 'Blog created');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to save blog.');
+      toast.error(err.response?.data?.detail || 'Failed to save blog.');
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Delete this blog post?')) return;
+    const ok = await confirm({
+      title: 'Delete blog post',
+      message: 'Are you sure you want to delete this blog post?',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
     try {
       await apiClient.delete(`/blogs/${id}`);
       setBlogs((s) => s.filter((x) => x.id !== id));
+      toast.success('Blog deleted');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to delete blog.');
+      toast.error(err.response?.data?.detail || 'Failed to delete blog.');
     }
   };
 
   const togglePublish = async (blog: Blog) => {
     try {
       await apiClient.patch(`/blogs/${blog.id}`, { is_published: !blog.is_published });
-      setBlogs((s) => s.map((b) => (b.id === blog.id ? { ...b, is_published: !b.is_published } : b)));
+      setBlogs((s) => s.map((b) => (b.id === blog.id ? { ...b, is_published: !blog.is_published } : b)));
+      toast.success(blog.is_published ? 'Blog unpublished' : 'Blog published');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to update publish status.');
+      toast.error(err.response?.data?.detail || 'Failed to update publish status.');
     }
   };
 
@@ -130,7 +144,7 @@ export const AdminBlogs: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="text-center text-zinc-400 text-xs py-12">Loading blogs...</div>
+        <SkeletonTable rows={4} cols={6} />
       ) : blogs.length === 0 ? (
         <div className="ui-surface p-12 rounded-sm text-center text-zinc-400 text-xs">No blog posts yet.</div>
       ) : (
@@ -180,31 +194,27 @@ export const AdminBlogs: React.FC = () => {
         </div>
       )}
 
-      {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-zinc-900 p-6 rounded-sm space-y-4 shadow-xl border border-zinc-700">
-            <h2 className="text-base font-bold text-zinc-100 border-b border-zinc-700 pb-2">{editingBlog ? 'Edit Blog' : 'Add New Blog'}</h2>
-            <form onSubmit={handleSave} className="space-y-3">
-              <input type="text" required placeholder="Title" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value, slug: e.target.value.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-') })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
-              <input type="text" required placeholder="Slug" value={draft.slug} onChange={(e) => setDraft({ ...draft, slug: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs font-mono text-zinc-100 focus:outline-none focus:border-zinc-700" />
-              <input type="text" placeholder="Excerpt" value={draft.excerpt} onChange={(e) => setDraft({ ...draft, excerpt: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
-              <textarea rows={5} required placeholder="Content (HTML supported)" value={draft.content} onChange={(e) => setDraft({ ...draft, content: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700 font-mono" />
-              <ImageUpload
-                label="Cover Image"
-                currentImageUrl={draft.cover_image_url}
-                onImageUploaded={(url) => setDraft({ ...draft, cover_image_url: url })}
-                onImageRemoved={() => setDraft({ ...draft, cover_image_url: '' })}
-              />
-              <input type="text" placeholder="Author Name" value={draft.author_name} onChange={(e) => setDraft({ ...draft, author_name: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
-              <label className="flex items-center gap-2 text-xs font-semibold text-zinc-300"><input type="checkbox" checked={draft.is_published} onChange={(e) => setDraft({ ...draft, is_published: e.target.checked })} /> Publish immediately</label>
-              <div className="flex justify-end space-x-2 pt-2 border-t border-zinc-700">
-                <button type="button" onClick={() => setShowModal(false)} className="px-3 py-2 border border-zinc-700 text-xs font-semibold text-zinc-400 hover:bg-zinc-800 rounded-xs">Cancel</button>
-                <button type="submit" className="btn-primary text-xs font-bold py-2 px-4">{editingBlog ? 'Save Changes' : 'Create Blog'}</button>
-              </div>
-            </form>
+      <Modal open={showModal} onClose={() => setShowModal(false)} title={editingBlog ? 'Edit Blog' : 'Add New Blog'} maxWidth="max-w-2xl">
+        <form onSubmit={handleSave} className="space-y-3">
+          <input type="text" required placeholder="Title" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value, slug: e.target.value.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-') })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
+          <input type="text" required placeholder="Slug" value={draft.slug} onChange={(e) => setDraft({ ...draft, slug: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs font-mono text-zinc-100 focus:outline-none focus:border-zinc-700" />
+          <input type="text" placeholder="Excerpt" value={draft.excerpt} onChange={(e) => setDraft({ ...draft, excerpt: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
+          <textarea rows={5} required placeholder="Content (HTML supported)" value={draft.content} onChange={(e) => setDraft({ ...draft, content: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700 font-mono" />
+          <ImageUpload
+            label="Cover Image"
+            currentImageUrl={draft.cover_image_url}
+            onImageUploaded={(url) => setDraft({ ...draft, cover_image_url: url })}
+            onImageRemoved={() => setDraft({ ...draft, cover_image_url: '' })}
+          />
+          <input type="text" placeholder="Author Name" value={draft.author_name} onChange={(e) => setDraft({ ...draft, author_name: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
+          <label className="flex items-center gap-2 text-xs font-semibold text-zinc-300"><input type="checkbox" checked={draft.is_published} onChange={(e) => setDraft({ ...draft, is_published: e.target.checked })} /> Publish immediately</label>
+          <div className="flex justify-end space-x-2 pt-2 border-t border-zinc-700">
+            <button type="button" onClick={() => setShowModal(false)} className="px-3 py-2 border border-zinc-700 text-xs font-semibold text-zinc-400 hover:bg-zinc-800 rounded-xs">Cancel</button>
+            <button type="submit" className="btn-primary text-xs font-bold py-2 px-4">{editingBlog ? 'Save Changes' : 'Create Blog'}</button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
+      {dialog}
     </div>
   );
 };
