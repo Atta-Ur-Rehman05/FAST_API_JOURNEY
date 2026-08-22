@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Filter, ShoppingCart, Tag, Eye, ChevronRight, ChevronLeft, Heart, Sparkles, ArrowRight } from 'lucide-react';
-import type { Product, CategoryTreeResponse, PaginatedResponse, HomeSlide, Blog } from '../types/api';
+import { Filter, ShoppingCart, Tag, Eye, ChevronRight, ChevronLeft, Heart, ArrowRight } from 'lucide-react';
+import type { Product, CategoryTreeResponse, PaginatedResponse } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { useCartStore } from '../store/cartStore';
 import { useWishlistStore } from '../store/wishlistStore';
