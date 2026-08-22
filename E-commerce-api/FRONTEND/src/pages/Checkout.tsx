@@ -7,6 +7,7 @@ import type { Address, AddressListResponse, PaymentMethod, CheckoutResponse } fr
 import { apiClient } from '../lib/api-client';
 import { useCartStore } from '../store/cartStore';
 import { formatPrice } from '../lib/format-price';
+import { toast } from 'sonner';
 
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
@@ -86,8 +87,8 @@ export const Checkout: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [orderResult, setOrderResult] = useState<CheckoutResponse | null>(null);
   const [stripeCheckout, setStripeCheckout] = useState<CheckoutResponse | null>(null);
-  // One idempotency key per checkout session; retries after failures reuse it so
-  // the backend can dedupe, and a fresh key is minted after a successful order.
+  const [initError, setInitError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
 
   useEffect(() => {
@@ -103,6 +104,7 @@ export const Checkout: React.FC = () => {
         if (defaultBilling) setSelectedBillingId(defaultBilling.id);
       } catch (err) {
         console.error('Error initializing checkout:', err);
+        setInitError('Failed to load checkout data. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -112,12 +114,13 @@ export const Checkout: React.FC = () => {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
     if (!selectedShippingId || !selectedBillingId) {
-      alert('Please select both shipping and billing addresses.');
+      toast.error('Please select both shipping and billing addresses.');
       return;
     }
     if (paymentMethod === 'stripe' && !stripePromise) {
-      alert('Stripe is not configured. Set VITE_STRIPE_PUBLISHABLE_KEY and try again.');
+      toast.error('Stripe is not configured. Set VITE_STRIPE_PUBLISHABLE_KEY and try again.');
       return;
     }
     setSubmitting(true);
@@ -142,7 +145,9 @@ export const Checkout: React.FC = () => {
         setOrderResult(res.data);
       }
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to complete checkout.');
+      const msg = err.response?.data?.detail || 'Failed to complete checkout.';
+      setSubmitError(msg);
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -152,43 +157,52 @@ export const Checkout: React.FC = () => {
     return <div className="max-w-7xl mx-auto px-4 py-16 text-center text-zinc-400 font-medium">Loading checkout session...</div>;
   }
 
-      if (orderResult) {
-        const subtotal = orderResult.subtotal_amount;
-        const tax = orderResult.tax_amount;
-        const shipping = orderResult.shipping_amount;
-        const total = subtotal + tax + shipping;
-        return (
-          <div className="max-w-3xl mx-auto px-4 py-12 text-center space-y-6">
-            <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-sm">
-              <CheckCircle2 className="w-8 h-8" />
-            </div>
-            <div className="space-y-1">
-              <h1 className="text-2xl font-black text-zinc-100">Order Placed Successfully!</h1>
-              <p className="text-xs text-zinc-400">Thank you for your purchase. We are processing your package for delivery.</p>
-            </div>
+  if (initError) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-16 text-center space-y-4">
+        <p className="text-sm text-zinc-400">{initError}</p>
+        <button onClick={() => window.location.reload()} className="btn-primary text-xs font-bold py-2 px-4">Retry</button>
+      </div>
+    );
+  }
 
-            <div className="ui-surface p-6 rounded-sm text-left space-y-2 font-mono text-xs shadow-xs">
-              <p className="text-zinc-400">Order ID: <span className="text-zinc-100 font-bold">{orderResult.order.id}</span></p>
-              <div className="border-t border-zinc-800 pt-2 space-y-1">
-                <div className="flex justify-between"><span className="text-zinc-400">Subtotal</span><span className="text-zinc-100">{formatPrice(subtotal)}</span></div>
-                <div className="flex justify-between"><span className="text-zinc-400">Tax (5%)</span><span className="text-zinc-100">{formatPrice(tax)}</span></div>
-                <div className="flex justify-between"><span className="text-zinc-400">Shipping</span><span className="text-zinc-100">{shipping === 0 ? <span className="text-emerald-700 font-bold">FREE</span> : formatPrice(shipping)}</span></div>
-              </div>
-              <div className="border-t border-zinc-800 pt-2 flex justify-between text-sm font-black text-zinc-100">
-                <span>Total Paid</span>
-                <span>{formatPrice(total)}</span>
-              </div>
-            </div>
-            <p className="text-zinc-400">Payment Status: <span className="text-emerald-700 capitalize font-bold">{orderResult.payment.payment_status}</span></p>
+  if (orderResult) {
+    const subtotal = orderResult.subtotal_amount;
+    const tax = orderResult.tax_amount;
+    const shipping = orderResult.shipping_amount;
+    const total = subtotal + tax + shipping;
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-12 text-center space-y-6">
+        <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto shadow-sm">
+          <CheckCircle2 className="w-8 h-8" />
+        </div>
+        <div className="space-y-1">
+          <h1 className="text-2xl font-black text-zinc-100">Order Placed Successfully!</h1>
+          <p className="text-xs text-zinc-400">Thank you for your purchase. We are processing your package for delivery.</p>
+        </div>
 
-            <div className="flex justify-center">
-              <button onClick={() => navigate('/account/orders')} className="btn-primary text-xs font-bold py-2.5 px-6">
-                View My Orders
-              </button>
-            </div>
+        <div className="ui-surface p-6 rounded-sm text-left space-y-2 font-mono text-xs shadow-xs">
+          <p className="text-zinc-400">Order ID: <span className="text-zinc-100 font-bold">{orderResult.order.id}</span></p>
+          <div className="border-t border-zinc-800 pt-2 space-y-1">
+            <div className="flex justify-between"><span className="text-zinc-400">Subtotal</span><span className="text-zinc-100">{formatPrice(subtotal)}</span></div>
+            <div className="flex justify-between"><span className="text-zinc-400">Tax (5%)</span><span className="text-zinc-100">{formatPrice(tax)}</span></div>
+            <div className="flex justify-between"><span className="text-zinc-400">Shipping</span><span className="text-zinc-100">{shipping === 0 ? <span className="text-emerald-700 font-bold">FREE</span> : formatPrice(shipping)}</span></div>
           </div>
-        );
-      }
+          <div className="border-t border-zinc-800 pt-2 flex justify-between text-sm font-black text-zinc-100">
+            <span>Total Paid</span>
+            <span>{formatPrice(total)}</span>
+          </div>
+        </div>
+        <p className="text-zinc-400">Payment Status: <span className="text-emerald-700 capitalize font-bold">{orderResult.payment.payment_status}</span></p>
+
+        <div className="flex justify-center">
+          <button onClick={() => navigate('/account/orders')} className="btn-primary text-xs font-bold py-2.5 px-6">
+            View My Orders
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (stripeCheckout?.stripe_client_secret && stripePromise) {
     return (
@@ -213,6 +227,12 @@ export const Checkout: React.FC = () => {
         <h1 className="text-xl sm:text-2xl font-bold text-zinc-100">Checkout & Order Summary</h1>
         <p className="text-xs text-zinc-400 mt-0.5">Select delivery address and payment option to place order</p>
       </div>
+
+      {submitError && (
+        <div role="alert" className="p-3 rounded-xs bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+          {submitError}
+        </div>
+      )}
 
       <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
