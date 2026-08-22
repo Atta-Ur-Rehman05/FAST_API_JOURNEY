@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { ImagePlus, Pencil, Plus, Trash2, X } from 'lucide-react';
+import { ImagePlus, Plus, Pencil, Trash2, X } from 'lucide-react';
 import type { Product, Category, PaginatedResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
 import { formatPrice } from '../../lib/format-price';
 import { sanitizeText } from '../../lib/sanitize';
 import { ImageUpload } from '../../components/admin/ImageUpload';
+import { toast } from 'sonner';
+import { useConfirm } from '../../hooks/useConfirm';
+import { Modal } from '../../components/ui/Modal';
+import { SkeletonTable } from '../../components/ui/Skeleton';
 
 type VariantDraft = {
   id?: string;
@@ -38,6 +42,7 @@ export const AdminProducts: React.FC = () => {
   const [images, setImages] = useState<ImageDraft[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [formError, setFormError] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -47,6 +52,8 @@ export const AdminProducts: React.FC = () => {
     category_id: 1,
     is_active: true,
   });
+
+  const { confirm, dialog } = useConfirm();
 
   const fetchData = async () => {
     try {
@@ -70,6 +77,7 @@ export const AdminProducts: React.FC = () => {
 
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
     let variantPayload: Array<Omit<VariantDraft, 'attributes'> & { attributes?: Record<string, unknown> }>;
     try {
       variantPayload = variants.map((variant) => ({
@@ -79,17 +87,17 @@ export const AdminProducts: React.FC = () => {
         ...(variant.attributes.trim() ? { attributes: JSON.parse(variant.attributes) as Record<string, unknown> } : {}),
       }));
     } catch {
-      alert('Variant attributes must be valid JSON, for example {"color":"Blue"}.');
+      setFormError('Variant attributes must be valid JSON, for example {"color":"Blue"}.');
       return;
     }
 
     if (variantPayload.some((variant) => !variant.sku)) {
-      alert('Every variant needs an SKU.');
+      setFormError('Every variant needs an SKU.');
       return;
     }
 
     if (images.some((image) => !image.image_url.trim())) {
-      alert('Every image needs a URL.');
+      setFormError('Every image needs a URL.');
       return;
     }
 
@@ -134,8 +142,9 @@ export const AdminProducts: React.FC = () => {
       setVariants([]);
       setImages([]);
       setEditingProduct(null);
+      toast.success(editingProduct ? 'Product updated' : 'Product created');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to create product.');
+      toast.error(err.response?.data?.detail || 'Failed to save product.');
     } finally {
       setIsCreating(false);
     }
@@ -176,12 +185,19 @@ export const AdminProducts: React.FC = () => {
   };
 
   const handleDeleteProduct = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    const ok = await confirm({
+      title: 'Delete product',
+      message: 'Are you sure you want to delete this product? This cannot be undone.',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
     try {
       await apiClient.delete(`/products/${id}`);
       fetchData();
+      toast.success('Product deleted');
     } catch {
-      alert('Failed to delete product.');
+      toast.error('Failed to delete product.');
     }
   };
 
@@ -193,7 +209,7 @@ export const AdminProducts: React.FC = () => {
           <p className="text-xs text-zinc-500 mt-0.5">Create, edit, and inspect storefront items</p>
         </div>
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={() => { setEditingProduct(null); setFormData({ name: '', slug: '', description: '', base_price: 99.99, category_id: categories[0]?.id || 1, is_active: true }); setVariants([]); setImages([]); setFormError(''); setShowAddModal(true); }}
           className="btn-primary text-xs font-bold flex items-center space-x-1.5 shadow-xs"
         >
           <Plus className="w-4 h-4" />
@@ -202,7 +218,7 @@ export const AdminProducts: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="text-center text-zinc-400 text-xs py-12">Loading products...</div>
+        <SkeletonTable rows={5} cols={5} />
       ) : (
         <div className="ui-surface rounded-sm overflow-hidden shadow-xs border border-zinc-700">
           <div className="overflow-x-auto">
@@ -247,126 +263,127 @@ export const AdminProducts: React.FC = () => {
       )}
 
       {/* Add Product Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-zinc-900 p-6 rounded-xl space-y-4 border border-zinc-800 ring-1 ring-zinc-800/80">
-            <h2 className="text-base font-black text-zinc-100 border-b border-zinc-800 pb-3">{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
+      <Modal open={showAddModal} onClose={() => { setShowAddModal(false); setEditingProduct(null); setVariants([]); setImages([]); setFormError(''); }} title={editingProduct ? 'Edit Product' : 'Add New Product'} maxWidth="max-w-2xl">
+        <form onSubmit={handleCreateProduct} className="space-y-3">
+          {formError && (
+            <div className="p-2 rounded-xs bg-rose-50 border border-rose-200 text-rose-700 text-xs" role="alert">
+              {formError}
+            </div>
+          )}
+          <input
+            type="text"
+            required
+            placeholder="Product Name"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+            className="w-full p-2.5 border text-xs"
+          />
 
-            <form onSubmit={handleCreateProduct} className="space-y-3">
-              <input
-                type="text"
-                required
-                placeholder="Product Name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
-                className="w-full p-2.5 border text-xs"
-              />
+          <input
+            type="text"
+            required
+            placeholder="Slug"
+            value={formData.slug}
+            onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+            className="w-full p-2.5 border text-xs font-mono"
+          />
 
-              <input
-                type="text"
-                required
-                placeholder="Slug"
-                value={formData.slug}
-                onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                className="w-full p-2.5 border text-xs font-mono"
-              />
+          <select
+            value={formData.category_id}
+            onChange={(e) => setFormData({ ...formData, category_id: Number(e.target.value) })}
+            className="w-full p-2.5 border text-xs"
+          >
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
 
-              <select
-                value={formData.category_id}
-                onChange={(e) => setFormData({ ...formData, category_id: Number(e.target.value) })}
-                className="w-full p-2.5 border text-xs"
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+          <input
+            type="number"
+            step="0.01"
+            required
+            placeholder="Base Price (Rs.)"
+            value={formData.base_price}
+            onChange={(e) => setFormData({ ...formData, base_price: parseFloat(e.target.value) })}
+            className="w-full p-2.5 border text-xs font-mono"
+          />
 
-              <input
-                type="number"
-                step="0.01"
-                required
-                placeholder="Base Price (Rs.)"
-                value={formData.base_price}
-                onChange={(e) => setFormData({ ...formData, base_price: parseFloat(e.target.value) })}
-                className="w-full p-2.5 border text-xs font-mono"
-              />
+          <textarea
+            rows={3}
+            placeholder="Product Description"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="w-full p-2.5 border text-xs"
+          />
 
-              <textarea
-                rows={3}
-                placeholder="Product Description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full p-2.5 border text-xs"
-              />
+          <label className="flex items-center gap-2 text-xs font-semibold text-zinc-300"><input type="checkbox" checked={formData.is_active} onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })} /> Product is active in the storefront</label>
 
-              <label className="flex items-center gap-2 text-xs font-semibold text-zinc-300"><input type="checkbox" checked={formData.is_active} onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })} /> Product is active in the storefront</label>
-
-              <section className="space-y-3 border-t border-zinc-800 pt-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Variants</h3>
-                    <p className="text-[11px] text-zinc-500">Optional. Add each purchasable SKU and its stock.</p>
-                  </div>
-                  <button type="button" onClick={() => setVariants((current) => [...current, emptyVariant()])} className="text-xs font-bold text-zinc-200 hover:text-white flex items-center gap-1">
-                    <Plus className="w-3.5 h-3.5" /> Add Variant
-                  </button>
-                </div>
-
-                {variants.map((variant, index) => (
-                  <div key={index} className="relative grid grid-cols-1 sm:grid-cols-3 gap-2 rounded-lg border border-zinc-800 bg-zinc-950/50 p-3 pr-9">
-                    <input type="text" required placeholder="SKU" value={variant.sku} onChange={(e) => updateVariant(index, { sku: e.target.value })} className="w-full p-2 border text-xs font-mono" />
-                    <input type="number" step="0.01" placeholder="Price modifier" value={variant.price_modifier} onChange={(e) => updateVariant(index, { price_modifier: Number(e.target.value) || 0 })} className="w-full p-2 border text-xs font-mono" />
-                    <input type="number" min="0" placeholder="Stock quantity" value={variant.stock_quantity} onChange={(e) => updateVariant(index, { stock_quantity: Math.max(0, Number(e.target.value) || 0) })} className="w-full p-2 border text-xs font-mono" />
-                    <input type="text" placeholder={'Attributes JSON, e.g. {"color":"Blue"}'} value={variant.attributes} onChange={(e) => updateVariant(index, { attributes: e.target.value })} className="sm:col-span-3 w-full p-2 border text-xs font-mono" />
-                    <button type="button" onClick={() => removeVariant(index)} className="absolute right-2 top-2 text-zinc-400 hover:text-rose-600" aria-label="Remove variant"><X className="w-4 h-4" /></button>
-                  </div>
-                ))}
-              </section>
-
-              <section className="space-y-3 border-t border-zinc-800 pt-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Product Images</h3>
-                    <p className="text-[11px] text-zinc-500">Upload product images from your device.</p>
-                  </div>
-                  <button type="button" onClick={() => setImages((current) => [...current, emptyImage()])} className="text-xs font-bold text-zinc-200 hover:text-white flex items-center gap-1">
-                    <ImagePlus className="w-3.5 h-3.5" /> Add Image
-                  </button>
-                </div>
-
-                {images.map((image, index) => (
-                  <div key={index} className="relative flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-950/50 p-3 pr-9">
-                    <ImageUpload
-                      currentImageUrl={image.image_url}
-                      onImageUploaded={(url) => updateImage(index, { image_url: url })}
-                      onImageRemoved={() => updateImage(index, { image_url: '' })}
-                    />
-                    <label className="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-semibold text-zinc-300"><input type="radio" name="primary-image" checked={image.is_primary} onChange={() => updateImage(index, { is_primary: true })} /> Primary</label>
-                    <button type="button" onClick={() => removeImage(index)} className="absolute right-2 top-3 text-zinc-400 hover:text-rose-600" aria-label="Remove image"><X className="w-4 h-4" /></button>
-                  </div>
-                ))}
-              </section>
-
-              <div className="flex justify-end space-x-2 pt-2 border-t border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => { setShowAddModal(false); setEditingProduct(null); setVariants([]); setImages([]); }}
-                  className="px-3 py-2 border border-zinc-800 bg-zinc-900 text-xs font-semibold text-zinc-400 hover:bg-zinc-800 rounded-md"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isCreating}
-                  className="btn-primary text-xs font-bold py-2 px-4"
-                >
-                  {isCreating ? 'Saving...' : editingProduct ? 'Save Changes' : 'Create Product'}
-                </button>
+          <section className="space-y-3 border-t border-zinc-800 pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Variants</h3>
+                <p className="text-[11px] text-zinc-500">Optional. Add each purchasable SKU and its stock.</p>
               </div>
-            </form>
+              <button type="button" onClick={() => setVariants((current) => [...current, emptyVariant()])} className="text-xs font-bold text-zinc-200 hover:text-white flex items-center gap-1">
+                <Plus className="w-3.5 h-3.5" /> Add Variant
+              </button>
+            </div>
+
+            {variants.map((variant, index) => (
+              <div key={index} className="relative grid grid-cols-1 sm:grid-cols-3 gap-2 rounded-lg border border-zinc-800 bg-zinc-950/50 p-3 pr-9">
+                <input type="text" required placeholder="SKU" value={variant.sku} onChange={(e) => updateVariant(index, { sku: e.target.value })} className="w-full p-2 border text-xs font-mono" />
+                <input type="number" step="0.01" placeholder="Price modifier" value={variant.price_modifier} onChange={(e) => updateVariant(index, { price_modifier: Number(e.target.value) || 0 })} className="w-full p-2 border text-xs font-mono" />
+                <input type="number" min="0" placeholder="Stock quantity" value={variant.stock_quantity} onChange={(e) => updateVariant(index, { stock_quantity: Math.max(0, Number(e.target.value) || 0) })} className="w-full p-2 border text-xs font-mono" />
+                <input type="text" placeholder={'Attributes JSON, e.g. {"color":"Blue"}'} value={variant.attributes} onChange={(e) => updateVariant(index, { attributes: e.target.value })} className="sm:col-span-3 w-full p-2 border text-xs font-mono" />
+                <button type="button" onClick={() => removeVariant(index)} className="absolute right-2 top-2 text-zinc-400 hover:text-rose-600" aria-label="Remove variant"><X className="w-4 h-4" /></button>
+              </div>
+            ))}
+          </section>
+
+          <section className="space-y-3 border-t border-zinc-800 pt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Product Images</h3>
+                <p className="text-[11px] text-zinc-500">Upload product images from your device.</p>
+              </div>
+              <button type="button" onClick={() => setImages((current) => [...current, emptyImage()])} className="text-xs font-bold text-zinc-200 hover:text-white flex items-center gap-1">
+                <ImagePlus className="w-3.5 h-3.5" /> Add Image
+              </button>
+            </div>
+
+            {images.map((image, index) => (
+              <div key={index} className="relative flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-950/50 p-3 pr-9">
+                <ImageUpload
+                  label="Product Image"
+                  currentImageUrl={image.image_url}
+                  onImageUploaded={(url) => updateImage(index, { image_url: url })}
+                  onImageRemoved={() => updateImage(index, { image_url: '' })}
+                />
+                <label className="flex items-center gap-1.5 whitespace-nowrap text-[11px] font-semibold text-zinc-300"><input type="radio" name="primary-image" checked={image.is_primary} onChange={() => updateImage(index, { is_primary: true })} /> Primary</label>
+                <button type="button" onClick={() => removeImage(index)} className="absolute right-2 top-3 text-zinc-400 hover:text-rose-600" aria-label="Remove image"><X className="w-4 h-4" /></button>
+              </div>
+            ))}
+          </section>
+
+          <div className="flex justify-end space-x-2 pt-2 border-t border-zinc-800">
+            <button
+              type="button"
+              onClick={() => { setShowAddModal(false); setEditingProduct(null); setVariants([]); setImages([]); setFormError(''); }}
+              className="px-3 py-2 border border-zinc-800 bg-zinc-900 text-xs font-semibold text-zinc-400 hover:bg-zinc-800 rounded-md"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isCreating}
+              className="btn-primary text-xs font-bold py-2 px-4"
+            >
+              {isCreating ? 'Saving...' : editingProduct ? 'Save Changes' : 'Create Product'}
+            </button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
+      {dialog}
     </div>
   );
 };

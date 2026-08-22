@@ -3,6 +3,9 @@ import { RefreshCw, Trash2, CreditCard, Plus, Save, Edit } from 'lucide-react';
 import type { Order, OrderStatus, PaginatedResponse, Payment, OrderItemResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
 import { formatPrice } from '../../lib/format-price';
+import { toast } from 'sonner';
+import { useConfirm } from '../../hooks/useConfirm';
+import { SkeletonTable } from '../../components/ui/Skeleton';
 
 const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
   draft: ['pending'],
@@ -25,6 +28,7 @@ export const AdminOrders: React.FC = () => {
   const [newItemQuantity, setNewItemQuantity] = useState(1);
   const [updatingItemId, setUpdatingItemId] = useState<number | null>(null);
   const [updateQuantity, setUpdateQuantity] = useState<number>(1);
+  const { confirm, dialog } = useConfirm();
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -45,20 +49,33 @@ export const AdminOrders: React.FC = () => {
   }, []);
 
   const handleDeleteOrder = async (orderId: string) => {
-    if (!confirm('Delete this order? This cannot be undone.')) return;
-    try { await apiClient.delete(`/orders/${orderId}`); fetchOrders(); }
-    catch (err: any) { alert(err.response?.data?.detail || 'Failed to delete order.'); }
+    const ok = await confirm({
+      title: 'Delete order',
+      message: 'Delete this order? This cannot be undone.',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
+    try { await apiClient.delete(`/orders/${orderId}`); fetchOrders(); toast.success('Order deleted'); }
+    catch (err: any) { toast.error(err.response?.data?.detail || 'Failed to delete order.'); }
   };
 
   const handleRefund = async (orderId: string, payment: Payment | undefined) => {
     if (!payment?.id) return;
-    if (!confirm(`Refund payment of ${formatPrice(payment.amount)} for this order?`)) return;
+    const ok = await confirm({
+      title: 'Refund payment',
+      message: `Refund payment of ${formatPrice(payment.amount)} for this order?`,
+      confirmLabel: 'Refund',
+      variant: 'danger',
+    });
+    if (!ok) return;
     setRefundingId(orderId);
     try {
       await apiClient.post(`/payments/${payment.id}/refund`);
       fetchOrders();
+      toast.success('Payment refunded');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to refund payment.');
+      toast.error(err.response?.data?.detail || 'Failed to refund payment.');
     } finally {
       setRefundingId(null);
     }
@@ -75,8 +92,9 @@ export const AdminOrders: React.FC = () => {
       setNewItemVariantId('');
       setNewItemQuantity(1);
       fetchOrders();
+      toast.success('Item added to order');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to add item.');
+      toast.error(err.response?.data?.detail || 'Failed to add item.');
     }
   };
 
@@ -88,18 +106,26 @@ export const AdminOrders: React.FC = () => {
       });
       setUpdatingItemId(null);
       fetchOrders();
+      toast.success('Item quantity updated');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to update item.');
+      toast.error(err.response?.data?.detail || 'Failed to update item.');
     }
   };
 
   const handleDeleteItem = async (orderId: string, itemId: number) => {
-    if (!confirm('Remove this item from the order?')) return;
+    const ok = await confirm({
+      title: 'Remove item',
+      message: 'Remove this item from the order?',
+      confirmLabel: 'Remove',
+      variant: 'danger',
+    });
+    if (!ok) return;
     try {
       await apiClient.delete(`/orders/${orderId}/items/${itemId}`);
       fetchOrders();
+      toast.success('Item removed from order');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to remove item.');
+      toast.error(err.response?.data?.detail || 'Failed to remove item.');
     }
   };
 
@@ -131,7 +157,7 @@ export const AdminOrders: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="text-center text-zinc-400 text-xs py-12">Loading fulfillment queue...</div>
+        <SkeletonTable rows={4} cols={6} />
       ) : orders.length === 0 ? (
         <div className="ui-surface p-12 rounded-sm text-center text-zinc-400 text-xs">
           No active orders found in the queue.
@@ -326,6 +352,7 @@ export const AdminOrders: React.FC = () => {
           </div>
         </div>
       )}
+      {dialog}
     </div>
   );
 };

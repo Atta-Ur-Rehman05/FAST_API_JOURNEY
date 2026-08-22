@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { RefreshCw, Pencil, CheckCircle2, XCircle } from 'lucide-react';
 import type { User, RoleType, PaginatedResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
+import { toast } from 'sonner';
+import { SkeletonTable } from '../../components/ui/Skeleton';
 
 export const AdminUsers: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -42,8 +44,9 @@ export const AdminUsers: React.FC = () => {
       await apiClient.patch(`/users/${userId}`, { role: editRole, is_active: editActive });
       setEditingId(null);
       fetchUsers();
+      toast.success('User updated');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to update user.');
+      toast.error(err.response?.data?.detail || 'Failed to update user.');
     } finally {
       setSavingId(null);
     }
@@ -72,7 +75,7 @@ export const AdminUsers: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="text-center text-zinc-400 text-xs py-12">Loading users...</div>
+        <SkeletonTable rows={4} cols={6} />
       ) : users.length === 0 ? (
         <div className="ui-surface p-12 rounded-sm text-center text-zinc-400 text-xs">No users found.</div>
       ) : (
