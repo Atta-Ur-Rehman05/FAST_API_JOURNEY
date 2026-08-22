@@ -4,6 +4,9 @@ import { Heart, Trash2, ShoppingCart } from 'lucide-react';
 import type { WishlistResponse, WishlistItemResponse } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { useCartStore } from '../store/cartStore';
+import { toast } from 'sonner';
+import { useConfirm } from '../hooks/useConfirm';
+import { EmptyState } from '../components/ui/EmptyState';
 
 export const WishlistDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +14,7 @@ export const WishlistDetail: React.FC = () => {
   const [items, setItems] = useState<WishlistItemResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const { addItem } = useCartStore();
+  const { confirm, dialog } = useConfirm();
 
   const fetchWishlist = async () => {
     setLoading(true);
@@ -37,28 +41,36 @@ export const WishlistDetail: React.FC = () => {
       if (wishlist) {
         setWishlist({ ...wishlist, items: wishlist.items.filter((item) => item.product_id !== productId) });
       }
+      toast.success('Removed from wishlist');
     } catch {
-      alert('Failed to remove item from wishlist.');
+      toast.error('Failed to remove item from wishlist.');
     }
   };
 
   const handleMoveToCart = async (productId: string) => {
     try {
       await addItem(productId, 1);
-      await handleRemove(productId);
+      toast.success('Moved to cart');
     } catch {
-      alert('Failed to add item to cart.');
+      toast.error('Failed to add item to cart.');
     }
   };
 
   const handleClearWishlist = async () => {
-    if (!confirm('Clear your entire wishlist? This cannot be undone.')) return;
+    const ok = await confirm({
+      title: 'Clear wishlist',
+      message: 'Are you sure you want to clear your entire wishlist? This cannot be undone.',
+      confirmLabel: 'Clear',
+      variant: 'danger',
+    });
+    if (!ok) return;
     try {
       await apiClient.delete('/wishlist/clear');
       setItems([]);
-      setWishlist({ id: '', user_id: '', items: [], created_at: undefined });
+      setWishlist({ id: wishlist?.id || '', user_id: wishlist?.user_id || '', items: [], created_at: undefined });
+      toast.success('Wishlist cleared');
     } catch {
-      alert('Failed to clear wishlist.');
+      toast.error('Failed to clear wishlist.');
     }
   };
 
@@ -85,12 +97,7 @@ export const WishlistDetail: React.FC = () => {
       {loading ? (
         <div className="text-center text-zinc-400 text-xs py-12">Loading wishlist...</div>
       ) : items.length === 0 ? (
-        <div className="ui-surface p-12 rounded-sm text-center space-y-3">
-          <Heart className="w-10 h-10 text-zinc-400 mx-auto" />
-          <p className="text-base font-bold text-zinc-100">Your wishlist is empty</p>
-          <p className="text-xs text-zinc-400">Save items you love by clicking the heart icon on any product.</p>
-          <button onClick={() => navigate('/products')} className="btn-primary text-xs font-bold py-2 px-6">Browse Products</button>
-        </div>
+        <EmptyState icon={Heart} title="Your wishlist is empty" description="Save items you love by clicking the heart icon on any product." action={<button onClick={() => navigate('/products')} className="btn-primary text-xs font-bold py-2 px-6">Browse Products</button>} />
       ) : (
         <>
           {wishlist && (
@@ -130,6 +137,7 @@ export const WishlistDetail: React.FC = () => {
           </div>
         </>
       )}
+      {dialog}
     </div>
   );
 };
