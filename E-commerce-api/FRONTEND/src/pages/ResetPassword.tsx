@@ -8,7 +8,7 @@ const MIN_PASSWORD_LENGTH = 8;
 export const ResetPassword: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [token, setToken] = useState(searchParams.get('token') || '');
+  const urlToken = searchParams.get('token') || '';
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,11 +16,10 @@ export const ResetPassword: React.FC = () => {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const urlToken = searchParams.get('token');
-    if (urlToken) {
-      setToken(urlToken);
-    }
-  }, [searchParams]);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('token');
+    window.history.replaceState({}, '', url.toString());
+  }, []);
 
   const validatePassword = (value: string): string | null => {
     if (value.length < MIN_PASSWORD_LENGTH) {
@@ -53,14 +52,14 @@ export const ResetPassword: React.FC = () => {
       return;
     }
 
-    if (!token.trim()) {
-      setError('Reset token is missing or invalid.');
+    if (!urlToken.trim()) {
+      setError('Reset token is missing or invalid. Please request a new reset link.');
       return;
     }
 
     setLoading(true);
     try {
-      await apiClient.post('/auth/password-reset/confirm', { token, new_password: password });
+      await apiClient.post('/auth/password-reset/confirm', { token: urlToken, new_password: password });
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2500);
     } catch (err: any) {
@@ -70,14 +69,6 @@ export const ResetPassword: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (token) {
-      const url = new URL(window.location.href);
-      url.searchParams.delete('token');
-      window.history.replaceState({}, '', url.toString());
-    }
-  }, [token]);
-
   return (
     <div className="min-h-[75vh] flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md ui-surface rounded-sm p-6 sm:p-8 space-y-6 shadow-xs">
@@ -86,7 +77,7 @@ export const ResetPassword: React.FC = () => {
             <Lock className="w-6 h-6" />
           </div>
           <h1 className="text-xl font-bold text-zinc-100">Set New Password</h1>
-          <p className="text-xs text-zinc-400">Paste your reset token and choose a new password.</p>
+          <p className="text-xs text-zinc-400">Choose a new password for your account.</p>
         </div>
 
         {error && (
@@ -103,17 +94,6 @@ export const ResetPassword: React.FC = () => {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-zinc-100 uppercase tracking-wider mb-1.5">Reset Token</label>
-              <input
-                type="text"
-                required
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="Token from your email"
-                className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-700 rounded-xs text-xs font-mono text-zinc-100 placeholder-gray-400 focus:outline-none focus:border-zinc-700"
-              />
-            </div>
             <div>
               <label className="block text-xs font-bold text-zinc-100 uppercase tracking-wider mb-1.5">New Password</label>
               <input
