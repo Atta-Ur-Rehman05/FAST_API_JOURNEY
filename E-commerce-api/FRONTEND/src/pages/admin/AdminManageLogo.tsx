@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 import type { SiteLogo } from '../../types/api';
 import { ImageUpload } from '../../components/admin/ImageUpload';
 import { apiClient } from '../../lib/api-client';
 
 export const AdminManageLogo: React.FC = () => {
-  const [logo, setLogo] = useState<SiteLogo | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [logoUrl, setLogoUrl] = useState('');
@@ -16,7 +15,6 @@ export const AdminManageLogo: React.FC = () => {
     setLoading(true);
     try {
       const res = await apiClient.get<SiteLogo>('/logo/');
-      setLogo(res.data);
       setLogoUrl(res.data.logo_url);
       setFaviconUrl(res.data.favicon_url || '');
     } catch {
@@ -74,6 +72,7 @@ export const AdminManageLogo: React.FC = () => {
           <div className="space-y-2">
             <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Logo</label>
             <ImageUpload
+              label="Logo"
               currentImageUrl={logoUrl}
               onImageUploaded={(url) => setLogoUrl(url)}
               onImageRemoved={() => setLogoUrl('')}
@@ -83,6 +82,7 @@ export const AdminManageLogo: React.FC = () => {
           <div className="space-y-2">
             <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Favicon</label>
             <ImageUpload
+              label="Favicon"
               currentImageUrl={faviconUrl}
               onImageUploaded={(url) => setFaviconUrl(url)}
               onImageRemoved={() => setFaviconUrl('')}
