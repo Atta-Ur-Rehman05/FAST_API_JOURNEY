@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import type { HomeSlide, HomeSlideCreate, HomeSlideUpdate } from '../../types/api';
 import { ImageUpload } from '../../components/admin/ImageUpload';
 import { apiClient } from '../../lib/api-client';
+import { toast } from 'sonner';
+import { useConfirm } from '../../hooks/useConfirm';
+import { Modal } from '../../components/ui/Modal';
 
 type SlideDraft = {
   id?: number;
@@ -29,6 +32,8 @@ export const AdminHomeSlides: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingSlide, setEditingSlide] = useState<HomeSlide | null>(null);
   const [draft, setDraft] = useState<SlideDraft>(emptySlide);
+
+  const { confirm, dialog } = useConfirm();
 
   const fetchSlides = async () => {
     setLoading(true);
@@ -84,18 +89,26 @@ export const AdminHomeSlides: React.FC = () => {
       }
       setShowModal(false);
       fetchSlides();
+      toast.success(editingSlide ? 'Slide updated' : 'Slide created');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to save slide.');
+      toast.error(err.response?.data?.detail || 'Failed to save slide.');
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Delete this slide?')) return;
+    const ok = await confirm({
+      title: 'Delete slide',
+      message: 'Are you sure you want to delete this slide?',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
     try {
       await apiClient.delete(`/slides/${id}`);
       setSlides((s) => s.filter((x) => x.id !== id));
+      toast.success('Slide deleted');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to delete slide.');
+      toast.error(err.response?.data?.detail || 'Failed to delete slide.');
     }
   };
 
@@ -142,30 +155,26 @@ export const AdminHomeSlides: React.FC = () => {
         </div>
       )}
 
-      {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-zinc-900 p-6 rounded-sm space-y-4 shadow-xl border border-zinc-700">
-            <h2 className="text-base font-bold text-zinc-100 border-b border-zinc-700 pb-2">{editingSlide ? 'Edit Slide' : 'Add New Slide'}</h2>
-            <form onSubmit={handleSave} className="space-y-3">
-              <input type="text" required placeholder="Title" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
-              <input type="text" placeholder="Subtitle" value={draft.subtitle} onChange={(e) => setDraft({ ...draft, subtitle: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
-              <ImageUpload
-                label="Slide Image"
-                currentImageUrl={draft.image_url}
-                onImageUploaded={(url) => setDraft({ ...draft, image_url: url })}
-                onImageRemoved={() => setDraft({ ...draft, image_url: '' })}
-              />
-              <input type="url" placeholder="Link URL (optional)" value={draft.link_url} onChange={(e) => setDraft({ ...draft, link_url: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
-              <input type="number" placeholder="Sort Order" value={draft.sort_order} onChange={(e) => setDraft({ ...draft, sort_order: Number(e.target.value) })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
-              <label className="flex items-center gap-2 text-xs font-semibold text-zinc-300"><input type="checkbox" checked={draft.is_active} onChange={(e) => setDraft({ ...draft, is_active: e.target.checked })} /> Slide is active</label>
-              <div className="flex justify-end space-x-2 pt-2 border-t border-zinc-700">
-                <button type="button" onClick={() => setShowModal(false)} className="px-3 py-2 border border-zinc-700 text-xs font-semibold text-zinc-400 hover:bg-zinc-800 rounded-xs">Cancel</button>
-                <button type="submit" className="btn-primary text-xs font-bold py-2 px-4">{editingSlide ? 'Save Changes' : 'Create Slide'}</button>
-              </div>
-            </form>
+      <Modal open={showModal} onClose={() => setShowModal(false)} title={editingSlide ? 'Edit Slide' : 'Add New Slide'} maxWidth="max-w-lg">
+        <form onSubmit={handleSave} className="space-y-3">
+          <input type="text" required placeholder="Title" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
+          <input type="text" placeholder="Subtitle" value={draft.subtitle} onChange={(e) => setDraft({ ...draft, subtitle: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
+          <ImageUpload
+            label="Slide Image"
+            currentImageUrl={draft.image_url}
+            onImageUploaded={(url) => setDraft({ ...draft, image_url: url })}
+            onImageRemoved={() => setDraft({ ...draft, image_url: '' })}
+          />
+          <input type="url" placeholder="Link URL (optional)" value={draft.link_url} onChange={(e) => setDraft({ ...draft, link_url: e.target.value })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
+          <input type="number" placeholder="Sort Order" value={draft.sort_order} onChange={(e) => setDraft({ ...draft, sort_order: Number(e.target.value) })} className="w-full p-2.5 border border-zinc-700 rounded-xs text-xs text-zinc-100 focus:outline-none focus:border-zinc-700" />
+          <label className="flex items-center gap-2 text-xs font-semibold text-zinc-300"><input type="checkbox" checked={draft.is_active} onChange={(e) => setDraft({ ...draft, is_active: e.target.checked })} /> Slide is active</label>
+          <div className="flex justify-end space-x-2 pt-2 border-t border-zinc-700">
+            <button type="button" onClick={() => setShowModal(false)} className="px-3 py-2 border border-zinc-700 text-xs font-semibold text-zinc-400 hover:bg-zinc-800 rounded-xs">Cancel</button>
+            <button type="submit" className="btn-primary text-xs font-bold py-2 px-4">{editingSlide ? 'Save Changes' : 'Create Slide'}</button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
+      {dialog}
     </div>
   );
 };
