@@ -8,6 +8,7 @@ import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { CartDrawer } from './components/cart/CartDrawer';
 import { AdminRoute } from './components/auth/AdminRoute';
+import { RequireAuth } from './components/auth/RequireAuth';
 
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
@@ -62,30 +63,30 @@ export function App() {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
 
-{/* Customer Account Routes */}
-                  <Route path="/account/addresses" element={<Addresses />} />
-                  <Route path="/account/addresses/:id" element={<AddressDetail />} />
-                  <Route path="/account/orders" element={<Orders />} />
-                  <Route path="/account/orders/:id" element={<OrderDetail />} />
-                  <Route path="/wishlist" element={<WishlistPage />} />
-                  <Route path="/wishlist/detail" element={<WishlistDetail />} />
-                  <Route path="/categories/:id" element={<CategoryDetail />} />
-                  <Route path="/reviews/:id" element={<ReviewDetail />} />
-                  <Route path="/checkout" element={<Checkout />} />
+                {/* Customer Account Routes */}
+                <Route path="/account/addresses" element={<RequireAuth><Addresses /></RequireAuth>} />
+                <Route path="/account/addresses/:id" element={<RequireAuth><AddressDetail /></RequireAuth>} />
+                <Route path="/account/orders" element={<RequireAuth><Orders /></RequireAuth>} />
+                <Route path="/account/orders/:id" element={<RequireAuth><OrderDetail /></RequireAuth>} />
+                <Route path="/wishlist" element={<RequireAuth><WishlistPage /></RequireAuth>} />
+                <Route path="/wishlist/detail" element={<RequireAuth><WishlistDetail /></RequireAuth>} />
+                <Route path="/categories/:id" element={<CategoryDetail />} />
+                <Route path="/reviews/:id" element={<ReviewDetail />} />
+                <Route path="/checkout" element={<RequireAuth><Checkout /></RequireAuth>} />
 
-                  {/* Admin Portal Routes - code split */}
-                  <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
-                    <Route index element={<AdminSuspense><AdminDashboard /></AdminSuspense>} />
-                    <Route path="slides" element={<AdminSuspense><AdminHomeSlides /></AdminSuspense>} />
-                    <Route path="categories" element={<AdminSuspense><AdminCategories /></AdminSuspense>} />
-                    <Route path="products" element={<AdminSuspense><AdminProducts /></AdminSuspense>} />
-                    <Route path="inventory" element={<AdminSuspense><AdminInventory /></AdminSuspense>} />
-                    <Route path="banners" element={<AdminSuspense><AdminBanners /></AdminSuspense>} />
-                    <Route path="blogs" element={<AdminSuspense><AdminBlogs /></AdminSuspense>} />
-                    <Route path="logo" element={<AdminSuspense><AdminManageLogo /></AdminSuspense>} />
-                    <Route path="orders" element={<AdminSuspense><AdminOrders /></AdminSuspense>} />
-                    <Route path="users" element={<AdminSuspense><AdminUsers /></AdminSuspense>} />
-                  </Route>
+                {/* Admin Portal Routes - code split */}
+                <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+                  <Route index element={<AdminSuspense><AdminDashboard /></AdminSuspense>} />
+                  <Route path="slides" element={<AdminSuspense><AdminHomeSlides /></AdminSuspense>} />
+                  <Route path="categories" element={<AdminSuspense><AdminCategories /></AdminSuspense>} />
+                  <Route path="products" element={<AdminSuspense><AdminProducts /></AdminSuspense>} />
+                  <Route path="inventory" element={<AdminSuspense><AdminInventory /></AdminSuspense>} />
+                  <Route path="banners" element={<AdminSuspense><AdminBanners /></AdminSuspense>} />
+                  <Route path="blogs" element={<AdminSuspense><AdminBlogs /></AdminSuspense>} />
+                  <Route path="logo" element={<AdminSuspense><AdminManageLogo /></AdminSuspense>} />
+                  <Route path="orders" element={<AdminSuspense><AdminOrders /></AdminSuspense>} />
+                  <Route path="users" element={<AdminSuspense><AdminUsers /></AdminSuspense>} />
+                </Route>
 
                 {/* Catch-all redirect */}
                 <Route path="*" element={<Navigate to="/products" replace />} />
