@@ -3,11 +3,15 @@ import { Package, Clock, CheckCircle, Truck, XCircle, Ban } from 'lucide-react';
 import type { Order, PaginatedResponse } from '../types/api';
 import { apiClient } from '../lib/api-client';
 import { formatPrice } from '../lib/format-price';
+import { toast } from 'sonner';
+import { useConfirm } from '../hooks/useConfirm';
+import { EmptyState } from '../components/ui/EmptyState';
 
 export const Orders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const { confirm, dialog } = useConfirm();
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -24,13 +28,20 @@ export const Orders: React.FC = () => {
   }, []);
 
   const cancelOrder = async (orderId: string) => {
-    if (!confirm('Cancel this order? This action cannot be undone.')) return;
+    const ok = await confirm({
+      title: 'Cancel order',
+      message: 'Are you sure you want to cancel this order? This action cannot be undone.',
+      confirmLabel: 'Cancel Order',
+      variant: 'danger',
+    });
+    if (!ok) return;
     setCancellingId(orderId);
     try {
       await apiClient.post(`/orders/${orderId}/cancel`);
       setOrders((current) => current.map((order) => order.id === orderId ? { ...order, order_status: 'cancelled' as const } : order));
+      toast.success('Order cancelled');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to cancel order.');
+      toast.error(err.response?.data?.detail || 'Failed to cancel order.');
     } finally {
       setCancellingId(null);
     }
@@ -67,11 +78,7 @@ export const Orders: React.FC = () => {
       {loading ? (
         <div className="text-center text-zinc-400 text-xs py-12">Loading order history...</div>
       ) : orders.length === 0 ? (
-        <div className="ui-surface p-12 rounded-sm text-center space-y-3 shadow-xs">
-          <Package className="w-10 h-10 text-zinc-400 mx-auto" />
-          <p className="text-base font-bold text-zinc-100">No orders placed yet</p>
-          <p className="text-xs text-zinc-400">Your purchased orders will appear here once submitted.</p>
-        </div>
+        <EmptyState icon={Package} title="No orders placed yet" description="Your purchased orders will appear here once submitted." />
       ) : (
         <div className="space-y-4">
           {orders.map((order) => {
@@ -126,6 +133,7 @@ export const Orders: React.FC = () => {
           })}
         </div>
       )}
+      {dialog}
     </div>
   );
 };
