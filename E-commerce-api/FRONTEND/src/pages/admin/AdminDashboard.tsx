@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Bell, User, Plus, Search, ChevronDown, BarChart3, Users, ShoppingCart, Package, FolderTree, Edit, Trash2, ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Search, BarChart3, Users, ShoppingCart, Package, FolderTree, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import { apiClient } from '../../lib/api-client';
-import type { Category, PaginatedResponse, Product, Order, Review, ProductVariant, MonthlyStats, Address } from '../../types/api';
+import type { Category, PaginatedResponse, Product, Order, Review, MonthlyStats } from '../../types/api';
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -17,7 +17,6 @@ export const AdminDashboard: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState<number | null>(null);
   const [subcategoryFilter, setSubcategoryFilter] = useState<number | null>(null);
   const [productPage, setProductPage] = useState(0);
-  const [productTotal, setProductTotal] = useState(0);
   const PRODUCT_PAGE_SIZE = 10;
 
   // Recent Orders state
@@ -35,7 +34,7 @@ export const AdminDashboard: React.FC = () => {
     const fetchAll = async () => {
       setLoading(true);
       try {
-        const [usersRes, ordersRes, productsRes, categoriesRes, reviewsRes] = await Promise.all([
+        const [usersRes, ordersRes, productsRes, categoriesRes, _reviewsRes] = await Promise.all([
           apiClient.get<PaginatedResponse<any>>('/users/', { params: { limit: 1 } }),
           apiClient.get<PaginatedResponse<Order>>('/orders/', { params: { limit: 1 } }),
           apiClient.get<PaginatedResponse<Product>>('/products/', { params: { limit: 100 } }),
@@ -50,7 +49,6 @@ export const AdminDashboard: React.FC = () => {
         });
         setProducts(productsRes.data.items);
         setCategories(categoriesRes.data.items);
-        setProductTotal(productsRes.data.total);
       } catch (err: any) {
         const raw = err?.response?.data?.detail;
         const msg = typeof raw === 'string' ? raw : raw ? JSON.stringify(raw) : err?.message || 'Failed to load dashboard data';
@@ -620,7 +618,7 @@ const BarChart: React.FC<{
 
     // Draw bars
     data.datasets.forEach((dataset, dsIndex) => {
-      data.labels.forEach((label, i) => {
+      data.labels.forEach((_label, i) => {
         const value = dataset.data[i];
         const barHeight = (value / maxValue) * chartHeight;
         const x = padding.left + barGroupWidth * i + (barGroupWidth * 0.15) + dsIndex * barWidth;
