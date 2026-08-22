@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Minus, Plus, Save } from 'lucide-react';
 import type { InventoryItem, PaginatedResponse } from '../../types/api';
 import { apiClient } from '../../lib/api-client';
+import { toast } from 'sonner';
+import { SkeletonTable } from '../../components/ui/Skeleton';
 
 export const AdminInventory: React.FC = () => {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
@@ -60,8 +62,9 @@ export const AdminInventory: React.FC = () => {
         stock_quantity: quantities[variantId],
       });
       fetchInventory();
+      toast.success('Stock quantity updated');
     } catch {
-      alert('Failed to update stock quantity.');
+      toast.error('Failed to update stock quantity.');
     } finally {
       setUpdatingId(null);
     }
@@ -69,13 +72,14 @@ export const AdminInventory: React.FC = () => {
 
   const adjustStock = async (variantId: string, action: 'restock' | 'deduct' | 'release') => {
     const quantity = adjustments[variantId] || 0;
-    if (quantity <= 0) { alert('Enter an adjustment quantity greater than zero.'); return; }
+    if (quantity <= 0) { toast.error('Enter an adjustment quantity greater than zero.'); return; }
     setUpdatingId(variantId);
     try {
       const item = inventory.find((i) => i.variant_id === variantId);
       await apiClient.post(`/inventory/${variantId}/${action}`, { quantity, reason: `Admin ${action} — ${item?.sku ?? variantId}` });
       fetchInventory();
-    } catch (err: any) { alert(err.response?.data?.detail || `Failed to ${action} stock.`); }
+      toast.success(`Stock ${action}ed successfully`);
+    } catch (err: any) { toast.error(err.response?.data?.detail || `Failed to ${action} stock.`); }
     finally { setUpdatingId(null); }
   };
 
@@ -131,7 +135,7 @@ export const AdminInventory: React.FC = () => {
       )}
 
       {loading ? (
-        <div className="text-center text-zinc-400 text-xs py-12">Loading inventory matrix...</div>
+        <SkeletonTable rows={5} cols={6} />
       ) : (
         <div className="ui-surface rounded-sm overflow-hidden border border-zinc-700 shadow-xs">
           <div className="overflow-x-auto">
