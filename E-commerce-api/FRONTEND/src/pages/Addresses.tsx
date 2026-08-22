@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Plus, Trash2, CheckCircle2, Pencil, Star } from 'lucide-react';
 import type { Address } from '../types/api';
 import { apiClient } from '../lib/api-client';
+import { toast } from 'sonner';
+import { useConfirm } from '../hooks/useConfirm';
+import { EmptyState } from '../components/ui/EmptyState';
 
 export const Addresses: React.FC = () => {
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -9,6 +12,7 @@ export const Addresses: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [formError, setFormError] = useState('');
+  const { confirm, dialog } = useConfirm();
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -26,11 +30,11 @@ export const Addresses: React.FC = () => {
     setFormError('');
     const phone = formData.phone.trim();
     const postal = formData.postal_code.trim();
-    if (!/^\+?[0-9\s\-\(\)]+$/.test(phone) || phone.length < 7 || phone.length > 20) {
+    if (!/^\+?[0-9\s\-()]+$/.test(phone) || phone.length < 7 || phone.length > 20) {
       setFormError('Phone number must be 7-20 characters and contain only digits, spaces, hyphens, or parentheses.');
       return false;
     }
-    if (!/^[A-Za-z0-9\s\-]+$/.test(postal) || postal.length < 3 || postal.length > 10) {
+    if (!/^[A-Za-z0-9\s-]+$/.test(postal) || postal.length < 3 || postal.length > 10) {
       setFormError('Postal code must be 3-10 alphanumeric characters (spaces and hyphens allowed).');
       return false;
     }
@@ -70,8 +74,9 @@ export const Addresses: React.FC = () => {
       setEditingAddressId(null);
       fetchAddresses();
       resetForm();
+      toast.success(editingAddressId ? 'Address updated' : 'Address added');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to add address.');
+      toast.error(err.response?.data?.detail || 'Failed to save address.');
     }
   };
 
@@ -86,12 +91,19 @@ export const Addresses: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this address?')) return;
+    const ok = await confirm({
+      title: 'Delete address',
+      message: 'Are you sure you want to delete this address?',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
     try {
       await apiClient.delete(`/addresses/${id}`);
       fetchAddresses();
+      toast.success('Address deleted');
     } catch {
-      alert('Failed to delete address.');
+      toast.error('Failed to delete address.');
     }
   };
 
@@ -99,8 +111,9 @@ export const Addresses: React.FC = () => {
     try {
       await apiClient.patch(`/addresses/${id}/default-shipping`);
       fetchAddresses();
+      toast.success('Default shipping address updated');
     } catch {
-      alert('Failed to update default shipping address.');
+      toast.error('Failed to update default shipping address.');
     }
   };
 
@@ -108,8 +121,9 @@ export const Addresses: React.FC = () => {
     try {
       await apiClient.patch(`/addresses/${id}/default-billing`);
       fetchAddresses();
+      toast.success('Default billing address updated');
     } catch {
-      alert('Failed to update default billing address.');
+      toast.error('Failed to update default billing address.');
     }
   };
 
@@ -133,11 +147,7 @@ export const Addresses: React.FC = () => {
       {loading ? (
         <div className="text-center text-zinc-400 text-xs py-12">Loading address book...</div>
       ) : addresses.length === 0 ? (
-        <div className="ui-surface p-12 rounded-sm text-center space-y-3 shadow-xs">
-          <MapPin className="w-10 h-10 text-zinc-400 mx-auto" />
-          <p className="text-base font-bold text-zinc-100">No saved addresses</p>
-          <p className="text-xs text-zinc-400">Add an address to speed up checkout.</p>
-        </div>
+        <EmptyState icon={MapPin} title="No saved addresses" description="Add an address to speed up checkout." action={<button onClick={() => { resetForm(); setEditingAddressId(null); setShowAddModal(true); }} className="btn-primary text-xs font-bold py-2 px-6">Add Address</button>} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {addresses.map((addr) => (
@@ -293,7 +303,7 @@ export const Addresses: React.FC = () => {
           </div>
         </div>
       )}
-
+      {dialog}
     </div>
   );
 };
